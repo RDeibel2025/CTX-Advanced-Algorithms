@@ -370,7 +370,35 @@ five consecutive runs and cannot see drift *between* configurations
 measured minutes apart. Interleaving the configuration order across
 repeated passes would expose that, and is the first thing I would change.
 
-### Figures
+### Key figures
+
+![Sorting algorithm runtime on random input](docs/figures/sorting_comparison_random.png)
+
+*Runtime against input size on log–log axes, random input. Error bars are
+one standard deviation over five runs. All three series run parallel to
+the dotted O(n²) reference across two orders of magnitude of n, and
+clearly steeper than the dashed O(n) reference.*
+
+![Effect of input order at fixed n = 10,000](docs/figures/data_type_sensitivity.png)
+
+*The same three algorithms at one fixed size across the five swept data
+types, on a logarithmic runtime axis. Selection sort (orange) is the same
+height in every group; bubble sort (blue) and insertion sort (green)
+collapse by three to four orders of magnitude on sorted input.*
+
+![All eight input shapes at n = 2,000](docs/figures/data_shape_study.png)
+
+*The second study: all eight generated shapes at fixed n = 2,000.
+Selection sort's bars are the same height eight times over — the visual
+form of its constant n(n−1)/2 comparison count.*
+
+![Measured runtimes against fitted complexity models](docs/figures/complexity_fits_random.png)
+
+*Measurements (black dots) against all three fitted models on random
+input, with each model's R² in the legend. The O(n) and O(n log n) curves
+cannot follow the data; the O(n²) curve passes through every point.*
+
+### All figures
 
 All charts are in [`docs/figures/`](docs/figures) and embedded in
 [`docs/performance_analysis.md`](docs/performance_analysis.md):
