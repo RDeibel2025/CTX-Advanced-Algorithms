@@ -129,7 +129,7 @@ def plot_data_type_sensitivity(
             if r.data_type not in data_types:
                 data_types.append(r.data_type)
 
-    fig, ax = plt.subplots(figsize=(1.7 * max(len(data_types), 3) + 4, 5))
+    fig, ax = plt.subplots(figsize=(1.7 * max(len(data_types), 3) + 5, 5))
     positions = np.arange(len(data_types), dtype=float)
     width = 0.8 / max(len(sliced), 1)
     colors = plt.get_cmap("tab10").colors
@@ -164,7 +164,9 @@ def plot_data_type_sensitivity(
         or f"Sensitivity to input order at n = {input_size:,} "
         f"({'log' if log_scale else 'linear'} runtime axis)"
     )
-    ax.legend()
+    # Placed outside the axes: the shortest bars are exactly where a
+    # corner legend would sit, and those are the bars that carry the point.
+    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1.0), borderaxespad=0.0)
     ax.grid(True, axis="y", linestyle=":", linewidth=0.5, alpha=0.7)
     fig.tight_layout()
 

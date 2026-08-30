@@ -1,0 +1,16 @@
+algorithm_name,data_type,n_points,best_fit,best_r_squared,empirical_exponent,r2_linear,r2_linearithmic,r2_quadratic,quadratic_coefficient
+Bubble Sort,random,5,O(n^2),0.999992,2.0804,0.943147,0.957715,0.999992,2.562411e-08
+Bubble Sort,sorted,5,O(n),0.999829,1.0919,0.999829,0.998176,0.940198,2.874633e-12
+Bubble Sort,reverse,5,O(n^2),0.999988,2.0893,0.942852,0.957459,0.999988,3.205373e-08
+Bubble Sort,nearly_sorted,5,O(n^2),0.999924,2.1024,0.940393,0.955302,0.999924,1.599762e-08
+Bubble Sort,duplicates,5,O(n^2),0.999909,2.0983,0.940017,0.954969,0.999909,2.664140e-08
+Selection Sort,random,5,O(n^2),0.999993,2.0383,0.943235,0.95778,0.999993,1.133896e-08
+Selection Sort,sorted,5,O(n^2),0.999995,2.0654,0.945419,0.959696,0.999995,1.097107e-08
+Selection Sort,reverse,5,O(n^2),0.999998,2.0559,0.943836,0.95831,0.999998,1.139055e-08
+Selection Sort,nearly_sorted,5,O(n^2),0.999971,2.0716,0.942011,0.956708,0.999971,1.123501e-08
+Selection Sort,duplicates,5,O(n^2),0.999748,2.0751,0.951096,0.964648,0.999748,1.154844e-08
+Insertion Sort,random,5,O(n^2),0.999995,2.0579,0.943426,0.957955,0.999995,1.090696e-08
+Insertion Sort,sorted,5,O(n),0.99975,1.0665,0.99975,0.997875,0.938594,5.163528e-12
+Insertion Sort,reverse,5,O(n^2),0.999989,2.0673,0.942911,0.957509,0.999989,2.100542e-08
+Insertion Sort,nearly_sorted,5,O(n^2),0.999997,1.9384,0.944975,0.959313,0.999997,1.291408e-09
+Insertion Sort,duplicates,5,O(n^2),0.999909,2.0879,0.940042,0.954982,0.999909,1.077874e-08
