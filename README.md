@@ -73,7 +73,11 @@ Advanced Algorithms/
 │   ├── AI_USE.md                   AI use disclosure
 │   └── figures/                    Generated charts (PNG)
 ├── tools/
-│   └── build_report.py             Renders the report from the result CSVs
+│   ├── build_report.py             Renders the report from the result CSVs
+│   ├── md_to_pdf.py                Exports SUBMISSION.md to PDF
+│   └── package_submission.sh       Builds the submission zip and PDF
+├── submissions/
+│   └── week-01-algorithm-lab/      What was handed in for Week 1
 ├── notebooks/                      Reserved for exploratory work
 └── examples/                       Reserved for worked examples
 ```

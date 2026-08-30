@@ -468,13 +468,26 @@ Advanced Algorithms/                  <- repository root
 │   ├── AI_USE.md                     AI use disclosure
 │   └── figures/                      8 generated PNG charts
 ├── tools/
-│   └── build_report.py               renders the report from the result CSVs
+│   ├── build_report.py               renders the report from the result CSVs
+│   ├── md_to_pdf.py                  exports SUBMISSION.md to PDF
+│   └── package_submission.sh         builds the two files below
+├── submissions/
+│   └── week-01-algorithm-lab/
+│       ├── Deibel_CSC5300_Week1_AlgorithmLab.zip
+│       └── Deibel_CSC5300_Week1_Submission.pdf
 ├── notebooks/                        reserved for exploratory work
 └── examples/                         reserved for worked examples
 ```
 
+The repository covers the whole course, not just this assignment: the
+`searching`, `graph`, `dynamic_programming` and `data_structures` packages
+are in place for later weeks, and each week's submitted artifacts get their
+own folder under `submissions/`.
+
 The virtual environment (`algorithms_course/`), `__pycache__/` and
 `.pytest_cache/` are excluded from version control and from this archive.
+`submissions/` is tracked but excluded from the archive as well — otherwise
+this zip would contain a copy of itself.
 
 ### Commit history
 
