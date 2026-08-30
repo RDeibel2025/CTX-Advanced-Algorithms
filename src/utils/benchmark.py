@@ -553,8 +553,12 @@ class AlgorithmBenchmark:
 
         peak_bytes = 0.0
         if measure_memory:
+            # Build the payload copy BEFORE tracing starts. Otherwise this
+            # harness's own defensive copy is charged to the algorithm and
+            # the reported peak comes out at roughly twice the truth.
+            payload = list(data)
             tracemalloc.start()
-            algorithm(list(data))
+            algorithm(payload)
             _, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
             peak_bytes = float(peak)

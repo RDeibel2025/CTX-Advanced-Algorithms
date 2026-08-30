@@ -1,4 +1,4 @@
 algorithm_name,input_size,peak_bytes,peak_kib,bytes_per_element
-Bubble Sort,1000,16396,16.01,16.4
-Selection Sort,1000,16396,16.01,16.4
-Insertion Sort,1000,16276,15.89,16.28
+Bubble Sort,1000,8340,8.14,8.34
+Selection Sort,1000,8340,8.14,8.34
+Insertion Sort,1000,8220,8.03,8.22

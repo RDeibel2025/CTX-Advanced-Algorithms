@@ -69,9 +69,11 @@ Advanced Algorithms/
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Exported measurements (CSV)
 ├── docs/
-│   ├── performance_analysis.md     The performance report
+│   ├── performance_analysis.md     The performance report (generated)
 │   ├── AI_USE.md                   AI use disclosure
 │   └── figures/                    Generated charts (PNG)
+├── tools/
+│   └── build_report.py             Renders the report from the result CSVs
 ├── notebooks/                      Reserved for exploratory work
 └── examples/                       Reserved for worked examples
 ```
@@ -166,6 +168,16 @@ full report: methodology, the measured results with their standard
 deviations, the empirical complexity fits, and the conclusions drawn from
 them. Charts are in [`docs/figures/`](docs/figures/) and the raw
 measurements in [`benchmarks/results/`](benchmarks/results/).
+
+Every number in that report — every table cell and every figure quoted in
+the prose — is computed from the result CSVs by
+[`tools/build_report.py`](tools/build_report.py), so the write-up cannot
+drift out of step with the data after a re-run:
+
+```bash
+python benchmarks/sorting_benchmarks.py     # measure
+python tools/build_report.py                # write the report from the measurements
+```
 
 **[`SUBMISSION.md`](SUBMISSION.md)** — the cover document: what was built,
 where each piece lives, the actual environment and test output, and the
