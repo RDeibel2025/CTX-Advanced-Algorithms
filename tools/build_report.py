@@ -17,6 +17,7 @@ Author:
 
 from __future__ import annotations
 
+import math
 import os
 import statistics
 import sys
@@ -185,7 +186,9 @@ f = {
     "worst_slow_pct": slow_rel.max(),
     "k_min": min(unordered_k),
     "k_max": max(unordered_k),
-    "r2_min": min(unordered_r2),
+    # Floored, not rounded: this figure is quoted after a ">=" sign,
+    # and rounding 0.999656 up to 0.9997 would make that claim false.
+    "r2_min": math.floor(min(unordered_r2) * 10_000) / 10_000,
     "ratio_min": min(unordered_ratio),
     "ratio_max": max(unordered_ratio),
     "worst_ratio_alg": worst_ratio[0],

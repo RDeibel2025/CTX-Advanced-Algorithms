@@ -377,7 +377,7 @@ the others, and it does not.
 ### 3.1 All three algorithms are quadratic on unordered input, and three independent measures agree
 
 On `random`, `reverse` and `duplicates` input, every algorithm's measured
-curve fits O(n²) with R² ≥ 0.9997, and two cross-checks confirm it
+curve fits O(n²) with R² ≥ 0.9996, and two cross-checks confirm it
 without reference to the fitted models:
 
 * the **log–log slope** lands between 2.04 and 2.10 in every
