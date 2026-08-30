@@ -374,8 +374,8 @@ def table_stability() -> str:
 # ----------------------------------------------------------------------
 REPORT = """# Performance Analysis — Basic Sorting Algorithms
 
-**Robert Deibel**
-CSC 5300 Advanced Algorithms · Concordia University Texas · Fall 2026
+**Robert Deibel**  
+CSC 5300 Advanced Algorithms · Concordia University Texas · Fall 2026  
 Week 1 Project — Algorithm Laboratory Setup
 
 > Every figure in this report is generated from the measured result files

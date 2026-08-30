@@ -1,8 +1,8 @@
 # CSC 5300 Advanced Algorithms — Week 1 Project: Algorithm Laboratory Setup
 
-**Robert Deibel**
-Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026
-Week 1 Project — Algorithm Laboratory Setup (30 points)
+**Robert Deibel**  
+Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026  
+Week 1 Project — Algorithm Laboratory Setup (30 points)  
 Submitted: August 30, 2026
 
 ---

@@ -1,7 +1,7 @@
 # CSC 5300 Advanced Algorithms — Week 1: Algorithm Laboratory Setup
 
-**Robert Deibel**
-Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026
+**Robert Deibel**  
+Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026  
 Week 1 Project — Algorithm Laboratory Setup (30 points)
 
 Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
@@ -97,7 +97,10 @@ pip install -r requirements.txt
 ```
 
 The nine required packages are numpy, matplotlib, pandas, jupyter, pytest,
-scipy, scikit-learn, plotly and seaborn.
+scipy, scikit-learn, plotly and seaborn. `requirements.txt` also pins
+`markdown`, which only `tools/md_to_pdf.py` uses when exporting
+`SUBMISSION.md` to PDF; nothing in `src/`, `tests/` or `benchmarks/`
+depends on it.
 
 ---
 
