@@ -1,0 +1,56 @@
+name: tests
+
+# Runs the full test suite on every push and pull request, so a change that
+# breaks a sort or the benchmarking framework is caught in CI rather than at
+# submission time.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: pytest on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # requirements.txt is a full `pip freeze` of the macOS development
+      # environment, so a transitive pin can occasionally be unavailable for
+      # this runner's platform. Fall back to the nine top-level packages in
+      # that case rather than failing the whole run on a pin.
+      - name: Install dependencies (pinned)
+        id: pinned
+        continue-on-error: true
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install dependencies (unpinned fallback)
+        if: steps.pinned.outcome == 'failure'
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy matplotlib pandas jupyter pytest scipy scikit-learn plotly seaborn
+
+      - name: Verify the environment
+        run: python check_environment.py
+
+      - name: Run the test suite
+        run: pytest tests/ -v
+
+      - name: Run the docstring examples
+        run: pytest --doctest-modules src/ -v

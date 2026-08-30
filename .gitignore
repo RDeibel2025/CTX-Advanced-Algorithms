@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.Python
+venv/
+algorithms_course/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+*.csv
+*.json
+*.pickle
+
+# Exception: benchmark results are graded evidence
+!benchmarks/results/
+!benchmarks/results/*.csv
+
+# Working material, not part of the submitted project
+BUILD_SPEC.md
