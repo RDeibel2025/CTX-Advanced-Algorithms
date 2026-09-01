@@ -68,9 +68,17 @@ __all__ = [
     "AlgorithmBenchmark",
     "CorrectnessError",
     "DATA_TYPES",
+    "MANY_DUPLICATES_DISTINCT",
+    "FEW_UNIQUE_DISTINCT",
 ]
 
 #: Every data shape :meth:`AlgorithmBenchmark.generate_test_data` understands.
+#:
+#: New shapes are **appended**, never inserted. :meth:`benchmark_suite`
+#: derives each configuration's seed from a data type's index in this
+#: tuple, so reordering it would silently change the inputs of every
+#: previously recorded study - including the Week 1 results, which are
+#: published with a reproducibility claim.
 DATA_TYPES: tuple = (
     "random",
     "sorted",
@@ -80,7 +88,19 @@ DATA_TYPES: tuple = (
     "single_value",
     "mountain",
     "valley",
+    # Added in Week 2: fixed distinct-value counts, independent of n.
+    "many_duplicates",
+    "few_unique",
 )
+
+#: Distinct values in the ``many_duplicates`` shape. Fixed, not a fraction
+#: of n: at n=50,000 a size-proportional count would give 5,000 distinct
+#: values, which is not "many duplicates" in any useful sense.
+MANY_DUPLICATES_DISTINCT = 10
+
+#: Distinct values in the ``few_unique`` shape. Three is small enough to be
+#: the pathological case for a two-way partition that mishandles equal keys.
+FEW_UNIQUE_DISTINCT = 3
 
 
 class CorrectnessError(ValueError):
@@ -258,7 +278,11 @@ class AlgorithmBenchmark:
     # 1. Test data generation
     # ------------------------------------------------------------------
     def generate_test_data(
-        self, size: int, data_type: str = "random", seed: int = None
+        self,
+        size: int,
+        data_type: str = "random",
+        seed: int = None,
+        distinct_values: int = None,
     ) -> List[int]:
         """Build a list of ``size`` integers with a specified shape.
 
@@ -282,7 +306,17 @@ class AlgorithmBenchmark:
                         decreasing
         valley          Strictly decreasing to a single trough, then strictly
                         increasing
+        many_duplicates Random draws from exactly
+                        :data:`MANY_DUPLICATES_DISTINCT` (10) distinct values
+        few_unique      Random draws from exactly
+                        :data:`FEW_UNIQUE_DISTINCT` (3) distinct values
         =============== ===========================================================
+
+        ``duplicates`` scales its pool with n, while ``many_duplicates`` and
+        ``few_unique`` fix it. The distinction matters: at n=50,000 the
+        size-proportional shape has 5,000 distinct values and behaves much
+        like random data, whereas the fixed shapes get *more* duplicated as
+        n grows, which is what stresses a partition scheme.
 
         Args:
             size: Number of elements to produce. Must be non-negative.
@@ -291,6 +325,12 @@ class AlgorithmBenchmark:
                 seed makes the output reproducible; passing ``None`` leaves
                 it unseeded. A dedicated :class:`random.Random` instance is
                 used so the global random state is never disturbed.
+            distinct_values: Overrides the size of the value pool for the
+                three duplicate-heavy shapes (``duplicates``,
+                ``many_duplicates``, ``few_unique``). Makes the distinct
+                count an explicit experimental parameter rather than
+                something implied by the shape's name. Ignored by the other
+                shapes.
 
         Returns:
             A list of ``size`` integers.
@@ -329,15 +369,32 @@ class AlgorithmBenchmark:
             >>> len(set(dupes)) <= 10
             True
 
+            The Week 2 shapes fix their distinct-value count regardless of n:
+
+            >>> len(set(bench.generate_test_data(5000, "many_duplicates", seed=1)))
+            10
+            >>> len(set(bench.generate_test_data(5000, "few_unique", seed=1)))
+            3
+
+            And the count can be overridden explicitly:
+
+            >>> len(set(bench.generate_test_data(
+            ...     5000, "few_unique", seed=1, distinct_values=7)))
+            7
+
             >>> bench.generate_test_data(5, "spiral")
             Traceback (most recent call last):
                 ...
-            ValueError: unknown data_type 'spiral'; expected one of: duplicates, mountain, nearly_sorted, random, reverse, single_value, sorted, valley
+            ValueError: unknown data_type 'spiral'; expected one of: duplicates, few_unique, many_duplicates, mountain, nearly_sorted, random, reverse, single_value, sorted, valley
         """
         if isinstance(size, bool) or not isinstance(size, int):
             raise TypeError(f"size must be an int, got {type(size).__name__}")
         if size < 0:
             raise ValueError(f"size must be >= 0, got {size}")
+        if distinct_values is not None and distinct_values < 1:
+            raise ValueError(
+                f"distinct_values must be >= 1, got {distinct_values}"
+            )
         if data_type not in DATA_TYPES:
             raise ValueError(
                 f"unknown data_type {data_type!r}; expected one of: "
@@ -372,8 +429,24 @@ class AlgorithmBenchmark:
             return data
 
         if data_type == "duplicates":
-            distinct = max(1, size // 10)
+            distinct = distinct_values or max(1, size // 10)
             return [rng.randrange(distinct) for _ in range(size)]
+
+        if data_type in ("many_duplicates", "few_unique"):
+            fixed = (
+                MANY_DUPLICATES_DISTINCT
+                if data_type == "many_duplicates"
+                else FEW_UNIQUE_DISTINCT
+            )
+            distinct = distinct_values or fixed
+            # Guarantee every value in the pool actually appears, so the
+            # distinct count is exact rather than merely expected: a random
+            # draw could otherwise miss a value and leave, say, 9 distinct
+            # values in a shape documented as having 10.
+            pool = list(range(min(distinct, size)))
+            values = pool + [rng.choice(pool) for _ in range(size - len(pool))]
+            rng.shuffle(values)
+            return values
 
         if data_type == "single_value":
             return [42] * size
