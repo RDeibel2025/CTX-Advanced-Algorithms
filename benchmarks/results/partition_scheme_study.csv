@@ -1,0 +1,55 @@
+scheme,data_type,input_size,mean_time,speedup_vs_hoare,growth_vs_previous
+Lomuto (2-way),few_unique,500,0.001915,0.088,
+Hoare (2-way),few_unique,500,0.000169,1.0,
+Dutch flag (3-way),few_unique,500,5.3e-05,3.189,
+Lomuto (2-way),few_unique,1000,0.007774,0.047,4.06
+Hoare (2-way),few_unique,1000,0.000367,1.0,2.172
+Dutch flag (3-way),few_unique,1000,0.000102,3.598,1.925
+Lomuto (2-way),few_unique,2000,0.030964,0.027,3.983
+Hoare (2-way),few_unique,2000,0.000844,1.0,2.3
+Dutch flag (3-way),few_unique,2000,0.000162,5.21,1.588
+Lomuto (2-way),few_unique,4000,0.122731,0.014,3.964
+Hoare (2-way),few_unique,4000,0.001753,1.0,2.077
+Dutch flag (3-way),few_unique,4000,0.000392,4.472,2.42
+Lomuto (2-way),few_unique,8000,0.484409,0.008,3.947
+Hoare (2-way),few_unique,8000,0.003839,1.0,2.19
+Dutch flag (3-way),few_unique,8000,0.000647,5.934,1.651
+Lomuto (2-way),few_unique,16000,1.936811,0.004,3.998
+Hoare (2-way),few_unique,16000,0.007921,1.0,2.063
+Dutch flag (3-way),few_unique,16000,0.001573,5.036,2.431
+Lomuto (2-way),many_duplicates,500,0.000765,0.237,
+Hoare (2-way),many_duplicates,500,0.000181,1.0,
+Dutch flag (3-way),many_duplicates,500,8.4e-05,2.155,
+Lomuto (2-way),many_duplicates,1000,0.002868,0.135,3.749
+Hoare (2-way),many_duplicates,1000,0.000386,1.0,2.133
+Dutch flag (3-way),many_duplicates,1000,0.000204,1.892,2.429
+Lomuto (2-way),many_duplicates,2000,0.010521,0.078,3.668
+Hoare (2-way),many_duplicates,2000,0.000818,1.0,2.119
+Dutch flag (3-way),many_duplicates,2000,0.000358,2.285,1.755
+Lomuto (2-way),many_duplicates,4000,0.039611,0.044,3.765
+Hoare (2-way),many_duplicates,4000,0.001749,1.0,2.138
+Dutch flag (3-way),many_duplicates,4000,0.000788,2.22,2.201
+Lomuto (2-way),many_duplicates,8000,0.151567,0.025,3.826
+Hoare (2-way),many_duplicates,8000,0.003771,1.0,2.156
+Dutch flag (3-way),many_duplicates,8000,0.001429,2.639,1.813
+Lomuto (2-way),many_duplicates,16000,0.600793,0.013,3.964
+Hoare (2-way),many_duplicates,16000,0.007965,1.0,2.112
+Dutch flag (3-way),many_duplicates,16000,0.002475,3.218,1.732
+Lomuto (2-way),random,500,0.000242,0.975,
+Hoare (2-way),random,500,0.000236,1.0,
+Dutch flag (3-way),random,500,0.00029,0.814,
+Lomuto (2-way),random,1000,0.000606,0.889,2.504
+Hoare (2-way),random,1000,0.000539,1.0,2.284
+Dutch flag (3-way),random,1000,0.000808,0.667,2.786
+Lomuto (2-way),random,2000,0.001231,0.92,2.031
+Hoare (2-way),random,2000,0.001133,1.0,2.102
+Dutch flag (3-way),random,2000,0.001637,0.692,2.026
+Lomuto (2-way),random,4000,0.002767,0.906,2.248
+Hoare (2-way),random,4000,0.002506,1.0,2.212
+Dutch flag (3-way),random,4000,0.003675,0.682,2.245
+Lomuto (2-way),random,8000,0.005793,0.913,2.094
+Hoare (2-way),random,8000,0.005289,1.0,2.111
+Dutch flag (3-way),random,8000,0.007731,0.684,2.104
+Lomuto (2-way),random,16000,0.012379,0.92,2.137
+Hoare (2-way),random,16000,0.011384,1.0,2.152
+Dutch flag (3-way),random,16000,0.018058,0.63,2.336

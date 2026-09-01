@@ -72,6 +72,10 @@ REQUIRED_DIRECTORIES: List[str] = [
     "docs/figures",
     "examples",
     ".github/workflows",
+    # Week 2
+    "analysis",
+    "benchmarks/results",
+    "tools",
 ]
 
 #: Files the assignment's project structure requires.
@@ -103,6 +107,15 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/sorting_benchmarks.py",
     "benchmarks/complexity_validation.py",
     "docs/performance_analysis.md",
+    # Week 2 - divide and conquer
+    "src/sorting/merge_sort.py",
+    "src/sorting/quick_sort.py",
+    "tests/test_merge_sort.py",
+    "tests/test_quick_sort.py",
+    "tests/test_sorting_comparison.py",
+    "benchmarks/week2_performance.py",
+    "analysis/week2_report.md",
+    "analysis/week2_recurrences.md",
 ]
 
 OK = "[ OK ]"

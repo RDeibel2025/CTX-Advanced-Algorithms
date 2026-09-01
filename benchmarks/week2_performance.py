@@ -657,6 +657,72 @@ def validate_cap(bench: Week2Benchmark) -> List[dict]:
     return rows
 
 
+def cutoff_study(bench: Week2Benchmark) -> List[dict]:
+    """Measure the insertion-sort cutoff's effect by varying the threshold.
+
+    The assignment asks for the optimization's impact to be measured rather
+    than asserted, which means actually varying the constant. A threshold
+    of 0 disables the optimization entirely, so quicksort partitions all
+    the way down to single elements; larger thresholds hand progressively
+    bigger ranges to insertion sort.
+
+    The constant is patched on the module for the duration of each
+    measurement. That is acceptable here because this is a controlled
+    experiment in a benchmark script, and it is the only way to vary a
+    value the algorithm reads as a module-level constant.
+
+    Returns:
+        One row per (threshold, data type, size).
+    """
+    print("\n=== STUDY 5 - insertion-sort cutoff threshold ===")
+    import src.sorting.quick_sort as quick_sort_module
+
+    thresholds = [0, 5, 10, 20, 40, 80]
+    sizes = [10_000, 50_000]
+    data_types = ["random", "nearly_sorted", "few_unique"]
+    original = quick_sort_module.INSERTION_SORT_CUTOFF
+    rows: List[dict] = []
+
+    try:
+        for data_type in data_types:
+            print(f"\n  --- {data_type} ---", flush=True)
+            for size in sizes:
+                data = bench.generate_test_data(size, data_type, seed=SEED + size)
+                baseline: Optional[float] = None
+                line = []
+                for threshold in thresholds:
+                    quick_sort_module.INSERTION_SORT_CUTOFF = threshold
+                    result = bench.time_algorithm(
+                        quick_sort_hoare, data, runs=5, verify_correctness=True
+                    )
+                    bench.results[result.algorithm_name].pop()
+                    if not bench.results[result.algorithm_name]:
+                        del bench.results[result.algorithm_name]
+
+                    if threshold == 0:
+                        baseline = result.average_time
+                    rows.append(
+                        {
+                            "threshold": threshold,
+                            "data_type": data_type,
+                            "input_size": size,
+                            "mean_time": result.average_time,
+                            "std_deviation": result.std_deviation,
+                            "speedup_vs_no_cutoff": (
+                                round(baseline / result.average_time, 4)
+                                if baseline
+                                else ""
+                            ),
+                        }
+                    )
+                    line.append(f"cutoff={threshold}:{result.average_time:.5f}s")
+                print(f"    n={size:<6} " + "  ".join(line), flush=True)
+    finally:
+        quick_sort_module.INSERTION_SORT_CUTOFF = original
+
+    return rows
+
+
 def main(argv: List[str] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quick", action="store_true", help="fast smoke run")
@@ -668,7 +734,23 @@ def main(argv: List[str] = None) -> int:
             "them against the projection (adds roughly an hour)"
         ),
     )
+    parser.add_argument(
+        "--cutoff-only",
+        action="store_true",
+        help="run only the insertion-sort threshold study and exit",
+    )
     args = parser.parse_args(argv)
+
+    if args.cutoff_only:
+        bench = Week2Benchmark(warmup_runs=2, precision=6, seed=SEED)
+        bench.verbose = False
+        write_csv(
+            os.path.join(RESULTS_DIR, "cutoff_study.csv"),
+            ["threshold", "data_type", "input_size", "mean_time",
+             "std_deviation", "speedup_vs_no_cutoff"],
+            cutoff_study(bench),
+        )
+        return 0
 
     sizes = [100, 500, 1000] if args.quick else SIZES
     data_types = DATA_TYPES[:2] if args.quick else DATA_TYPES
@@ -702,6 +784,8 @@ def main(argv: List[str] = None) -> int:
 
     scheme_rows = partition_scheme_study(bench)
 
+    cutoff_rows = cutoff_study(bench)
+
     validation_rows = validate_cap(bench) if args.validate_cap else []
 
     print("\n=== writing results ===")
@@ -720,6 +804,13 @@ def main(argv: List[str] = None) -> int:
         ["scheme", "data_type", "input_size", "mean_time", "speedup_vs_hoare",
          "growth_vs_previous"],
         scheme_rows,
+    )
+
+    write_csv(
+        os.path.join(RESULTS_DIR, "cutoff_study.csv"),
+        ["threshold", "data_type", "input_size", "mean_time", "std_deviation",
+         "speedup_vs_no_cutoff"],
+        cutoff_rows,
     )
 
     if validation_rows:
