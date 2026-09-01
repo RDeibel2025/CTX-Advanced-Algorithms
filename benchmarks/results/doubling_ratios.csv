@@ -1,163 +1,163 @@
 algorithm_name,data_type,n_from,n_to,size_ratio,is_true_doubling,observed_ratio,predicted_linear,predicted_linearithmic,predicted_quadratic,t_from,t_to
-Bubble Sort,random,100,500,5.0,False,27.472,5.0,6.747,25.0,0.000178,0.00489
-Bubble Sort,random,500,1000,2.0,True,4.624,2.0,2.223,4.0,0.00489,0.022613
-Bubble Sort,random,1000,5000,5.0,False,27.66,5.0,6.165,25.0,0.022613,0.625473
-Bubble Sort,random,5000,10000,2.0,True,4.039,2.0,2.163,4.0,0.625473,2.52659
+Bubble Sort,random,100,500,5.0,False,27.2,5.0,6.747,25.0,0.00018,0.004896
+Bubble Sort,random,500,1000,2.0,True,4.789,2.0,2.223,4.0,0.004896,0.023446
+Bubble Sort,random,1000,5000,5.0,False,27.073,5.0,6.165,25.0,0.023446,0.634742
+Bubble Sort,random,5000,10000,2.0,True,4.017,2.0,2.163,4.0,0.634742,2.549766
 Bubble Sort,sorted,100,500,5.0,False,6.5,5.0,6.747,25.0,2e-06,1.3e-05
-Bubble Sort,sorted,500,1000,2.0,True,2.231,2.0,2.223,4.0,1.3e-05,2.9e-05
-Bubble Sort,sorted,1000,5000,5.0,False,5.276,5.0,6.165,25.0,2.9e-05,0.000153
-Bubble Sort,sorted,5000,10000,2.0,True,2.007,2.0,2.163,4.0,0.000153,0.000307
-Bubble Sort,reverse,100,500,5.0,False,28.538,5.0,6.747,25.0,0.000223,0.006364
-Bubble Sort,reverse,500,1000,2.0,True,4.475,2.0,2.223,4.0,0.006364,0.028478
-Bubble Sort,reverse,1000,5000,5.0,False,28.162,5.0,6.165,25.0,0.028478,0.80199
-Bubble Sort,reverse,5000,10000,2.0,True,4.047,2.0,2.163,4.0,0.80199,3.245851
-Bubble Sort,nearly_sorted,100,500,5.0,False,28.165,5.0,6.747,25.0,0.000109,0.00307
-Bubble Sort,nearly_sorted,500,1000,2.0,True,4.467,2.0,2.223,4.0,0.00307,0.013713
-Bubble Sort,nearly_sorted,1000,5000,5.0,False,28.713,5.0,6.165,25.0,0.013713,0.393745
-Bubble Sort,nearly_sorted,5000,10000,2.0,True,4.103,2.0,2.163,4.0,0.393745,1.615601
-Bubble Sort,many_duplicates,100,500,5.0,False,27.094,5.0,6.747,25.0,0.000171,0.004633
-Bubble Sort,many_duplicates,500,1000,2.0,True,4.523,2.0,2.223,4.0,0.004633,0.020955
-Bubble Sort,many_duplicates,1000,5000,5.0,False,27.657,5.0,6.165,25.0,0.020955,0.579546
-Bubble Sort,many_duplicates,5000,10000,2.0,True,4.042,2.0,2.163,4.0,0.579546,2.342538
-Bubble Sort,few_unique,100,500,5.0,False,29.327,5.0,6.747,25.0,0.00015,0.004399
-Bubble Sort,few_unique,500,1000,2.0,True,4.123,2.0,2.223,4.0,0.004399,0.018136
-Bubble Sort,few_unique,1000,5000,5.0,False,26.972,5.0,6.165,25.0,0.018136,0.489162
-Bubble Sort,few_unique,5000,10000,2.0,True,4.099,2.0,2.163,4.0,0.489162,2.004905
-Selection Sort,random,100,500,5.0,False,30.427,5.0,6.747,25.0,8.9e-05,0.002708
-Selection Sort,random,500,1000,2.0,True,4.147,2.0,2.223,4.0,0.002708,0.011229
-Selection Sort,random,1000,5000,5.0,False,25.134,5.0,6.165,25.0,0.011229,0.28223
-Selection Sort,random,5000,10000,2.0,True,4.075,2.0,2.163,4.0,0.28223,1.150206
-Selection Sort,sorted,100,500,5.0,False,33.835,5.0,6.747,25.0,7.9e-05,0.002673
-Selection Sort,sorted,500,1000,2.0,True,4.175,2.0,2.223,4.0,0.002673,0.011159
-Selection Sort,sorted,1000,5000,5.0,False,25.23,5.0,6.165,25.0,0.011159,0.281546
-Selection Sort,sorted,5000,10000,2.0,True,4.036,2.0,2.163,4.0,0.281546,1.13631
-Selection Sort,reverse,100,500,5.0,False,32.333,5.0,6.747,25.0,8.7e-05,0.002813
-Selection Sort,reverse,500,1000,2.0,True,4.106,2.0,2.223,4.0,0.002813,0.011549
-Selection Sort,reverse,1000,5000,5.0,False,25.239,5.0,6.165,25.0,0.011549,0.291482
-Selection Sort,reverse,5000,10000,2.0,True,4.055,2.0,2.163,4.0,0.291482,1.181862
-Selection Sort,nearly_sorted,100,500,5.0,False,29.086,5.0,6.747,25.0,9.3e-05,0.002705
-Selection Sort,nearly_sorted,500,1000,2.0,True,4.433,2.0,2.223,4.0,0.002705,0.011992
-Selection Sort,nearly_sorted,1000,5000,5.0,False,23.63,5.0,6.165,25.0,0.011992,0.283371
-Selection Sort,nearly_sorted,5000,10000,2.0,True,3.963,2.0,2.163,4.0,0.283371,1.122863
-Selection Sort,many_duplicates,100,500,5.0,False,29.839,5.0,6.747,25.0,8.7e-05,0.002596
-Selection Sort,many_duplicates,500,1000,2.0,True,4.207,2.0,2.223,4.0,0.002596,0.010921
-Selection Sort,many_duplicates,1000,5000,5.0,False,25.462,5.0,6.165,25.0,0.010921,0.278075
-Selection Sort,many_duplicates,5000,10000,2.0,True,3.985,2.0,2.163,4.0,0.278075,1.108163
-Selection Sort,few_unique,100,500,5.0,False,29.295,5.0,6.747,25.0,8.8e-05,0.002578
-Selection Sort,few_unique,500,1000,2.0,True,4.201,2.0,2.223,4.0,0.002578,0.010829
-Selection Sort,few_unique,1000,5000,5.0,False,25.452,5.0,6.165,25.0,0.010829,0.27562
-Selection Sort,few_unique,5000,10000,2.0,True,3.986,2.0,2.163,4.0,0.27562,1.098683
-Insertion Sort,random,100,500,5.0,False,25.712,5.0,6.747,25.0,8e-05,0.002057
-Insertion Sort,random,500,1000,2.0,True,4.913,2.0,2.223,4.0,0.002057,0.010106
-Insertion Sort,random,1000,5000,5.0,False,26.123,5.0,6.165,25.0,0.010106,0.264
-Insertion Sort,random,5000,10000,2.0,True,4.088,2.0,2.163,4.0,0.264,1.079187
-Insertion Sort,sorted,100,500,5.0,False,5.5,5.0,6.747,25.0,4e-06,2.2e-05
-Insertion Sort,sorted,500,1000,2.0,True,2.182,2.0,2.223,4.0,2.2e-05,4.8e-05
-Insertion Sort,sorted,1000,5000,5.0,False,5.604,5.0,6.165,25.0,4.8e-05,0.000269
-Insertion Sort,sorted,5000,10000,2.0,True,2.134,2.0,2.163,4.0,0.000269,0.000574
-Insertion Sort,reverse,100,500,5.0,False,27.099,5.0,6.747,25.0,0.000162,0.00439
-Insertion Sort,reverse,500,1000,2.0,True,4.342,2.0,2.223,4.0,0.00439,0.019063
-Insertion Sort,reverse,1000,5000,5.0,False,27.335,5.0,6.165,25.0,0.019063,0.521095
-Insertion Sort,reverse,5000,10000,2.0,True,4.145,2.0,2.163,4.0,0.521095,2.159955
-Insertion Sort,nearly_sorted,100,500,5.0,False,24.583,5.0,6.747,25.0,1.2e-05,0.000295
-Insertion Sort,nearly_sorted,500,1000,2.0,True,4.193,2.0,2.223,4.0,0.000295,0.001237
-Insertion Sort,nearly_sorted,1000,5000,5.0,False,27.006,5.0,6.165,25.0,0.001237,0.033407
-Insertion Sort,nearly_sorted,5000,10000,2.0,True,3.991,2.0,2.163,4.0,0.033407,0.133319
-Insertion Sort,many_duplicates,100,500,5.0,False,24.533,5.0,6.747,25.0,7.5e-05,0.00184
-Insertion Sort,many_duplicates,500,1000,2.0,True,4.638,2.0,2.223,4.0,0.00184,0.008534
-Insertion Sort,many_duplicates,1000,5000,5.0,False,26.913,5.0,6.165,25.0,0.008534,0.229676
-Insertion Sort,many_duplicates,5000,10000,2.0,True,3.979,2.0,2.163,4.0,0.229676,0.9139
-Insertion Sort,few_unique,100,500,5.0,False,28.889,5.0,6.747,25.0,5.4e-05,0.00156
-Insertion Sort,few_unique,500,1000,2.0,True,4.286,2.0,2.223,4.0,0.00156,0.006686
-Insertion Sort,few_unique,1000,5000,5.0,False,25.321,5.0,6.165,25.0,0.006686,0.169294
-Insertion Sort,few_unique,5000,10000,2.0,True,4.023,2.0,2.163,4.0,0.169294,0.681044
-Merge Sort,random,100,500,5.0,False,5.765,5.0,6.747,25.0,8.1e-05,0.000467
-Merge Sort,random,500,1000,2.0,True,2.21,2.0,2.223,4.0,0.000467,0.001032
-Merge Sort,random,1000,5000,5.0,False,5.98,5.0,6.165,25.0,0.001032,0.006171
-Merge Sort,random,5000,10000,2.0,True,2.171,2.0,2.163,4.0,0.006171,0.013396
-Merge Sort,random,10000,50000,5.0,False,5.661,5.0,5.874,25.0,0.013396,0.075839
-Merge Sort,sorted,100,500,5.0,False,5.3,5.0,6.747,25.0,7e-05,0.000371
-Merge Sort,sorted,500,1000,2.0,True,2.092,2.0,2.223,4.0,0.000371,0.000776
-Merge Sort,sorted,1000,5000,5.0,False,5.746,5.0,6.165,25.0,0.000776,0.004459
-Merge Sort,sorted,5000,10000,2.0,True,2.15,2.0,2.163,4.0,0.004459,0.009587
-Merge Sort,sorted,10000,50000,5.0,False,6.446,5.0,5.874,25.0,0.009587,0.061794
-Merge Sort,reverse,100,500,5.0,False,4.885,5.0,6.747,25.0,7.8e-05,0.000381
-Merge Sort,reverse,500,1000,2.0,True,2.181,2.0,2.223,4.0,0.000381,0.000831
-Merge Sort,reverse,1000,5000,5.0,False,5.54,5.0,6.165,25.0,0.000831,0.004604
-Merge Sort,reverse,5000,10000,2.0,True,2.135,2.0,2.163,4.0,0.004604,0.009828
-Merge Sort,reverse,10000,50000,5.0,False,5.459,5.0,5.874,25.0,0.009828,0.053652
-Merge Sort,nearly_sorted,100,500,5.0,False,5.878,5.0,6.747,25.0,7.4e-05,0.000435
-Merge Sort,nearly_sorted,500,1000,2.0,True,2.216,2.0,2.223,4.0,0.000435,0.000964
-Merge Sort,nearly_sorted,1000,5000,5.0,False,5.842,5.0,6.165,25.0,0.000964,0.005632
-Merge Sort,nearly_sorted,5000,10000,2.0,True,2.118,2.0,2.163,4.0,0.005632,0.01193
-Merge Sort,nearly_sorted,10000,50000,5.0,False,5.729,5.0,5.874,25.0,0.01193,0.068346
-Merge Sort,many_duplicates,100,500,5.0,False,5.75,5.0,6.747,25.0,8e-05,0.00046
-Merge Sort,many_duplicates,500,1000,2.0,True,2.172,2.0,2.223,4.0,0.00046,0.000999
-Merge Sort,many_duplicates,1000,5000,5.0,False,6.024,5.0,6.165,25.0,0.000999,0.006018
-Merge Sort,many_duplicates,5000,10000,2.0,True,2.074,2.0,2.163,4.0,0.006018,0.012482
-Merge Sort,many_duplicates,10000,50000,5.0,False,5.623,5.0,5.874,25.0,0.012482,0.070192
-Merge Sort,few_unique,100,500,5.0,False,5.558,5.0,6.747,25.0,7.7e-05,0.000428
-Merge Sort,few_unique,500,1000,2.0,True,2.164,2.0,2.223,4.0,0.000428,0.000926
-Merge Sort,few_unique,1000,5000,5.0,False,5.941,5.0,6.165,25.0,0.000926,0.005501
-Merge Sort,few_unique,5000,10000,2.0,True,2.112,2.0,2.163,4.0,0.005501,0.011617
-Merge Sort,few_unique,10000,50000,5.0,False,5.583,5.0,5.874,25.0,0.011617,0.064862
-Quick Sort,random,100,500,5.0,False,5.524,5.0,6.747,25.0,4.2e-05,0.000232
-Quick Sort,random,500,1000,2.0,True,2.323,2.0,2.223,4.0,0.000232,0.000539
-Quick Sort,random,1000,5000,5.0,False,5.698,5.0,6.165,25.0,0.000539,0.003071
-Quick Sort,random,5000,10000,2.0,True,2.321,2.0,2.163,4.0,0.003071,0.007127
-Quick Sort,random,10000,50000,5.0,False,5.584,5.0,5.874,25.0,0.007127,0.0398
-Quick Sort,sorted,100,500,5.0,False,4.711,5.0,6.747,25.0,3.8e-05,0.000179
-Quick Sort,sorted,500,1000,2.0,True,2.145,2.0,2.223,4.0,0.000179,0.000384
-Quick Sort,sorted,1000,5000,5.0,False,6.125,5.0,6.165,25.0,0.000384,0.002352
-Quick Sort,sorted,5000,10000,2.0,True,2.197,2.0,2.163,4.0,0.002352,0.005168
-Quick Sort,sorted,10000,50000,5.0,False,5.65,5.0,5.874,25.0,0.005168,0.029201
-Quick Sort,reverse,100,500,5.0,False,5.077,5.0,6.747,25.0,3.9e-05,0.000198
-Quick Sort,reverse,500,1000,2.0,True,2.217,2.0,2.223,4.0,0.000198,0.000439
-Quick Sort,reverse,1000,5000,5.0,False,5.554,5.0,6.165,25.0,0.000439,0.002438
-Quick Sort,reverse,5000,10000,2.0,True,2.269,2.0,2.163,4.0,0.002438,0.005532
-Quick Sort,reverse,10000,50000,5.0,False,5.574,5.0,5.874,25.0,0.005532,0.030833
-Quick Sort,nearly_sorted,100,500,5.0,False,5.727,5.0,6.747,25.0,3.3e-05,0.000189
-Quick Sort,nearly_sorted,500,1000,2.0,True,2.148,2.0,2.223,4.0,0.000189,0.000406
-Quick Sort,nearly_sorted,1000,5000,5.0,False,5.773,5.0,6.165,25.0,0.000406,0.002344
-Quick Sort,nearly_sorted,5000,10000,2.0,True,2.267,2.0,2.163,4.0,0.002344,0.005315
-Quick Sort,nearly_sorted,10000,50000,5.0,False,5.43,5.0,5.874,25.0,0.005315,0.028859
-Quick Sort,many_duplicates,100,500,5.0,False,5.235,5.0,6.747,25.0,3.4e-05,0.000178
-Quick Sort,many_duplicates,500,1000,2.0,True,2.157,2.0,2.223,4.0,0.000178,0.000384
-Quick Sort,many_duplicates,1000,5000,5.0,False,6.01,5.0,6.165,25.0,0.000384,0.002308
-Quick Sort,many_duplicates,5000,10000,2.0,True,2.079,2.0,2.163,4.0,0.002308,0.004799
-Quick Sort,many_duplicates,10000,50000,5.0,False,5.741,5.0,5.874,25.0,0.004799,0.027552
-Quick Sort,few_unique,100,500,5.0,False,5.25,5.0,6.747,25.0,3.2e-05,0.000168
-Quick Sort,few_unique,500,1000,2.0,True,2.226,2.0,2.223,4.0,0.000168,0.000374
-Quick Sort,few_unique,1000,5000,5.0,False,5.765,5.0,6.165,25.0,0.000374,0.002156
-Quick Sort,few_unique,5000,10000,2.0,True,2.149,2.0,2.163,4.0,0.002156,0.004633
-Quick Sort,few_unique,10000,50000,5.0,False,6.032,5.0,5.874,25.0,0.004633,0.027948
-Quick Sort (3-way),random,100,500,5.0,False,5.327,5.0,6.747,25.0,5.5e-05,0.000293
-Quick Sort (3-way),random,500,1000,2.0,True,2.805,2.0,2.223,4.0,0.000293,0.000822
-Quick Sort (3-way),random,1000,5000,5.0,False,5.672,5.0,6.165,25.0,0.000822,0.004662
-Quick Sort (3-way),random,5000,10000,2.0,True,2.343,2.0,2.163,4.0,0.004662,0.010923
-Quick Sort (3-way),random,10000,50000,5.0,False,5.579,5.0,5.874,25.0,0.010923,0.060936
-Quick Sort (3-way),sorted,100,500,5.0,False,5.906,5.0,6.747,25.0,5.3e-05,0.000313
-Quick Sort (3-way),sorted,500,1000,2.0,True,2.345,2.0,2.223,4.0,0.000313,0.000734
-Quick Sort (3-way),sorted,1000,5000,5.0,False,6.196,5.0,6.165,25.0,0.000734,0.004548
-Quick Sort (3-way),sorted,5000,10000,2.0,True,2.321,2.0,2.163,4.0,0.004548,0.010558
-Quick Sort (3-way),sorted,10000,50000,5.0,False,5.7,5.0,5.874,25.0,0.010558,0.060182
-Quick Sort (3-way),reverse,100,500,5.0,False,6.404,5.0,6.747,25.0,4.7e-05,0.000301
-Quick Sort (3-way),reverse,500,1000,2.0,True,2.419,2.0,2.223,4.0,0.000301,0.000728
-Quick Sort (3-way),reverse,1000,5000,5.0,False,6.163,5.0,6.165,25.0,0.000728,0.004487
-Quick Sort (3-way),reverse,5000,10000,2.0,True,2.784,2.0,2.163,4.0,0.004487,0.012494
-Quick Sort (3-way),reverse,10000,50000,5.0,False,4.715,5.0,5.874,25.0,0.012494,0.05891
-Quick Sort (3-way),nearly_sorted,100,500,5.0,False,5.286,5.0,6.747,25.0,6.3e-05,0.000333
-Quick Sort (3-way),nearly_sorted,500,1000,2.0,True,2.489,2.0,2.223,4.0,0.000333,0.000829
-Quick Sort (3-way),nearly_sorted,1000,5000,5.0,False,5.601,5.0,6.165,25.0,0.000829,0.004643
-Quick Sort (3-way),nearly_sorted,5000,10000,2.0,True,2.105,2.0,2.163,4.0,0.004643,0.009772
-Quick Sort (3-way),nearly_sorted,10000,50000,5.0,False,5.8,5.0,5.874,25.0,0.009772,0.056676
-Quick Sort (3-way),many_duplicates,100,500,5.0,False,3.964,5.0,6.747,25.0,2.8e-05,0.000111
-Quick Sort (3-way),many_duplicates,500,1000,2.0,True,2.126,2.0,2.223,4.0,0.000111,0.000236
-Quick Sort (3-way),many_duplicates,1000,5000,5.0,False,4.0,5.0,6.165,25.0,0.000236,0.000944
-Quick Sort (3-way),many_duplicates,5000,10000,2.0,True,1.748,2.0,2.163,4.0,0.000944,0.00165
-Quick Sort (3-way),many_duplicates,10000,50000,5.0,False,5.598,5.0,5.874,25.0,0.00165,0.009236
-Quick Sort (3-way),few_unique,100,500,5.0,False,3.412,5.0,6.747,25.0,1.7e-05,5.8e-05
-Quick Sort (3-way),few_unique,500,1000,2.0,True,1.724,2.0,2.223,4.0,5.8e-05,0.0001
-Quick Sort (3-way),few_unique,1000,5000,5.0,False,5.01,5.0,6.165,25.0,0.0001,0.000501
-Quick Sort (3-way),few_unique,5000,10000,2.0,True,1.583,2.0,2.163,4.0,0.000501,0.000793
-Quick Sort (3-way),few_unique,10000,50000,5.0,False,6.148,5.0,5.874,25.0,0.000793,0.004875
+Bubble Sort,sorted,500,1000,2.0,True,2.308,2.0,2.223,4.0,1.3e-05,3e-05
+Bubble Sort,sorted,1000,5000,5.0,False,6.7,5.0,6.165,25.0,3e-05,0.000201
+Bubble Sort,sorted,5000,10000,2.0,True,1.488,2.0,2.163,4.0,0.000201,0.000299
+Bubble Sort,reverse,100,500,5.0,False,27.105,5.0,6.747,25.0,0.000228,0.00618
+Bubble Sort,reverse,500,1000,2.0,True,4.528,2.0,2.223,4.0,0.00618,0.027981
+Bubble Sort,reverse,1000,5000,5.0,False,28.076,5.0,6.165,25.0,0.027981,0.785588
+Bubble Sort,reverse,5000,10000,2.0,True,4.119,2.0,2.163,4.0,0.785588,3.235972
+Bubble Sort,nearly_sorted,100,500,5.0,False,28.63,5.0,6.747,25.0,0.0001,0.002863
+Bubble Sort,nearly_sorted,500,1000,2.0,True,4.615,2.0,2.223,4.0,0.002863,0.013212
+Bubble Sort,nearly_sorted,1000,5000,5.0,False,28.989,5.0,6.165,25.0,0.013212,0.383
+Bubble Sort,nearly_sorted,5000,10000,2.0,True,4.09,2.0,2.163,4.0,0.383,1.566541
+Bubble Sort,many_duplicates,100,500,5.0,False,27.226,5.0,6.747,25.0,0.000168,0.004574
+Bubble Sort,many_duplicates,500,1000,2.0,True,4.542,2.0,2.223,4.0,0.004574,0.020774
+Bubble Sort,many_duplicates,1000,5000,5.0,False,27.537,5.0,6.165,25.0,0.020774,0.572064
+Bubble Sort,many_duplicates,5000,10000,2.0,True,4.031,2.0,2.163,4.0,0.572064,2.305939
+Bubble Sort,few_unique,100,500,5.0,False,27.785,5.0,6.747,25.0,0.000149,0.00414
+Bubble Sort,few_unique,500,1000,2.0,True,4.348,2.0,2.223,4.0,0.00414,0.018001
+Bubble Sort,few_unique,1000,5000,5.0,False,26.902,5.0,6.165,25.0,0.018001,0.484263
+Bubble Sort,few_unique,5000,10000,2.0,True,4.118,2.0,2.163,4.0,0.484263,1.994025
+Selection Sort,random,100,500,5.0,False,29.865,5.0,6.747,25.0,8.9e-05,0.002658
+Selection Sort,random,500,1000,2.0,True,4.272,2.0,2.223,4.0,0.002658,0.011354
+Selection Sort,random,1000,5000,5.0,False,24.994,5.0,6.165,25.0,0.011354,0.283783
+Selection Sort,random,5000,10000,2.0,True,3.94,2.0,2.163,4.0,0.283783,1.118181
+Selection Sort,sorted,100,500,5.0,False,34.197,5.0,6.747,25.0,7.6e-05,0.002599
+Selection Sort,sorted,500,1000,2.0,True,4.225,2.0,2.223,4.0,0.002599,0.01098
+Selection Sort,sorted,1000,5000,5.0,False,25.144,5.0,6.165,25.0,0.01098,0.276085
+Selection Sort,sorted,5000,10000,2.0,True,3.995,2.0,2.163,4.0,0.276085,1.103078
+Selection Sort,reverse,100,500,5.0,False,31.624,5.0,6.747,25.0,8.5e-05,0.002688
+Selection Sort,reverse,500,1000,2.0,True,4.181,2.0,2.223,4.0,0.002688,0.011239
+Selection Sort,reverse,1000,5000,5.0,False,25.263,5.0,6.165,25.0,0.011239,0.283936
+Selection Sort,reverse,5000,10000,2.0,True,4.07,2.0,2.163,4.0,0.283936,1.155553
+Selection Sort,nearly_sorted,100,500,5.0,False,32.974,5.0,6.747,25.0,7.8e-05,0.002572
+Selection Sort,nearly_sorted,500,1000,2.0,True,4.181,2.0,2.223,4.0,0.002572,0.010754
+Selection Sort,nearly_sorted,1000,5000,5.0,False,25.264,5.0,6.165,25.0,0.010754,0.271694
+Selection Sort,nearly_sorted,5000,10000,2.0,True,4.023,2.0,2.163,4.0,0.271694,1.092917
+Selection Sort,many_duplicates,100,500,5.0,False,30.759,5.0,6.747,25.0,8.3e-05,0.002553
+Selection Sort,many_duplicates,500,1000,2.0,True,4.226,2.0,2.223,4.0,0.002553,0.010789
+Selection Sort,many_duplicates,1000,5000,5.0,False,24.937,5.0,6.165,25.0,0.010789,0.269043
+Selection Sort,many_duplicates,5000,10000,2.0,True,4.007,2.0,2.163,4.0,0.269043,1.078156
+Selection Sort,few_unique,100,500,5.0,False,31.6,5.0,6.747,25.0,8e-05,0.002528
+Selection Sort,few_unique,500,1000,2.0,True,4.261,2.0,2.223,4.0,0.002528,0.010771
+Selection Sort,few_unique,1000,5000,5.0,False,24.87,5.0,6.165,25.0,0.010771,0.267878
+Selection Sort,few_unique,5000,10000,2.0,True,4.124,2.0,2.163,4.0,0.267878,1.104657
+Insertion Sort,random,100,500,5.0,False,25.788,5.0,6.747,25.0,8e-05,0.002063
+Insertion Sort,random,500,1000,2.0,True,4.994,2.0,2.223,4.0,0.002063,0.010303
+Insertion Sort,random,1000,5000,5.0,False,28.861,5.0,6.165,25.0,0.010303,0.29735
+Insertion Sort,random,5000,10000,2.0,True,3.756,2.0,2.163,4.0,0.29735,1.116714
+Insertion Sort,sorted,100,500,5.0,False,6.0,5.0,6.747,25.0,4e-06,2.4e-05
+Insertion Sort,sorted,500,1000,2.0,True,2.0,2.0,2.223,4.0,2.4e-05,4.8e-05
+Insertion Sort,sorted,1000,5000,5.0,False,5.5,5.0,6.165,25.0,4.8e-05,0.000264
+Insertion Sort,sorted,5000,10000,2.0,True,2.03,2.0,2.163,4.0,0.000264,0.000536
+Insertion Sort,reverse,100,500,5.0,False,26.786,5.0,6.747,25.0,0.000159,0.004259
+Insertion Sort,reverse,500,1000,2.0,True,4.422,2.0,2.223,4.0,0.004259,0.018833
+Insertion Sort,reverse,1000,5000,5.0,False,27.329,5.0,6.165,25.0,0.018833,0.514684
+Insertion Sort,reverse,5000,10000,2.0,True,4.015,2.0,2.163,4.0,0.514684,2.066703
+Insertion Sort,nearly_sorted,100,500,5.0,False,23.667,5.0,6.747,25.0,1.2e-05,0.000284
+Insertion Sort,nearly_sorted,500,1000,2.0,True,4.113,2.0,2.223,4.0,0.000284,0.001168
+Insertion Sort,nearly_sorted,1000,5000,5.0,False,27.832,5.0,6.165,25.0,0.001168,0.032508
+Insertion Sort,nearly_sorted,5000,10000,2.0,True,4.039,2.0,2.163,4.0,0.032508,0.13131
+Insertion Sort,many_duplicates,100,500,5.0,False,24.74,5.0,6.747,25.0,7.3e-05,0.001806
+Insertion Sort,many_duplicates,500,1000,2.0,True,4.693,2.0,2.223,4.0,0.001806,0.008475
+Insertion Sort,many_duplicates,1000,5000,5.0,False,26.565,5.0,6.165,25.0,0.008475,0.225138
+Insertion Sort,many_duplicates,5000,10000,2.0,True,3.999,2.0,2.163,4.0,0.225138,0.900418
+Insertion Sort,few_unique,100,500,5.0,False,28.907,5.0,6.747,25.0,5.4e-05,0.001561
+Insertion Sort,few_unique,500,1000,2.0,True,4.3,2.0,2.223,4.0,0.001561,0.006713
+Insertion Sort,few_unique,1000,5000,5.0,False,25.649,5.0,6.165,25.0,0.006713,0.172179
+Insertion Sort,few_unique,5000,10000,2.0,True,3.981,2.0,2.163,4.0,0.172179,0.685468
+Merge Sort,random,100,500,5.0,False,6.127,5.0,6.747,25.0,7.9e-05,0.000484
+Merge Sort,random,500,1000,2.0,True,2.147,2.0,2.223,4.0,0.000484,0.001039
+Merge Sort,random,1000,5000,5.0,False,5.853,5.0,6.165,25.0,0.001039,0.006081
+Merge Sort,random,5000,10000,2.0,True,2.254,2.0,2.163,4.0,0.006081,0.013706
+Merge Sort,random,10000,50000,5.0,False,5.634,5.0,5.874,25.0,0.013706,0.077219
+Merge Sort,sorted,100,500,5.0,False,5.968,5.0,6.747,25.0,6.2e-05,0.00037
+Merge Sort,sorted,500,1000,2.0,True,2.059,2.0,2.223,4.0,0.00037,0.000762
+Merge Sort,sorted,1000,5000,5.0,False,5.745,5.0,6.165,25.0,0.000762,0.004378
+Merge Sort,sorted,5000,10000,2.0,True,2.071,2.0,2.163,4.0,0.004378,0.009066
+Merge Sort,sorted,10000,50000,5.0,False,5.495,5.0,5.874,25.0,0.009066,0.049817
+Merge Sort,reverse,100,500,5.0,False,5.731,5.0,6.747,25.0,6.7e-05,0.000384
+Merge Sort,reverse,500,1000,2.0,True,2.023,2.0,2.223,4.0,0.000384,0.000777
+Merge Sort,reverse,1000,5000,5.0,False,5.744,5.0,6.165,25.0,0.000777,0.004463
+Merge Sort,reverse,5000,10000,2.0,True,2.046,2.0,2.163,4.0,0.004463,0.009131
+Merge Sort,reverse,10000,50000,5.0,False,5.468,5.0,5.874,25.0,0.009131,0.04993
+Merge Sort,nearly_sorted,100,500,5.0,False,5.859,5.0,6.747,25.0,7.1e-05,0.000416
+Merge Sort,nearly_sorted,500,1000,2.0,True,2.18,2.0,2.223,4.0,0.000416,0.000907
+Merge Sort,nearly_sorted,1000,5000,5.0,False,5.968,5.0,6.165,25.0,0.000907,0.005413
+Merge Sort,nearly_sorted,5000,10000,2.0,True,2.144,2.0,2.163,4.0,0.005413,0.011605
+Merge Sort,nearly_sorted,10000,50000,5.0,False,5.691,5.0,5.874,25.0,0.011605,0.066048
+Merge Sort,many_duplicates,100,500,5.0,False,5.812,5.0,6.747,25.0,8e-05,0.000465
+Merge Sort,many_duplicates,500,1000,2.0,True,2.097,2.0,2.223,4.0,0.000465,0.000975
+Merge Sort,many_duplicates,1000,5000,5.0,False,5.976,5.0,6.165,25.0,0.000975,0.005827
+Merge Sort,many_duplicates,5000,10000,2.0,True,2.078,2.0,2.163,4.0,0.005827,0.012111
+Merge Sort,many_duplicates,10000,50000,5.0,False,5.626,5.0,5.874,25.0,0.012111,0.068131
+Merge Sort,few_unique,100,500,5.0,False,5.72,5.0,6.747,25.0,7.5e-05,0.000429
+Merge Sort,few_unique,500,1000,2.0,True,2.154,2.0,2.223,4.0,0.000429,0.000924
+Merge Sort,few_unique,1000,5000,5.0,False,6.262,5.0,6.165,25.0,0.000924,0.005786
+Merge Sort,few_unique,5000,10000,2.0,True,2.013,2.0,2.163,4.0,0.005786,0.011646
+Merge Sort,few_unique,10000,50000,5.0,False,5.493,5.0,5.874,25.0,0.011646,0.063975
+Quick Sort,random,100,500,5.0,False,5.619,5.0,6.747,25.0,4.2e-05,0.000236
+Quick Sort,random,500,1000,2.0,True,2.398,2.0,2.223,4.0,0.000236,0.000566
+Quick Sort,random,1000,5000,5.0,False,5.38,5.0,6.165,25.0,0.000566,0.003045
+Quick Sort,random,5000,10000,2.0,True,2.388,2.0,2.163,4.0,0.003045,0.007271
+Quick Sort,random,10000,50000,5.0,False,5.334,5.0,5.874,25.0,0.007271,0.038784
+Quick Sort,sorted,100,500,5.0,False,5.438,5.0,6.747,25.0,3.2e-05,0.000174
+Quick Sort,sorted,500,1000,2.0,True,2.293,2.0,2.223,4.0,0.000174,0.000399
+Quick Sort,sorted,1000,5000,5.0,False,5.812,5.0,6.165,25.0,0.000399,0.002319
+Quick Sort,sorted,5000,10000,2.0,True,2.113,2.0,2.163,4.0,0.002319,0.0049
+Quick Sort,sorted,10000,50000,5.0,False,5.772,5.0,5.874,25.0,0.0049,0.028284
+Quick Sort,reverse,100,500,5.0,False,5.389,5.0,6.747,25.0,3.6e-05,0.000194
+Quick Sort,reverse,500,1000,2.0,True,2.227,2.0,2.223,4.0,0.000194,0.000432
+Quick Sort,reverse,1000,5000,5.0,False,5.602,5.0,6.165,25.0,0.000432,0.00242
+Quick Sort,reverse,5000,10000,2.0,True,2.131,2.0,2.163,4.0,0.00242,0.005156
+Quick Sort,reverse,10000,50000,5.0,False,5.681,5.0,5.874,25.0,0.005156,0.029292
+Quick Sort,nearly_sorted,100,500,5.0,False,5.625,5.0,6.747,25.0,3.2e-05,0.00018
+Quick Sort,nearly_sorted,500,1000,2.0,True,2.256,2.0,2.223,4.0,0.00018,0.000406
+Quick Sort,nearly_sorted,1000,5000,5.0,False,5.638,5.0,6.165,25.0,0.000406,0.002289
+Quick Sort,nearly_sorted,5000,10000,2.0,True,2.257,2.0,2.163,4.0,0.002289,0.005167
+Quick Sort,nearly_sorted,10000,50000,5.0,False,5.452,5.0,5.874,25.0,0.005167,0.028168
+Quick Sort,many_duplicates,100,500,5.0,False,5.206,5.0,6.747,25.0,3.4e-05,0.000177
+Quick Sort,many_duplicates,500,1000,2.0,True,2.153,2.0,2.223,4.0,0.000177,0.000381
+Quick Sort,many_duplicates,1000,5000,5.0,False,5.79,5.0,6.165,25.0,0.000381,0.002206
+Quick Sort,many_duplicates,5000,10000,2.0,True,2.152,2.0,2.163,4.0,0.002206,0.004748
+Quick Sort,many_duplicates,10000,50000,5.0,False,5.697,5.0,5.874,25.0,0.004748,0.027047
+Quick Sort,few_unique,100,500,5.0,False,5.219,5.0,6.747,25.0,3.2e-05,0.000167
+Quick Sort,few_unique,500,1000,2.0,True,2.204,2.0,2.223,4.0,0.000167,0.000368
+Quick Sort,few_unique,1000,5000,5.0,False,6.079,5.0,6.165,25.0,0.000368,0.002237
+Quick Sort,few_unique,5000,10000,2.0,True,2.105,2.0,2.163,4.0,0.002237,0.004708
+Quick Sort,few_unique,10000,50000,5.0,False,5.982,5.0,5.874,25.0,0.004708,0.028163
+Quick Sort (3-way),random,100,500,5.0,False,5.34,5.0,6.747,25.0,5.3e-05,0.000283
+Quick Sort (3-way),random,500,1000,2.0,True,6.926,2.0,2.223,4.0,0.000283,0.00196
+Quick Sort (3-way),random,1000,5000,5.0,False,2.426,5.0,6.165,25.0,0.00196,0.004754
+Quick Sort (3-way),random,5000,10000,2.0,True,2.279,2.0,2.163,4.0,0.004754,0.010833
+Quick Sort (3-way),random,10000,50000,5.0,False,5.54,5.0,5.874,25.0,0.010833,0.060013
+Quick Sort (3-way),sorted,100,500,5.0,False,5.849,5.0,6.747,25.0,5.3e-05,0.00031
+Quick Sort (3-way),sorted,500,1000,2.0,True,2.355,2.0,2.223,4.0,0.00031,0.00073
+Quick Sort (3-way),sorted,1000,5000,5.0,False,6.129,5.0,6.165,25.0,0.00073,0.004474
+Quick Sort (3-way),sorted,5000,10000,2.0,True,2.215,2.0,2.163,4.0,0.004474,0.00991
+Quick Sort (3-way),sorted,10000,50000,5.0,False,5.907,5.0,5.874,25.0,0.00991,0.058534
+Quick Sort (3-way),reverse,100,500,5.0,False,6.426,5.0,6.747,25.0,4.7e-05,0.000302
+Quick Sort (3-way),reverse,500,1000,2.0,True,2.338,2.0,2.223,4.0,0.000302,0.000706
+Quick Sort (3-way),reverse,1000,5000,5.0,False,6.235,5.0,6.165,25.0,0.000706,0.004402
+Quick Sort (3-way),reverse,5000,10000,2.0,True,2.258,2.0,2.163,4.0,0.004402,0.009938
+Quick Sort (3-way),reverse,10000,50000,5.0,False,5.67,5.0,5.874,25.0,0.009938,0.056347
+Quick Sort (3-way),nearly_sorted,100,500,5.0,False,5.98,5.0,6.747,25.0,5.1e-05,0.000305
+Quick Sort (3-way),nearly_sorted,500,1000,2.0,True,2.525,2.0,2.223,4.0,0.000305,0.00077
+Quick Sort (3-way),nearly_sorted,1000,5000,5.0,False,5.856,5.0,6.165,25.0,0.00077,0.004509
+Quick Sort (3-way),nearly_sorted,5000,10000,2.0,True,2.155,2.0,2.163,4.0,0.004509,0.009715
+Quick Sort (3-way),nearly_sorted,10000,50000,5.0,False,5.705,5.0,5.874,25.0,0.009715,0.055424
+Quick Sort (3-way),many_duplicates,100,500,5.0,False,4.143,5.0,6.747,25.0,2.8e-05,0.000116
+Quick Sort (3-way),many_duplicates,500,1000,2.0,True,1.974,2.0,2.223,4.0,0.000116,0.000229
+Quick Sort (3-way),many_duplicates,1000,5000,5.0,False,4.004,5.0,6.165,25.0,0.000229,0.000917
+Quick Sort (3-way),many_duplicates,5000,10000,2.0,True,1.756,2.0,2.163,4.0,0.000917,0.00161
+Quick Sort (3-way),many_duplicates,10000,50000,5.0,False,5.609,5.0,5.874,25.0,0.00161,0.009031
+Quick Sort (3-way),few_unique,100,500,5.0,False,3.312,5.0,6.747,25.0,1.6e-05,5.3e-05
+Quick Sort (3-way),few_unique,500,1000,2.0,True,1.868,2.0,2.223,4.0,5.3e-05,9.9e-05
+Quick Sort (3-way),few_unique,1000,5000,5.0,False,4.929,5.0,6.165,25.0,9.9e-05,0.000488
+Quick Sort (3-way),few_unique,5000,10000,2.0,True,1.715,2.0,2.163,4.0,0.000488,0.000837
+Quick Sort (3-way),few_unique,10000,50000,5.0,False,5.952,5.0,5.874,25.0,0.000837,0.004982

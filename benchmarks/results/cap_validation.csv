@@ -1,0 +1,19 @@
+algorithm_name,data_type,input_size,fitted_coefficient,projected_time,measured_time,projection_error_pct
+Bubble Sort,random,50000,2.549108e-08,63.7277,65.2172,-2.28
+Bubble Sort,sorted,50000,3.289861e-12,0.0082,0.0015,436.16
+Bubble Sort,reverse,50000,3.230420e-08,80.7605,80.8631,-0.13
+Bubble Sort,nearly_sorted,50000,1.564484e-08,39.1121,40.1294,-2.54
+Bubble Sort,many_duplicates,50000,2.304875e-08,57.6219,58.3431,-1.24
+Bubble Sort,few_unique,50000,1.990654e-08,49.7663,49.8801,-0.23
+Selection Sort,random,50000,1.119179e-08,27.9795,28.3288,-1.23
+Selection Sort,sorted,50000,1.103151e-08,27.5788,28.1665,-2.09
+Selection Sort,reverse,50000,1.154384e-08,28.8596,28.6335,0.79
+Selection Sort,nearly_sorted,50000,1.092554e-08,27.3138,27.8044,-1.76
+Selection Sort,many_duplicates,50000,1.078039e-08,26.951,27.669,-2.6
+Selection Sort,few_unique,50000,1.102704e-08,27.5676,26.8506,2.67
+Insertion Sort,random,50000,1.120979e-08,28.0245,27.5969,1.55
+Insertion Sort,sorted,50000,5.670401e-12,0.0142,0.0026,437.17
+Insertion Sort,reverse,50000,2.066215e-08,51.6554,51.9834,-0.63
+Insertion Sort,nearly_sorted,50000,1.312334e-09,3.2808,3.313,-0.97
+Insertion Sort,many_duplicates,50000,9.004199e-09,22.5105,22.675,-0.73
+Insertion Sort,few_unique,50000,6.856573e-09,17.1414,16.9596,1.07
