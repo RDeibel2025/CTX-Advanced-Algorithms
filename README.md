@@ -1,10 +1,14 @@
-# CSC 5300 Advanced Algorithms — Week 1: Algorithm Laboratory Setup
+# CSC 5300 Advanced Algorithms — Course Project
 
 **Robert Deibel**  
-Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026  
-Week 1 Project — Algorithm Laboratory Setup (30 points)
+Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026
 
 Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
+
+| Week | Assignment | Deliverable |
+|---|---|---|
+| 1 | Algorithm Laboratory Setup | [`docs/performance_analysis.md`](docs/performance_analysis.md) |
+| 2 | Divide and Conquer | [`analysis/week2_report.md`](analysis/week2_report.md) · [`analysis/week2_recurrences.md`](analysis/week2_recurrences.md) |
 
 ---
 
@@ -15,10 +19,14 @@ rather than only reasoning about how they should behave.
 
 It contains three things:
 
-1. **Three sorting algorithms** — an optimized bubble sort, selection sort
-   and insertion sort — written to a single explicit contract: reject
-   non-list input, never mutate the caller's list, handle empty and
-   single-element input, and work on any comparable element type.
+1. **Five sorting algorithms** — an optimized bubble sort, selection sort
+   and insertion sort (Week 1), plus merge sort and a randomized quicksort
+   (Week 2) — all written to a single explicit contract: reject non-list
+   input, never mutate the caller's list, handle empty and single-element
+   input, and work on any comparable element type. Because they share that
+   contract they are interchangeable in the benchmark harness, which
+   [`tests/test_sorting_comparison.py`](tests/test_sorting_comparison.py)
+   verifies.
 2. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm over repeated runs with `time.perf_counter`,
    reports mean, standard deviation, minimum and maximum, fits the
@@ -50,6 +58,8 @@ Advanced Algorithms/
 ├── src/
 │   ├── sorting/
 │   │   ├── basic_sorts.py          Bubble (optimized), selection, insertion
+│   │   ├── merge_sort.py           Merge sort + linear merge helper
+│   │   ├── quick_sort.py           Randomized quicksort, 2-way and 3-way
 │   │   └── advanced_sorts.py       Reserved for a later week
 │   ├── searching/                  Reserved for a later week
 │   ├── graph/                      Reserved for a later week
@@ -61,13 +71,20 @@ Advanced Algorithms/
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Fixtures: sample_arrays, large_random_array
-│   ├── test_sorting.py             Sorting algorithm tests
+│   ├── test_sorting.py             Week 1 sorting algorithm tests
+│   ├── test_merge_sort.py          Merge sort tests
+│   ├── test_quick_sort.py          QuickSort tests
+│   ├── test_sorting_comparison.py  All five algorithms must agree
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
 │   ├── sorting_benchmarks.py       The Week 1 end-to-end benchmark driver
+│   ├── week2_performance.py        The Week 2 divide-and-conquer benchmark
 │   ├── complexity_validation.py    Reserved for a later week
-│   └── results/                    Exported measurements (CSV)
+│   └── results/                    Week 2 charts and measurements
+├── analysis/
+│   ├── week2_report.md             Week 2 technical report
+│   └── week2_recurrences.md        Master Theorem solutions
 ├── docs/
 │   ├── performance_analysis.md     The performance report (generated)
 │   ├── AI_USE.md                   AI use disclosure
@@ -127,7 +144,7 @@ everything passes and `1` when anything fails, naming each failure.
 pytest tests/ -v
 ```
 
-245 tests covering: every required edge case against all three algorithms
+Covering: every required edge case against all three algorithms
 (empty, single element, sorted, reverse sorted, duplicates, all identical,
 negatives, mixed signs, 1,000-element arrays), output correctness as
 *both* ordered and a permutation of the input, stability, `TypeError` on
