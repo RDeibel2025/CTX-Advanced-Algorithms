@@ -27,7 +27,7 @@ quicksort three-way) over sizes 100 … 50,000 and six shapes: random, sorted, r
 many duplicates (10 distinct values), few unique (3). Two warm-up runs are
 discarded per cell, then five measured runs below n = 10,000, three above.
 Generation is seeded; every algorithm receives the identical list per cell, and
-every run is verified a sorted permutation. Median relative SD: 0.9%.
+every run is verified a sorted permutation. Median relative SD: 1.2%.
 
 **The O(n²) size cap.** The quadratics were measured only to n = 10,000; the
 eighteen cells at n = 50,000 appear in
@@ -55,7 +55,7 @@ Mean seconds at n = 10,000:
 | Insertion | 1.0792 | 0.0006 | 2.1600 | 0.1333 | 0.9139 | 0.6810 |
 | Merge | 0.0134 | 0.0096 | 0.0098 | 0.0119 | 0.0125 | 0.0116 |
 | Quick | 0.0071 | 0.0052 | 0.0055 | 0.0053 | 0.0048 | 0.0046 |
-| Quick 3-way | 0.0109 | 0.0106 | 0.0125 | 0.0098 | 0.0017 | 0.0008 |
+| Quick 3-way | 0.0109 | 0.0106 | 0.0125 | 0.0098 | 0.0016 | 0.0008 |
 
 Speedup over the best quadratic, random input:
 
@@ -72,7 +72,7 @@ all six shapes at both n = 10,000 and n = 50,000, against 10,573× for bubble an
 3,763× for insertion. The positional split gives the same recursion tree whatever
 the input order: no best or worst case to find. The price is O(n) auxiliary space.
 
-**QuickSort** was fastest on five of six shapes, spread 1.4×: best on few-unique
+**QuickSort** was fastest on five of six shapes, spread 1.5×: best on few-unique
 (0.0046 s), worst on random (0.0071 s) — nothing like the O(n log n)-to-O(n²)
 range theory permits.
 
