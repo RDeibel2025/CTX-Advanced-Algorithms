@@ -29,7 +29,6 @@ Author:
 
 from __future__ import annotations
 
-import html
 import os
 import subprocess
 import sys
@@ -53,8 +52,90 @@ TITLE = "Deibel - CSC 5300 Week 2 - Divide and Conquer"
 URL_BANNER = (
     '<div class="url-banner"><strong>Project repository (complete source, '
     "tests, benchmarks and results):</strong><br>"
-    f"{REPO_URL}</div>"
+    f"{REPO_URL}<br>"
+    "<span style='font-size:8.5pt'>Full recurrence derivations: "
+    "analysis/week2_recurrences.md &nbsp;·&nbsp; "
+    "runnable demonstration: examples/week2_demo.py</span></div>"
 )
+
+#: Recurrences whose reasoning needs more than one table row. The other ten
+#: are routine applications and are fully specified by the summary table,
+#: which carries a, b, f(n), log_b(a), the case, the justification and the
+#: resulting bound for every one of the fourteen.
+APPENDIX_SECTIONS = ("9.", "11.", "13.", "14.")
+
+
+def abridge_recurrences(text: str) -> str:
+    """Condense the recurrence document for inclusion in the PDF.
+
+    The full document devotes a section to each of the fourteen
+    recurrences and runs to ten PDF pages. The assignment asks that each
+    be shown with its a, b, f(n), log_b(a), the case applied and why, and
+    the resulting bound - all of which the summary table carries for every
+    one of them. So the PDF keeps the theorem statement, that table, and
+    full discussion only for the four whose reasoning a table row cannot
+    hold: the three the theorem does not settle and the one needing the
+    extended case 2. The other ten are routine, and the complete
+    derivations stay a click away in the repository.
+
+    Sections are matched on their headings, so adding a recurrence to the
+    source document needs no change here.
+    """
+    parts = text.split("\n## ")
+    head, sections = parts[0], parts[1:]
+    by_title = {section.split("\n", 1)[0].strip(): section for section in sections}
+
+    def take(*prefixes: str) -> list:
+        found = []
+        for title, section in by_title.items():
+            if any(title.startswith(prefix) for prefix in prefixes):
+                found.append("## " + section.rstrip("\n"))
+        return found
+
+    theorem = take("The theorem")
+    summary = take("Summary")
+    special = take(*APPENDIX_SECTIONS)
+    references = take("References")
+    if not (theorem and summary and references) or len(special) != len(APPENDIX_SECTIONS):
+        # `references` is checked but deliberately not emitted; see below.
+        raise SystemExit(
+            "recurrence appendix structure changed; abridgement would drop "
+            f"content (theorem={len(theorem)} summary={len(summary)} "
+            f"special={len(special)} references={len(references)})"
+        )
+
+    head = head.replace(
+        "# Master Theorem - Recurrence Relations",
+        "# Appendix A: Master Theorem - Recurrence Relations",
+        1,
+    ).rstrip("\n")
+    head += (
+        "\n\n> **Abridged for this PDF.** The table below solves all fourteen "
+        "recurrences in full - a, b, f(n), log_b(a), the case applied, why, "
+        "and the resulting bound. The four whose reasoning needs more than a "
+        "table row are then discussed individually. Worked derivations for "
+        "the other ten are in "
+        f"[`analysis/week2_recurrences.md`]({REPO_URL}/blob/main/analysis/"
+        "week2_recurrences.md)."
+    )
+
+    intro_to_special = (
+        "## The four the table cannot hold\n\n"
+        "Three of these fall outside the Master Theorem entirely and one "
+        "needs the extended case 2. The remaining ten are routine "
+        "applications, fully specified by the table above."
+    )
+    # The four discussions run consecutively without horizontal rules
+    # between them - their headings already separate them, and three rules
+    # plus their margins cost most of a page.
+    # The appendix's own reference list is dropped here: it cites CLRS Ch. 4
+    # and Amakobe Ch. 2, both already in the report's section 8, and on its
+    # own it orphans a whole page for four lines. It stays in the full
+    # document in the repository.
+    special_block = "\n\n".join([intro_to_special] + special)
+
+    major = [head] + theorem + summary + [special_block]
+    return "\n\n---\n\n".join(major) + "\n"
 
 
 def run_demo() -> str:
@@ -100,37 +181,18 @@ def build_markdown() -> str:
         raise SystemExit("report has no H1 to anchor the URL banner to")
     body = "\n".join(lines)
 
-    # The appendix keeps its own H1; demote nothing, just separate the two.
-    appendix = appendix.replace(
-        "# Master Theorem - Recurrence Relations",
-        "# Appendix A: Master Theorem - Recurrence Relations",
-        1,
-    )
+    appendix = abridge_recurrences(appendix)
 
-    # Appendix B: the worked example, as it actually runs. Emitted as raw
-    # HTML rather than a fenced block so the narrower font can be applied -
-    # the widest line is 98 columns and would otherwise be clipped.
-    demo_output = html.escape(run_demo())
-    demo_appendix = (
-        "# Appendix B: Worked Example\n\n"
-        "Output of [`examples/week2_demo.py`]("
-        f"{REPO_URL}/blob/main/examples/week2_demo.py), captured by running "
-        "it. The script demonstrates merge sort and quicksort on inputs "
-        "small enough to read: the edge cases, the non-destructive "
-        "contract, non-integer element types, three-way partitioning timed "
-        "against two-way on duplicate-heavy input, stability, and a "
-        "cross-check that all five algorithms agree. Every claim it prints "
-        "is also asserted, so it exits non-zero if any of them stops "
-        "holding.\n\n"
-        f'<pre class="demo-output">{demo_output}</pre>\n'
-    )
+    # The demonstration is run as a build gate but not embedded: its
+    # transcript ran to two pages, and the script is one click away from
+    # the banner on page 1. A failing demo still fails the build.
+    run_demo()
 
     return (
         body.rstrip("\n")
         + '\n\n<div class="page-break"></div>\n\n'
         + appendix.rstrip("\n")
-        + '\n\n<div class="page-break"></div>\n\n'
-        + demo_appendix
+        + "\n"
     )
 
 

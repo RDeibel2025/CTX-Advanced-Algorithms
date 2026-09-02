@@ -388,22 +388,22 @@ give Θ(n).
 
 ## Summary
 
-| # | Recurrence | a | b | f(n) | log_b a | Case | Result |
-|---|---|---|---|---|---|---|---|
-| 1 | 2T(n/2) + Θ(n) | 2 | 2 | Θ(n) | 1 | 2 | Θ(n log n) |
-| 2 | T(n/2) + Θ(1) | 1 | 2 | Θ(1) | 0 | 2 | Θ(log n) |
-| 3 | 2T(n/2) + Θ(1) | 2 | 2 | Θ(1) | 1 | 1 | Θ(n) |
-| 4 | 3T(n/2) + Θ(n) | 3 | 2 | Θ(n) | 1.585 | 1 | Θ(n^1.585) |
-| 5 | 4T(n/2) + Θ(n) | 4 | 2 | Θ(n) | 2 | 1 | Θ(n²) |
-| 6 | 7T(n/2) + Θ(n²) | 7 | 2 | Θ(n²) | 2.807 | 1 | Θ(n^2.807) |
-| 7 | 8T(n/2) + Θ(n²) | 8 | 2 | Θ(n²) | 3 | 1 | Θ(n³) |
-| 8 | 2T(n/2) + Θ(n) | 2 | 2 | Θ(n) | 1 | 2 | Θ(n log n) |
-| 9 | T(n−1) + Θ(n) | - | - | Θ(n) | - | **N/A** | Θ(n²) |
-| 10 | 2T(n/2) + Θ(log n) | 2 | 2 | Θ(log n) | 1 | 1 | Θ(n) |
-| 11 | 2T(n/2) + Θ(n log n) | 2 | 2 | Θ(n log n) | 1 | 2 ext. | Θ(n log² n) |
-| 12 | 2T(n/2) + Θ(n²) | 2 | 2 | Θ(n²) | 1 | 3 | Θ(n²) |
-| 13 | 2T(n/2) + n/log n | 2 | 2 | n/log n | 1 | **N/A** | Θ(n log log n) |
-| 14 | T(n−1) + T(n−2) + Θ(1) | - | - | Θ(1) | - | **N/A** | Θ(φⁿ) |
+| # | Recurrence | a | b | f(n) | log_b a | Case | Why | Result |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2T(n/2) + Θ(n) | 2 | 2 | Θ(n) | 1 | 2 | f = Θ(n^log_b a) exactly | Θ(n log n) |
+| 2 | T(n/2) + Θ(1) | 1 | 2 | Θ(1) | 0 | 2 | f = Θ(n⁰) = watershed | Θ(log n) |
+| 3 | 2T(n/2) + Θ(1) | 2 | 2 | Θ(1) | 1 | 1 | Θ(1) = O(n^(1−1)) | Θ(n) |
+| 4 | 3T(n/2) + Θ(n) | 3 | 2 | Θ(n) | 1.585 | 1 | n = O(n^(1.585−0.585)) | Θ(n^1.585) |
+| 5 | 4T(n/2) + Θ(n) | 4 | 2 | Θ(n) | 2 | 1 | n = O(n^(2−1)) | Θ(n²) |
+| 6 | 7T(n/2) + Θ(n²) | 7 | 2 | Θ(n²) | 2.807 | 1 | n² = O(n^(2.807−0.807)) | Θ(n^2.807) |
+| 7 | 8T(n/2) + Θ(n²) | 8 | 2 | Θ(n²) | 3 | 1 | n² = O(n^(3−1)) | Θ(n³) |
+| 8 | 2T(n/2) + Θ(n) | 2 | 2 | Θ(n) | 1 | 2 | f = Θ(n) = watershed | Θ(n log n) |
+| 9 | T(n−1) + Θ(n) | - | - | Θ(n) | - | **N/A** | shrinks by a constant, no b | Θ(n²) |
+| 10 | 2T(n/2) + Θ(log n) | 2 | 2 | Θ(log n) | 1 | 1 | log n = O(n^0.5) | Θ(n) |
+| 11 | 2T(n/2) + Θ(n log n) | 2 | 2 | Θ(n log n) | 1 | 2 ext. | f = Θ(n·log¹n), so k = 1 | Θ(n log² n) |
+| 12 | 2T(n/2) + Θ(n²) | 2 | 2 | Θ(n²) | 1 | 3 | n² = Ω(n²); 2·f(n/2) = 0.5·f(n) | Θ(n²) |
+| 13 | 2T(n/2) + n/log n | 2 | 2 | n/log n | 1 | **N/A** | gap is logarithmic, not polynomial | Θ(n log log n) |
+| 14 | T(n−1) + T(n−2) + Θ(1) | - | - | Θ(1) | - | **N/A** | subproblems unequal, not a·T(n/b) | Θ(φⁿ) |
 
 Three of the fourteen (§9, §13, §14) are outside the theorem's reach, for
 three different reasons: subproblems that shrink by a constant amount, a

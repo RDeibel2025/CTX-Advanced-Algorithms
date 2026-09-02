@@ -49,14 +49,14 @@ CSS = """
 * { box-sizing: border-box; }
 body {
   font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 10.5pt; line-height: 1.5; color: #1a1a1a; margin: 0;
+  font-size: 10.5pt; line-height: 1.45; color: #1a1a1a; margin: 0;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 h1 { font-size: 20pt; margin: 0 0 .4em; line-height: 1.25;
      border-bottom: 2px solid #333; padding-bottom: .25em; }
-h2 { font-size: 15pt; margin: 1.6em 0 .5em; padding-bottom: .2em;
+h2 { font-size: 15pt; margin: 1.15em 0 .45em; padding-bottom: .2em;
      border-bottom: 1px solid #ccc; page-break-after: avoid; }
-h3 { font-size: 12pt; margin: 1.3em 0 .4em; page-break-after: avoid; }
+h3 { font-size: 12pt; margin: .95em 0 .35em; page-break-after: avoid; }
 h4 { font-size: 11pt; margin: 1.1em 0 .3em; page-break-after: avoid; }
 p, li { orphans: 3; widows: 3; }
 a { color: #14507d; text-decoration: none; word-break: break-word; }
@@ -78,10 +78,10 @@ img { max-width: 100%; height: auto; display: block; margin: .7em auto;
    full text width and take a page each, leaving half of every page blank.
    Capping the height lets two sit comfortably on one page while staying
    large enough to read the axis labels. */
-img { max-height: 4.1in; width: auto; }
+img { max-height: 2.95in; width: auto; }
 blockquote { border-left: 3px solid #c8d3dc; margin: 1em 0; padding: .2em 1em;
              color: #444; background: #f8fafb; }
-hr { border: none; border-top: 1px solid #ddd; margin: 1.8em 0; }
+hr { border: none; border-top: 1px solid #ddd; margin: 1.2em 0; }
 em { color: inherit; }
 figcaption { font-size: 8.5pt; color: #555; text-align: center;
              margin-top: -.5em; margin-bottom: 1.2em; }
