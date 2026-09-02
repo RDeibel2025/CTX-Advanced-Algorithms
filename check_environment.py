@@ -116,6 +116,7 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/week2_performance.py",
     "analysis/week2_report.md",
     "analysis/week2_recurrences.md",
+    "examples/week2_demo.py",
 ]
 
 OK = "[ OK ]"

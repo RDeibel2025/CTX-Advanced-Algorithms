@@ -96,7 +96,8 @@ Advanced Algorithms/
 ├── submissions/
 │   └── week-01-algorithm-lab/      What was handed in for Week 1
 ├── notebooks/                      Reserved for exploratory work
-└── examples/                       Reserved for worked examples
+└── examples/
+    └── week2_demo.py               Runnable Week 2 demonstration
 ```
 
 ---
@@ -161,6 +162,18 @@ pytest --doctest-modules src/
 ```
 
 ---
+
+## Running the demonstration
+
+```bash
+python examples/week2_demo.py
+```
+
+Walks through merge sort and quicksort on inputs small enough to read: the
+edge cases, the non-destructive contract, non-integer element types,
+three-way partitioning on duplicate-heavy data, stability, and a
+cross-check that all five algorithms agree. Every claim it prints is also
+asserted, so it exits non-zero if any of them stops holding.
 
 ## Running the benchmarks
 
