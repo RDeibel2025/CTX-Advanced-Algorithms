@@ -6,10 +6,12 @@ Week 2 - Divide and Conquer Implementation Project
 
 Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 
-Fourteen recurrences solved below. Twelve are straightforward applications
-of the Master Theorem; two are included precisely because the theorem does
-**not** settle them (§11 and §13), since knowing where a tool stops working
-is part of knowing how to use it.
+Fourteen recurrences solved below. Ten are straightforward applications of
+the Master Theorem; three are included precisely because the theorem does
+**not** settle them (§9, §13 and §14), since knowing where a tool stops
+working is part of knowing how to use it. The remaining one, §11, falls in
+the gap between cases 2 and 3 and needs the *extended* case 2 rather than
+the three-case statement. That is 10 + 3 + 1 = 14.
 
 ---
 
@@ -30,8 +32,8 @@ combining is smaller, equal, or larger than that.
 | 2 | f(n) = Θ(n^(log_b a) · log^k n), k ≥ 0 | Θ(n^(log_b a) · log^(k+1) n) - balanced |
 | 3 | f(n) = Ω(n^(log_b a + ε)) for some ε > 0, **and** a·f(n/b) ≤ c·f(n) for some c < 1 and large n | Θ(f(n)) - the root dominates |
 
-Two requirements are easy to skip past and are the source of both failures
-below. Cases 1 and 3 need f(n) to differ from the watershed by a
+Two requirements are easy to skip past, and they are what §11 and §13 fall
+foul of. Cases 1 and 3 need f(n) to differ from the watershed by a
 *polynomial* factor - an n^ε gap, not merely a logarithmic one. And case 3
 additionally needs the **regularity condition**, which is what rules out
 pathologically oscillating f.
@@ -40,7 +42,7 @@ pathologically oscillating f.
 
 ## 1. Merge sort - T(n) = 2T(n/2) + Θ(n)
 
-The recurrence implemented in [`src/sorting/merge_sort.py`](../src/sorting/merge_sort.py):
+The recurrence implemented in [`src/sorting/merge_sort.py`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/src/sorting/merge_sort.py):
 two recursive calls on half the input, plus a linear merge.
 
 | | |
@@ -59,9 +61,10 @@ Every level of the recursion does Θ(n) work merging, and there are log₂ n
 levels - the cost is spread evenly rather than concentrated at the root or
 the leaves. Because the split is positional it is always balanced, so this
 recurrence describes merge sort's best, average *and* worst case. The
-measured doubling ratios of 2.12-2.19 in
-[`week2_report.md`](week2_report.md) are this result observed rather than
-derived.
+measured doubling ratios of 2.03-2.20 tabulated in
+[`week2_report.md`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/analysis/week2_report.md) §4 - one per data shape,
+each the mean of the two doubling steps - are this result observed rather
+than derived.
 
 ---
 
@@ -204,11 +207,12 @@ this recurrence is a *hope* rather than a guarantee. The partition is
 > **T(n) = Θ(n log n)**
 
 Randomized pivot selection does not make this recurrence hold; it makes it
-hold *in expectation*. The genuinely balanced version of this recurrence is
-what §1 delivers deterministically, and that difference is why merge sort's
-runtime varies by only 1.4× across input shapes while quicksort's varies by
-1.5× - and why Lomuto partitioning on duplicate-heavy input reaches §9
-instead.
+hold *in expectation*, where §1 delivers it deterministically. That
+distinction did not show up in the measured spread across input shapes -
+merge sort varied by 1.51× at n = 10,000 and quicksort by 1.54×, which is
+randomization delivering in practice what merge sort guarantees in
+principle. Where it does show up is the tail: change the partition scheme
+and quicksort reaches §9 instead, as the Lomuto study did.
 
 ---
 
@@ -231,10 +235,10 @@ T(n) = n + (n−1) + (n−2) + … + 1 = n(n+1)/2
 > **T(n) = Θ(n²)**
 
 This is the recurrence that arises when every partition puts all remaining
-elements on one side. Section 5 of the report records that it was never
+elements on one side. Section 4 of the report records that it was never
 observed for the production quicksort across any of the six data shapes -
 but the Lomuto partition study reached it exactly, with a measured growth
-ratio of 3.99 per doubling against the predicted 4.
+ratio of 3.98 per doubling against the predicted 4.
 
 ---
 

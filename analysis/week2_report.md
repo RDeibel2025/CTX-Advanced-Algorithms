@@ -14,7 +14,7 @@
 
 Merge sort and quicksort beat the Week 1 quadratics by a compounding factor -
 parity at n = 100, 154× at n = 10,000 - and both matched O(n log n), with doubling
-ratios of 2.01-2.25 and 2.10-2.40 against a predicted ~2.1. Quicksort's O(n²)
+ratios of 2.03-2.20 and 2.15-2.39 against a predicted ~2.1. Quicksort's O(n²)
 worst case never appeared. The most interesting result was negative:
 three-way partitioning rescues duplicate-heavy input only from a weakness Hoare's
 scheme lacks.
@@ -32,7 +32,7 @@ every run is verified a sorted permutation. Median relative SD: 0.7%.
 **The O(n²) size cap.** The quadratics were measured only to n = 10,000; the
 eighteen cells at n = 50,000 appear in
 [`comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/comparison_table.csv) as `omitted`
-with a reason. Fitting t = c·n² projects 63 s, 29 s and 27 s
+with reasons. Fitting t = c·n² projects 64 s, 28 s and 28 s
 per run on random data - about an hour. I measured them anyway and checked the
 projection (§4).
 
@@ -82,7 +82,7 @@ duplicate-heavy input: 2.9× at ten distinct values, 5.6× at three.
 
 ## 4. Complexity Validation
 
-Observed t(2n)/t(n), 500→1,000 and 5,000→10,000:
+Observed t(2n)/t(n), mean of the 500→1,000 and 5,000→10,000 steps:
 
 | Algorithm | random | sorted | reverse | few uniq | Predicted |
 |---|---|---|---|---|---|
@@ -92,17 +92,17 @@ Observed t(2n)/t(n), 500→1,000 and 5,000→10,000:
 | Merge | 2.20 | 2.07 | 2.03 | 2.08 | ~2.1 |
 | Quick | 2.39 | 2.20 | 2.18 | 2.15 | ~2.1 |
 
-Merge sort stays within 0.15 of prediction everywhere. Bubble and insertion drop
+Merge sort stays within 0.10 of prediction everywhere. Bubble and insertion drop
 to ~2.1 on sorted input, their early exit appearing as a change of complexity
 class.
 
-**Did I observe quicksort's O(n²) worst case? No** - every shape gave a ratio near
-2.2, including the three meant to be adversarial. Three mechanisms prevent it:
+**Did I observe quicksort's O(n²) worst case? No** - every shape stayed at or below
+2.4, including the three meant to be adversarial. Three mechanisms prevent it:
 randomized pivots leave no fixed input adversarial, so the worst case needs an
 unlucky *sequence of draws*; Hoare's partition splits a run of equal elements near
 its middle rather than onto one side; and recursing into the smaller partition
-caps stack depth at O(log n) - 10-14 frames at n = 100,000, against Python's
-1,000-frame limit.
+caps stack depth at O(log n) - 10-14 frames across the six shapes at
+n = 100,000, against Python's 1,000-frame limit.
 
 Unreachable *by this implementation* is not unreachable. Lomuto's partition, the
 scheme most often taught, reaches it at once:
@@ -113,13 +113,13 @@ scheme most often taught, reaches it at once:
 | Hoare (2-way) | 2.15 | 0.0079 s |
 | Dutch flag (3-way) | 2.02 | 0.0016 s |
 
-3.99 against a predicted 4 is the worst case, measured - 244× slower than Hoare
+3.98 against a predicted 4 is the worst case, measured - 244× slower than Hoare
 on identical input.
 
 **The capped cells.** Measuring all eighteen put the fitted t = c·n² projection
 within **2.7%** on the sixteen genuinely quadratic cells (mean 1.4%), and off by
 **+436%** on the two sorted-input cells, where these algorithms are linear and n²
-is the wrong model. The extrapolation holds where its assumption does.
+is wrong. The extrapolation holds where its assumption does.
 
 ## 5. Optimization Impact
 
@@ -135,7 +135,7 @@ otherwise. **Randomized pivot** cannot be isolated by timing; its evidence is
 
 ## 6. Practical Recommendations
 
-- **n below ~100:** insertion sort - it matches merge sort there.
+- **n below ~100:** insertion sort - it matches merge sort.
 - **General purpose:** quicksort - randomized pivot, Hoare partition, insertion cutoff.
 - **Stability or a guarantee:** merge sort, 1.9× slower on random.
 - **Duplicate-heavy data:** three-way partitioning.
@@ -146,7 +146,7 @@ otherwise. **Randomized pivot** cannot be isolated by timing; its evidence is
 Measurement matched theory closely enough that the interesting results were where
 it did not: asymptotic advantage is real but only past a measurable crossover,
 quicksort's worst case belongs to the partition scheme rather than to quicksort,
-and three-way partitioning is a trade, not a free win.
+and three-way partitioning is a trade.
 
 ## 8. References
 

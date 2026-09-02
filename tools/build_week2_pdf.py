@@ -87,6 +87,19 @@ def build_markdown() -> str:
 
 
 def main() -> int:
+    # Sync first, always. week2_sync_report rewrites the report's tables from
+    # the result CSVs, and running it after a build silently leaves the PDF a
+    # revision behind - which has happened twice. Doing it here makes the
+    # ordering impossible to get wrong.
+    print("=== syncing report tables to benchmarks/results/ ===")
+    synced = subprocess.run(
+        [sys.executable, os.path.join(REPO_ROOT, "tools", "week2_sync_report.py")],
+        cwd=REPO_ROOT,
+    )
+    if synced.returncode != 0:
+        raise SystemExit("report sync failed; not building a PDF from stale data")
+    print()
+
     os.makedirs(OUT_DIR, exist_ok=True)
     combined_path = os.path.join(OUT_DIR, ".week2_combined.md")
     combined = build_markdown()
