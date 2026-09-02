@@ -1,4 +1,4 @@
-# Week 2 Technical Report — Divide and Conquer
+# Week 2 Technical Report - Divide and Conquer
 
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas · Fall 2026
 
@@ -6,15 +6,15 @@
 
 ### **<https://github.com/RDeibel2025/CTX-Advanced-Algorithms>**
 
-[Fourteen Master Theorem solutions](week2_recurrences.md).
+[Fourteen Master Theorem solutions](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/analysis/week2_recurrences.md).
 
 ---
 
 ## 1. Executive Summary
 
-Merge sort and quicksort beat the Week 1 quadratics by a compounding factor —
-parity at n = 100, 154× at n = 10,000 — and both matched O(n log n), with doubling
-ratios of 2.01–2.25 and 2.10–2.40 against a predicted ~2.1. Quicksort's O(n²)
+Merge sort and quicksort beat the Week 1 quadratics by a compounding factor -
+parity at n = 100, 154× at n = 10,000 - and both matched O(n log n), with doubling
+ratios of 2.01-2.25 and 2.10-2.40 against a predicted ~2.1. Quicksort's O(n²)
 worst case never appeared. The most interesting result was negative:
 three-way partitioning rescues duplicate-heavy input only from a weakness Hoare's
 scheme lacks.
@@ -31,19 +31,19 @@ every run is verified a sorted permutation. Median relative SD: 0.7%.
 
 **The O(n²) size cap.** The quadratics were measured only to n = 10,000; the
 eighteen cells at n = 50,000 appear in
-[`comparison_table.csv`](../benchmarks/results/comparison_table.csv) as `omitted`
+[`comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/comparison_table.csv) as `omitted`
 with a reason. Fitting t = c·n² projects 63 s, 29 s and 27 s
-per run on random data — about an hour. I measured them anyway and checked the
+per run on random data - about an hour. I measured them anyway and checked the
 projection (§4).
 
 ## 3. Results
 
-![random](../benchmarks/results/random_data.png)
-![sorted](../benchmarks/results/sorted_data.png)
-![reverse](../benchmarks/results/reverse_data.png)
-![nearly](../benchmarks/results/nearly_sorted.png)
-![duplicates](../benchmarks/results/many_duplicates.png)
-![few unique](../benchmarks/results/few_unique.png)
+![random](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/random_data.png)
+![sorted](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/sorted_data.png)
+![reverse](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/reverse_data.png)
+![nearly](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/nearly_sorted.png)
+![duplicates](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/many_duplicates.png)
+![few unique](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/few_unique.png)
 
 Mean seconds at n = 10,000:
 
@@ -67,17 +67,17 @@ The gap compounds; at n = 100 insertion and merge sort are indistinguishable
 (0.000080 s vs 0.000079 s, inside the run-to-run variation). Asymptotic
 superiority is a claim about large n.
 
-**Merge sort** was among the most consistent — 1.5× variation across the six
+**Merge sort** was among the most consistent - 1.5× variation across the six
 shapes at n = 10,000, against 10,823× for bubble and 3,856× for insertion. Its
 positional split gives the same recursion tree whatever the input order: no best
 or worst case to find. The price is O(n) auxiliary space.
 
 **QuickSort** was fastest on five of six shapes, spread 1.5×: best on few-unique
-(0.0047 s), worst on random (0.0073 s) — nothing like the O(n log n)-to-O(n²)
+(0.0047 s), worst on random (0.0073 s) - nothing like the O(n log n)-to-O(n²)
 range theory permits.
 
 **Surprising finding.** Three-way partitioning is *slower* than two-way wherever
-values are mostly distinct — roughly half speed — paying off only on
+values are mostly distinct - roughly half speed - paying off only on
 duplicate-heavy input: 2.9× at ten distinct values, 5.6× at three.
 
 ## 4. Complexity Validation
@@ -96,12 +96,12 @@ Merge sort stays within 0.15 of prediction everywhere. Bubble and insertion drop
 to ~2.1 on sorted input, their early exit appearing as a change of complexity
 class.
 
-**Did I observe quicksort's O(n²) worst case? No** — every shape gave a ratio near
+**Did I observe quicksort's O(n²) worst case? No** - every shape gave a ratio near
 2.2, including the three meant to be adversarial. Three mechanisms prevent it:
 randomized pivots leave no fixed input adversarial, so the worst case needs an
 unlucky *sequence of draws*; Hoare's partition splits a run of equal elements near
 its middle rather than onto one side; and recursing into the smaller partition
-caps stack depth at O(log n) — 10–14 frames at n = 100,000, against Python's
+caps stack depth at O(log n) - 10-14 frames at n = 100,000, against Python's
 1,000-frame limit.
 
 Unreachable *by this implementation* is not unreachable. Lomuto's partition, the
@@ -113,7 +113,7 @@ scheme most often taught, reaches it at once:
 | Hoare (2-way) | 2.15 | 0.0079 s |
 | Dutch flag (3-way) | 2.02 | 0.0016 s |
 
-3.99 against a predicted 4 is the worst case, measured — 244× slower than Hoare
+3.99 against a predicted 4 is the worst case, measured - 244× slower than Hoare
 on identical input.
 
 **The capped cells.** Measuring all eighteen put the fitted t = c·n² projection
@@ -135,8 +135,8 @@ otherwise. **Randomized pivot** cannot be isolated by timing; its evidence is
 
 ## 6. Practical Recommendations
 
-- **n below ~100:** insertion sort — it matches merge sort there.
-- **General purpose:** quicksort — randomized pivot, Hoare partition, insertion cutoff.
+- **n below ~100:** insertion sort - it matches merge sort there.
+- **General purpose:** quicksort - randomized pivot, Hoare partition, insertion cutoff.
 - **Stability or a guarantee:** merge sort, 1.9× slower on random.
 - **Duplicate-heavy data:** three-way partitioning.
 - **Never use Lomuto without a duplicate guard.**
@@ -150,7 +150,7 @@ and three-way partitioning is a trade, not a free win.
 
 ## 8. References
 
-- Cormen, Leiserson, Rivest, Stein. *Introduction to Algorithms*, 4th ed., Ch. 2.3–2.4, 4, 7
+- Cormen, Leiserson, Rivest, Stein. *Introduction to Algorithms*, 4th ed., Ch. 2.3-2.4, 4, 7
 - Amakobe. *Advanced Computational Algorithms*, 2nd ed., Ch. 2
 - Sedgewick, Wayne. *Algorithms*, 4th ed., §2.3
 
@@ -160,6 +160,6 @@ I used Anthropic's Claude (Claude Code) to draft the code, tests and first draft
 this report, from a specification I wrote off the instructions and assigned
 reading. The measurements are my own, every figure above
 computed from the result CSVs rather than transcribed. The design decisions
-were mine — Hoare's partition over Lomuto's, recursing into the smaller partition,
+were mine - Hoare's partition over Lomuto's, recursing into the smaller partition,
 and measuring the capped cells rather than projecting them. Full disclosure:
-[`docs/AI_USE.md`](../docs/AI_USE.md).
+[`docs/AI_USE.md`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/docs/AI_USE.md).

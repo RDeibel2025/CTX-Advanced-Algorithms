@@ -1,4 +1,4 @@
-# CSC 5300 Advanced Algorithms — Course Project
+# CSC 5300 Advanced Algorithms - Course Project
 
 **Robert Deibel**  
 Concordia University Texas · CSC 5300 Advanced Algorithms · Fall 2026
@@ -19,9 +19,9 @@ rather than only reasoning about how they should behave.
 
 It contains three things:
 
-1. **Five sorting algorithms** — an optimized bubble sort, selection sort
+1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
-   (Week 2) — all written to a single explicit contract: reject non-list
+   (Week 2) - all written to a single explicit contract: reject non-list
    input, never mutate the caller's list, handle empty and single-element
    input, and work on any comparable element type. Because they share that
    contract they are interchangeable in the benchmark harness, which
@@ -32,7 +32,7 @@ It contains three things:
    reports mean, standard deviation, minimum and maximum, fits the
    measurements against O(n), O(n log n) and O(n²) reference models, plots
    the comparison, and stores the results as CSV for later retrieval.
-3. **A performance study** built from a real run of that framework —
+3. **A performance study** built from a real run of that framework -
    charts, a results table, and an analysis of what the measurements
    actually show about each algorithm's growth rate and its sensitivity to
    the order of its input.
@@ -150,7 +150,7 @@ negatives, mixed signs, 1,000-element arrays), output correctness as
 *both* ordered and a permutation of the input, stability, `TypeError` on
 non-list input, non-mutation of the caller's list, direct comparison
 counting to prove bubble sort's early exit is present, and the
-benchmarking framework itself — its eight generators, its seeding, its
+benchmarking framework itself - its eight generators, its seeding, its
 statistics, its rejection of deliberately broken sorts, and its CSV
 round trip.
 
@@ -187,14 +187,14 @@ python benchmarks/sorting_benchmarks.py --quick
 
 ## Where the analysis lives
 
-**[`docs/performance_analysis.md`](docs/performance_analysis.md)** — the
+**[`docs/performance_analysis.md`](docs/performance_analysis.md)** - the
 full report: methodology, the measured results with their standard
 deviations, the empirical complexity fits, and the conclusions drawn from
 them. Charts are in [`docs/figures/`](docs/figures/) and the raw
 measurements in [`benchmarks/results/`](benchmarks/results/).
 
-Every number in that report — every table cell and every figure quoted in
-the prose — is computed from the result CSVs by
+Every number in that report - every table cell and every figure quoted in
+the prose - is computed from the result CSVs by
 [`tools/build_report.py`](tools/build_report.py), so the write-up cannot
 drift out of step with the data after a re-run:
 
@@ -203,7 +203,7 @@ python benchmarks/sorting_benchmarks.py     # measure
 python tools/build_report.py                # write the report from the measurements
 ```
 
-**[`SUBMISSION.md`](SUBMISSION.md)** — the cover document: what was built,
+**[`SUBMISSION.md`](SUBMISSION.md)** - the cover document: what was built,
 where each piece lives, the actual environment and test output, and the
 headline benchmark findings.
 

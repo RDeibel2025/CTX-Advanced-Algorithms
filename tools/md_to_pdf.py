@@ -30,6 +30,14 @@ import time
 
 import markdown
 
+#: Raw-content prefix for this project's own repository. Image sources in the
+#: reports are absolute GitHub URLs so the Markdown renders correctly wherever
+#: it is read, but a PDF must carry its figures rather than fetch them, so
+#: sources under this prefix are mapped back to the working copy and embedded.
+REPO_RAW_PREFIX = (
+    "https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/"
+)
+
 CHROME_CANDIDATES = [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
@@ -64,25 +72,50 @@ th, td { border: 1px solid #d0d0d0; padding: .32em .5em; text-align: left;
          vertical-align: top; }
 th { background: #eef1f4; font-weight: 600; }
 tr:nth-child(even) td { background: #fafbfc; }
-img { max-width: 100%; height: auto; display: block; margin: 1em auto;
+img { max-width: 100%; height: auto; display: block; margin: .7em auto;
       page-break-inside: avoid; border: 1px solid #e4e4e4; border-radius: 4px; }
+/* Benchmark charts are exported at 9x6.2in; unconstrained they scale to the
+   full text width and take a page each, leaving half of every page blank.
+   Capping the height lets two sit comfortably on one page while staying
+   large enough to read the axis labels. */
+img { max-height: 4.1in; width: auto; }
 blockquote { border-left: 3px solid #c8d3dc; margin: 1em 0; padding: .2em 1em;
              color: #444; background: #f8fafb; }
 hr { border: none; border-top: 1px solid #ddd; margin: 1.8em 0; }
 em { color: inherit; }
 figcaption { font-size: 8.5pt; color: #555; text-align: center;
              margin-top: -.5em; margin-bottom: 1.2em; }
+.page-break { page-break-before: always; }
+.url-banner { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10pt;
+              background: #eef4fa; border: 1px solid #b9d3ea; border-radius: 5px;
+              padding: .6em .8em; margin: .8em 0; word-break: break-all; }
 """
 
 
 def inline_images(html_body: str, base_dir: str) -> str:
     """Replace every local ``<img src=...>`` with an embedded data URI."""
 
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
     def replace(match: re.Match) -> str:
         src = match.group(1)
-        if src.startswith(("http://", "https://", "data:")):
+        if src.startswith("data:"):
             return match.group(0)
-        path = os.path.normpath(os.path.join(base_dir, src))
+
+        if src.startswith(REPO_RAW_PREFIX):
+            # One of our own figures, addressed absolutely. Resolve it against
+            # the working copy so the PDF embeds the bytes instead of leaving
+            # the grader's viewer to fetch them over the network.
+            path = os.path.normpath(
+                os.path.join(repo_root, src[len(REPO_RAW_PREFIX):])
+            )
+        elif src.startswith(("http://", "https://")):
+            print(f"  WARNING: external image left as a link: {src}",
+                  file=sys.stderr)
+            return match.group(0)
+        else:
+            path = os.path.normpath(os.path.join(base_dir, src))
+
         if not os.path.isfile(path):
             print(f"  WARNING: image not found, left as a link: {src}",
                   file=sys.stderr)

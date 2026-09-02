@@ -150,14 +150,21 @@ def main() -> int:
 
     # Flag inline prose figures that no longer match the data.
     print("\ncross-checking inline figures quoted in the prose:")
+    # Labels name the figure the report currently quotes, so a mismatch
+    # between the label and the computed value is the signal to edit the
+    # prose. Keep them in step when the prose changes.
     checks = [
-        ("151×  quick speedup at n=10,000",
+        ("quick speedup at n=10,000            (report: 154x)",
          min(t(a, "random", 10000) for a in ("Bubble Sort", "Selection Sort", "Insertion Sort"))
          / t("Quick Sort", "random", 10000)),
-        ("0.000080  insertion at n=100 random", t("Insertion Sort", "random", 100)),
-        ("0.000081  merge at n=100 random", t("Merge Sort", "random", 100)),
-        ("0.0046  quick best (few_unique, n=10,000)", t("Quick Sort", "few_unique", 10000)),
-        ("0.0071  quick worst (random, n=10,000)", t("Quick Sort", "random", 10000)),
+        ("insertion at n=100 random            (report: 0.000080)",
+         t("Insertion Sort", "random", 100)),
+        ("merge at n=100 random                (report: 0.000079)",
+         t("Merge Sort", "random", 100)),
+        ("quick best, few_unique n=10,000      (report: 0.0047)",
+         t("Quick Sort", "few_unique", 10000)),
+        ("quick worst, random n=10,000         (report: 0.0073)",
+         t("Quick Sort", "random", 10000)),
     ]
     for label, value in checks:
         print(f"  {label:<45} -> {value:.6f}")

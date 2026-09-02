@@ -1,8 +1,8 @@
-# Master Theorem — Recurrence Relations
+# Master Theorem - Recurrence Relations
 
 **Robert Deibel**  
 CSC 5300 Advanced Algorithms · Concordia University Texas · Fall 2026  
-Week 2 — Divide and Conquer Implementation Project
+Week 2 - Divide and Conquer Implementation Project
 
 Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 
@@ -20,25 +20,25 @@ For a recurrence of the form
 > **T(n) = a·T(n/b) + f(n)**, with a ≥ 1, b > 1
 
 compare f(n) against the *watershed function* n^(log_b a). That exponent is
-what the recursion costs on its own — it counts the leaves of the recursion
-tree — and the three cases ask whether the work done splitting and
+what the recursion costs on its own - it counts the leaves of the recursion
+tree - and the three cases ask whether the work done splitting and
 combining is smaller, equal, or larger than that.
 
 | Case | Condition | Result |
 |---|---|---|
-| 1 | f(n) = O(n^(log_b a − ε)) for some ε > 0 | Θ(n^(log_b a)) — leaves dominate |
-| 2 | f(n) = Θ(n^(log_b a) · log^k n), k ≥ 0 | Θ(n^(log_b a) · log^(k+1) n) — balanced |
-| 3 | f(n) = Ω(n^(log_b a + ε)) for some ε > 0, **and** a·f(n/b) ≤ c·f(n) for some c < 1 and large n | Θ(f(n)) — the root dominates |
+| 1 | f(n) = O(n^(log_b a − ε)) for some ε > 0 | Θ(n^(log_b a)) - leaves dominate |
+| 2 | f(n) = Θ(n^(log_b a) · log^k n), k ≥ 0 | Θ(n^(log_b a) · log^(k+1) n) - balanced |
+| 3 | f(n) = Ω(n^(log_b a + ε)) for some ε > 0, **and** a·f(n/b) ≤ c·f(n) for some c < 1 and large n | Θ(f(n)) - the root dominates |
 
 Two requirements are easy to skip past and are the source of both failures
 below. Cases 1 and 3 need f(n) to differ from the watershed by a
-*polynomial* factor — an n^ε gap, not merely a logarithmic one. And case 3
+*polynomial* factor - an n^ε gap, not merely a logarithmic one. And case 3
 additionally needs the **regularity condition**, which is what rules out
 pathologically oscillating f.
 
 ---
 
-## 1. Merge sort — T(n) = 2T(n/2) + Θ(n)
+## 1. Merge sort - T(n) = 2T(n/2) + Θ(n)
 
 The recurrence implemented in [`src/sorting/merge_sort.py`](../src/sorting/merge_sort.py):
 two recursive calls on half the input, plus a linear merge.
@@ -56,16 +56,16 @@ f(n) = Θ(n) = Θ(n^(log_b a) · log⁰ n), so **case 2 with k = 0**.
 > **T(n) = Θ(n log n)**
 
 Every level of the recursion does Θ(n) work merging, and there are log₂ n
-levels — the cost is spread evenly rather than concentrated at the root or
+levels - the cost is spread evenly rather than concentrated at the root or
 the leaves. Because the split is positional it is always balanced, so this
 recurrence describes merge sort's best, average *and* worst case. The
-measured doubling ratios of 2.12–2.19 in
+measured doubling ratios of 2.12-2.19 in
 [`week2_report.md`](week2_report.md) are this result observed rather than
 derived.
 
 ---
 
-## 2. Binary search — T(n) = T(n/2) + Θ(1)
+## 2. Binary search - T(n) = T(n/2) + Θ(1)
 
 | | |
 |---|---|
@@ -85,7 +85,7 @@ watershed, and the log factor comes from the depth.
 
 ---
 
-## 3. Tree traversal — T(n) = 2T(n/2) + Θ(1)
+## 3. Tree traversal - T(n) = 2T(n/2) + Θ(1)
 
 | | |
 |---|---|
@@ -95,7 +95,7 @@ watershed, and the log factor comes from the depth.
 | log_b a | **1** |
 | watershed | n |
 
-Θ(1) is polynomially *smaller* than n — take ε = 1, giving
+Θ(1) is polynomially *smaller* than n - take ε = 1, giving
 f(n) = O(n^(1−1)) = O(1). **Case 1.**
 
 > **T(n) = Θ(n)**
@@ -107,7 +107,7 @@ the recursion.
 
 ---
 
-## 4. Karatsuba multiplication — T(n) = 3T(n/2) + Θ(n)
+## 4. Karatsuba multiplication - T(n) = 3T(n/2) + Θ(n)
 
 | | |
 |---|---|
@@ -128,7 +128,7 @@ are dominated. Reducing a from 4 to 3 is what beats Θ(n²).
 
 ---
 
-## 5. The naive version — T(n) = 4T(n/2) + Θ(n)
+## 5. The naive version - T(n) = 4T(n/2) + Θ(n)
 
 | | |
 |---|---|
@@ -149,7 +149,7 @@ to that one parameter.
 
 ---
 
-## 6. Strassen's matrix multiplication — T(n) = 7T(n/2) + Θ(n²)
+## 6. Strassen's matrix multiplication - T(n) = 7T(n/2) + Θ(n²)
 
 | | |
 |---|---|
@@ -170,7 +170,7 @@ polynomially below the watershed and therefore free.
 
 ---
 
-## 7. Standard matrix multiplication — T(n) = 8T(n/2) + Θ(n²)
+## 7. Standard matrix multiplication - T(n) = 8T(n/2) + Θ(n²)
 
 | | |
 |---|---|
@@ -189,7 +189,7 @@ nothing.
 
 ---
 
-## 8. Quicksort's balanced case — T(n) = 2T(n/2) + Θ(n)
+## 8. Quicksort's balanced case - T(n) = 2T(n/2) + Θ(n)
 
 Identical in form to §1, and worth stating separately because in quicksort
 this recurrence is a *hope* rather than a guarantee. The partition is
@@ -207,21 +207,21 @@ Randomized pivot selection does not make this recurrence hold; it makes it
 hold *in expectation*. The genuinely balanced version of this recurrence is
 what §1 delivers deterministically, and that difference is why merge sort's
 runtime varies by only 1.4× across input shapes while quicksort's varies by
-1.5× — and why Lomuto partitioning on duplicate-heavy input reaches §9
+1.5× - and why Lomuto partitioning on duplicate-heavy input reaches §9
 instead.
 
 ---
 
-## 9. Quicksort's worst case — T(n) = T(n−1) + Θ(n)
+## 9. Quicksort's worst case - T(n) = T(n−1) + Θ(n)
 
 | | |
 |---|---|
 | a | 1 |
-| b | — |
+| b | - |
 | f(n) | Θ(n) |
 
 **The Master Theorem does not apply.** The theorem requires subproblems of
-size n/b for a constant b > 1 — a *fixed fraction* of the input. Here the
+size n/b for a constant b > 1 - a *fixed fraction* of the input. Here the
 subproblem shrinks by a constant *amount*, so there is no b to speak of.
 
 Solve by direct expansion instead:
@@ -232,13 +232,13 @@ T(n) = n + (n−1) + (n−2) + … + 1 = n(n+1)/2
 
 This is the recurrence that arises when every partition puts all remaining
 elements on one side. Section 5 of the report records that it was never
-observed for the production quicksort across any of the six data shapes —
+observed for the production quicksort across any of the six data shapes -
 but the Lomuto partition study reached it exactly, with a measured growth
 ratio of 3.99 per doubling against the predicted 4.
 
 ---
 
-## 10. Binary search variant — T(n) = 2T(n/2) + Θ(log n)
+## 10. Binary search variant - T(n) = 2T(n/2) + Θ(log n)
 
 | | |
 |---|---|
@@ -253,13 +253,13 @@ ratio of 3.99 per doubling against the predicted 4.
 
 > **T(n) = Θ(n)**
 
-A useful check on intuition — a logarithmic combine step is asymptotically
+A useful check on intuition - a logarithmic combine step is asymptotically
 invisible against a linear watershed, so this costs no more than §3 with
 its Θ(1) combine.
 
 ---
 
-## 11. Case 2 extended — T(n) = 2T(n/2) + Θ(n log n)
+## 11. Case 2 extended - T(n) = 2T(n/2) + Θ(n log n)
 
 | | |
 |---|---|
@@ -270,7 +270,7 @@ its Θ(1) combine.
 | watershed | n |
 
 This one needs care. f(n) = Θ(n log n) is **larger** than the watershed n,
-which looks like case 3 — but case 3 requires f(n) = Ω(n^(1+ε)) for some
+which looks like case 3 - but case 3 requires f(n) = Ω(n^(1+ε)) for some
 ε > 0, and n log n is *not* polynomially larger than n. It grows faster by
 a logarithmic factor only, and log n = o(n^ε) for every ε > 0. So the
 **three-case Master Theorem as usually stated does not cover this
@@ -290,7 +290,7 @@ case 3. The gap has to be polynomial.
 
 ---
 
-## 12. Case 3, with the regularity condition checked — T(n) = 2T(n/2) + Θ(n²)
+## 12. Case 3, with the regularity condition checked - T(n) = 2T(n/2) + Θ(n²)
 
 | | |
 |---|---|
@@ -300,7 +300,7 @@ case 3. The gap has to be polynomial.
 | log_b a | **1** |
 | watershed | n |
 
-f(n) = Θ(n²) = Ω(n^(1+ε)) with ε = 1 — a genuine polynomial gap, unlike
+f(n) = Θ(n²) = Ω(n^(1+ε)) with ε = 1 - a genuine polynomial gap, unlike
 §11. Case 3 also requires regularity, which most treatments assert and skip;
 here it is checked:
 
@@ -316,7 +316,7 @@ costs half the one above, summing to at most 2·f(n).
 
 ---
 
-## 13. Where the Master Theorem fails — T(n) = 2T(n/2) + n/log n
+## 13. Where the Master Theorem fails - T(n) = 2T(n/2) + n/log n
 
 | | |
 |---|---|
@@ -333,7 +333,7 @@ requires f(n) = O(n^(1−ε)) for some fixed ε > 0, and that fails: for any
 > lim (n→∞) [ n/log n ] / n^(1−ε) = lim n^ε / log n = **∞**
 
 so n/log n is not O(n^(1−ε)) for any ε. It is smaller than the watershed by
-a logarithmic factor only, never a polynomial one — the mirror image of the
+a logarithmic factor only, never a polynomial one - the mirror image of the
 §11 problem. Case 2 does not apply either, since n/log n = n·log^(−1) n
 requires k = −1 and the extended case 2 requires k ≥ 0.
 
@@ -351,18 +351,18 @@ where H is the harmonic series, H(m) = Θ(log m). Therefore:
 
 > **T(n) = Θ(n log log n)**
 
-A bound strictly between the Θ(n) of case 1 and the Θ(n log n) of case 2 —
-which is exactly why no case could produce it. The Akra–Bazzi method
+A bound strictly between the Θ(n) of case 1 and the Θ(n log n) of case 2 -
+which is exactly why no case could produce it. The Akra-Bazzi method
 handles this class of recurrence in general.
 
 ---
 
-## 14. Fibonacci by naive recursion — T(n) = T(n−1) + T(n−2) + Θ(1)
+## 14. Fibonacci by naive recursion - T(n) = T(n−1) + T(n−2) + Θ(1)
 
 | | |
 |---|---|
 | a | 2 subproblems, of *different* sizes |
-| b | — |
+| b | - |
 
 **The Master Theorem does not apply**, for two independent reasons: the
 subproblems shrink by a constant amount rather than a constant factor (as
@@ -394,12 +394,12 @@ give Θ(n).
 | 6 | 7T(n/2) + Θ(n²) | 7 | 2 | Θ(n²) | 2.807 | 1 | Θ(n^2.807) |
 | 7 | 8T(n/2) + Θ(n²) | 8 | 2 | Θ(n²) | 3 | 1 | Θ(n³) |
 | 8 | 2T(n/2) + Θ(n) | 2 | 2 | Θ(n) | 1 | 2 | Θ(n log n) |
-| 9 | T(n−1) + Θ(n) | — | — | Θ(n) | — | **N/A** | Θ(n²) |
+| 9 | T(n−1) + Θ(n) | - | - | Θ(n) | - | **N/A** | Θ(n²) |
 | 10 | 2T(n/2) + Θ(log n) | 2 | 2 | Θ(log n) | 1 | 1 | Θ(n) |
 | 11 | 2T(n/2) + Θ(n log n) | 2 | 2 | Θ(n log n) | 1 | 2 ext. | Θ(n log² n) |
 | 12 | 2T(n/2) + Θ(n²) | 2 | 2 | Θ(n²) | 1 | 3 | Θ(n²) |
 | 13 | 2T(n/2) + n/log n | 2 | 2 | n/log n | 1 | **N/A** | Θ(n log log n) |
-| 14 | T(n−1) + T(n−2) + Θ(1) | — | — | Θ(1) | — | **N/A** | Θ(φⁿ) |
+| 14 | T(n−1) + T(n−2) + Θ(1) | - | - | Θ(1) | - | **N/A** | Θ(φⁿ) |
 
 Three of the fourteen (§9, §13, §14) are outside the theorem's reach, for
 three different reasons: subproblems that shrink by a constant amount, a
@@ -410,5 +410,5 @@ size.
 
 ## References
 
-- Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th ed., Ch. 4 (the Master Theorem, its proof, and the Akra–Bazzi generalisation).
+- Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th ed., Ch. 4 (the Master Theorem, its proof, and the Akra-Bazzi generalisation).
 - Amakobe, *Advanced Computational Algorithms*, 2nd ed., Ch. 2.
