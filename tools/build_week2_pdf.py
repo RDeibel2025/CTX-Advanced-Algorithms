@@ -29,6 +29,7 @@ Author:
 
 from __future__ import annotations
 
+import html
 import os
 import subprocess
 import sys
@@ -39,6 +40,7 @@ if REPO_ROOT not in sys.path:
 
 REPORT = os.path.join(REPO_ROOT, "analysis", "week2_report.md")
 RECURRENCES = os.path.join(REPO_ROOT, "analysis", "week2_recurrences.md")
+DEMO = os.path.join(REPO_ROOT, "examples", "week2_demo.py")
 OUT_DIR = os.path.join(REPO_ROOT, "submissions", "week-02-divide-and-conquer")
 OUT_PDF = os.path.join(OUT_DIR, "Deibel_CSC5300_Week2_Report.pdf")
 
@@ -55,8 +57,34 @@ URL_BANNER = (
 )
 
 
+def run_demo() -> str:
+    """Run examples/week2_demo.py and return its output.
+
+    Executed at build time rather than pasted from a previous run, so the
+    transcript in the PDF is always what the committed code actually
+    prints. The demo asserts every claim it makes and exits non-zero if
+    any of them stops holding, so a failure here fails the build.
+    """
+    print("=== running examples/week2_demo.py ===")
+    result = subprocess.run(
+        [sys.executable, DEMO],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    if result.returncode != 0:
+        print(result.stdout[-3000:], file=sys.stderr)
+        print(result.stderr[-2000:], file=sys.stderr)
+        raise SystemExit("the demonstration failed; not embedding a broken run")
+    lines = result.stdout.rstrip("\n").split("\n")
+    print(f"    captured {len(lines)} lines, "
+          f"widest {max(len(line) for line in lines)} columns")
+    return result.stdout.rstrip("\n")
+
+
 def build_markdown() -> str:
-    """Report body, URL banner, then the recurrence appendix."""
+    """Report body, URL banner, then the two appendices."""
     with open(REPORT, encoding="utf-8") as handle:
         body = handle.read()
     with open(RECURRENCES, encoding="utf-8") as handle:
@@ -75,14 +103,34 @@ def build_markdown() -> str:
     # The appendix keeps its own H1; demote nothing, just separate the two.
     appendix = appendix.replace(
         "# Master Theorem - Recurrence Relations",
-        "# Appendix: Master Theorem - Recurrence Relations",
+        "# Appendix A: Master Theorem - Recurrence Relations",
         1,
+    )
+
+    # Appendix B: the worked example, as it actually runs. Emitted as raw
+    # HTML rather than a fenced block so the narrower font can be applied -
+    # the widest line is 98 columns and would otherwise be clipped.
+    demo_output = html.escape(run_demo())
+    demo_appendix = (
+        "# Appendix B: Worked Example\n\n"
+        "Output of [`examples/week2_demo.py`]("
+        f"{REPO_URL}/blob/main/examples/week2_demo.py), captured by running "
+        "it. The script demonstrates merge sort and quicksort on inputs "
+        "small enough to read: the edge cases, the non-destructive "
+        "contract, non-integer element types, three-way partitioning timed "
+        "against two-way on duplicate-heavy input, stability, and a "
+        "cross-check that all five algorithms agree. Every claim it prints "
+        "is also asserted, so it exits non-zero if any of them stops "
+        "holding.\n\n"
+        f'<pre class="demo-output">{demo_output}</pre>\n'
     )
 
     return (
         body.rstrip("\n")
         + '\n\n<div class="page-break"></div>\n\n'
-        + appendix.lstrip("\n")
+        + appendix.rstrip("\n")
+        + '\n\n<div class="page-break"></div>\n\n'
+        + demo_appendix
     )
 
 

@@ -86,6 +86,15 @@ em { color: inherit; }
 figcaption { font-size: 8.5pt; color: #555; text-align: center;
              margin-top: -.5em; margin-bottom: 1.2em; }
 .page-break { page-break-before: always; }
+/* Captured console output. The demo's widest line is 98 columns, which at
+   the 8pt used for ordinary code blocks is fractionally wider than the
+   text block and would be clipped in print rather than scrolled. */
+pre.demo-output { font-size: 6.6pt; line-height: 1.35;
+                  /* Ordinary code blocks avoid breaking across pages, but a
+                     135-line console transcript cannot fit on one - keeping
+                     the rule would push the whole block to a fresh page and
+                     leave the one before it blank. */
+                  page-break-inside: auto; }
 .url-banner { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10pt;
               background: #eef4fa; border: 1px solid #b9d3ea; border-radius: 5px;
               padding: .6em .8em; margin: .8em 0; word-break: break-all; }
