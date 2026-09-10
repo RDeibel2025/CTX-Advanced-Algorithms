@@ -39,6 +39,7 @@ Author:
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from typing import Any, Iterable, Iterator, List, Optional, Tuple
 
 __all__ = ["AVLNode", "AVLTree", "avl_max_height", "perfect_height"]
@@ -137,8 +138,11 @@ class AVLTree:
     """Self-balancing binary search tree with O(log n) search, insert and delete.
 
     Args:
-        items: Optional iterable of ``(key, value)`` pairs, or of bare keys
-            (stored with value None), inserted in order.
+        items: Optional initial contents, inserted in order. A mapping such
+            as a ``dict`` supplies key-value pairs; any other iterable
+            supplies keys, each stored with value None. The choice is made by
+            type rather than by guessing, so a tuple is always a key:
+            ``AVLTree([(1, 2)])`` stores the key ``(1, 2)``.
 
     Attributes:
         rotation_count: Individual rotations performed so far. A double
@@ -169,12 +173,14 @@ class AVLTree:
         self._size = 0
         self.rotation_count = 0
         self.rebalance_count = 0
-        if items is not None:
-            for item in items:
-                if isinstance(item, tuple) and len(item) == 2:
-                    self.insert(item[0], item[1])
-                else:
-                    self.insert(item)
+        if items is None:
+            return
+        if isinstance(items, Mapping):
+            for key, value in items.items():
+                self.insert(key, value)
+        else:
+            for key in items:
+                self.insert(key)
 
     # ------------------------------------------------------------------
     # Size and inspection
@@ -256,7 +262,7 @@ class AVLTree:
             about 1.44 log2(n).
 
         Examples:
-            >>> tree = AVLTree([("a", 1), ("b", 2)])
+            >>> tree = AVLTree({"a": 1, "b": 2})
             >>> tree.search("b"), tree.search("z"), tree.search("z", -1)
             (2, None, -1)
         """
