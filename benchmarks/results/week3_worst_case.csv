@@ -1,0 +1,31 @@
+n,keys,structure,ns_per_lookup,mean_probes,runs
+250,colliding,Hash (chaining),2381.78,125.5,3
+250,colliding,Hash (linear probing),4966.45,125.5,3
+250,colliding,dict,34.78,,3
+250,random,Hash (chaining),150.95,1.27,3
+250,random,Hash (linear probing),152.83,1.48,3
+250,random,dict,33.78,,3
+500,colliding,Hash (chaining),4586.47,250.5,3
+500,colliding,Hash (linear probing),10748.86,250.5,3
+500,colliding,dict,34.92,,3
+500,random,Hash (chaining),155.83,1.26,3
+500,random,Hash (linear probing),154.53,1.58,3
+500,random,dict,25.89,,3
+1000,colliding,Hash (chaining),9375.33,500.5,3
+1000,colliding,Hash (linear probing),22998.83,500.5,3
+1000,colliding,dict,31.19,,3
+1000,random,Hash (chaining),144.07,1.25,3
+1000,random,Hash (linear probing),149.42,1.45,3
+1000,random,dict,53.4,,3
+2000,colliding,Hash (chaining),19778.7,1000.5,3
+2000,colliding,Hash (linear probing),48350.92,1000.5,3
+2000,colliding,dict,30.93,,3
+2000,random,Hash (chaining),149.48,1.25,3
+2000,random,Hash (linear probing),144.83,1.46,3
+2000,random,dict,23.67,,3
+4000,colliding,Hash (chaining),39936.73,2000.5,3
+4000,colliding,Hash (linear probing),99762.26,2000.5,3
+4000,colliding,dict,30.03,,3
+4000,random,Hash (chaining),148.97,1.24,3
+4000,random,Hash (linear probing),146.06,1.46,3
+4000,random,dict,25.01,,3

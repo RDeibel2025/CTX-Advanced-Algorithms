@@ -33,11 +33,12 @@ Typical use::
     bench.export_results("benchmarks/results/run.csv")
 
 Author:
-    Robert Deibel — CSC 5300 Advanced Algorithms, Concordia University Texas.
+    Robert Deibel - CSC 5300 Advanced Algorithms, Concordia University Texas.
 """
 
 from __future__ import annotations
 
+import gc
 import json
 import math
 import os
@@ -128,7 +129,7 @@ class BenchmarkResult:
         memory_usage: Peak memory allocated by the call, in bytes, measured
             with :mod:`tracemalloc` in a separate un-timed run. ``0.0``
             when memory was not measured.
-        metadata: Free-form provenance — data type, run counts, raw
+        metadata: Free-form provenance - data type, run counts, raw
             per-run times, interpreter version, and so on.
 
     Examples:
@@ -172,8 +173,8 @@ class BenchmarkResult:
         """Return a flat, CSV-friendly dictionary of this result.
 
         ``metadata`` is JSON-encoded into a single ``metadata`` column and
-        the two fields most useful for filtering — ``data_type`` and
-        ``runs`` — are also promoted to columns of their own.
+        the two fields most useful for filtering - ``data_type`` and
+        ``runs`` - are also promoted to columns of their own.
 
         Examples:
             >>> row = BenchmarkResult("s", 10, 0.1, 0.0, 0.1, 0.1,
@@ -229,8 +230,8 @@ class AlgorithmBenchmark:
 
     Args:
         warmup_runs: Number of un-measured executions performed before the
-            timed runs. These absorb first-call costs — import side effects,
-            CPU frequency ramp-up, cold caches — that would otherwise
+            timed runs. These absorb first-call costs - import side effects,
+            CPU frequency ramp-up, cold caches - that would otherwise
             inflate the first measurement.
         precision: Number of decimal places reported times are rounded to.
             The default of 6 keeps microsecond resolution.
@@ -295,8 +296,8 @@ class AlgorithmBenchmark:
         ``data_type``   Meaning
         =============== ===========================================================
         random          Uniform random integers
-        sorted          ``[0, 1, ..., size - 1]`` — ascending, best case
-        reverse         ``[size - 1, ..., 1, 0]`` — descending, worst case
+        sorted          ``[0, 1, ..., size - 1]`` - ascending, best case
+        reverse         ``[size - 1, ..., 1, 0]`` - descending, worst case
         nearly_sorted   Ascending, then ``floor(0.05 * size)`` random
                         transpositions (at least one when ``size >= 2``)
         duplicates      Random draws from a pool of only ``max(1, size // 10)``
@@ -486,7 +487,7 @@ class AlgorithmBenchmark:
     def _same_multiset(left: Iterable[Any], right: Iterable[Any]) -> bool:
         """Return True if both iterables hold the same elements with the same counts.
 
-        Comparing as multisets — not as sets, and not by length — is what
+        Comparing as multisets - not as sets, and not by length - is what
         catches a sort that returns something ordered but has quietly
         dropped or duplicated an element.
 
@@ -530,7 +531,7 @@ class AlgorithmBenchmark:
            computed over those ``runs`` timings and rounded to
            ``self.precision`` decimal places.
         4. If ``verify_correctness`` is set, the output of the last timed
-           run is checked — after the clock has stopped — for being sorted
+           run is checked - after the clock has stopped - for being sorted
            *and* for holding the same multiset of elements as the input.
 
         Args:
@@ -663,6 +664,146 @@ class AlgorithmBenchmark:
         return result
 
     # ------------------------------------------------------------------
+    # 2b. Timing arbitrary operations (Week 3: data structures)
+    # ------------------------------------------------------------------
+    def time_operation(
+        self,
+        operation: Callable[[Any], Any],
+        setup: Optional[Callable[[], Any]] = None,
+        *,
+        runs: int = 5,
+        input_size: Optional[int] = None,
+        ops_per_run: int = 1,
+        name: Optional[str] = None,
+        warmup_runs: Optional[int] = None,
+        disable_gc: bool = True,
+    ) -> BenchmarkResult:
+        """Time an arbitrary operation, with per-run setup kept off the clock.
+
+        :meth:`time_algorithm` times a sort: one callable, one input list and
+        a correctness check on the output. A data-structure benchmark has a
+        different shape - build a structure, then time inserts, lookups or
+        deletes against it - and the building must not be counted. This
+        method applies the same measurement protocol to that shape:
+
+        1. ``setup()`` is called before every run, *outside* the timed
+           region, and its return value is handed to ``operation``. A
+           mutating operation such as "delete every key" therefore always
+           starts from a freshly built structure.
+        2. Warm-up runs are executed and discarded, as in
+           :meth:`time_algorithm`.
+        3. Each measured run is timed with :func:`time.perf_counter`, and the
+           mean, sample standard deviation, minimum and maximum reported.
+        4. ``ops_per_run`` records how many elementary operations one run
+           performs, so the per-operation cost - the number that separates
+           O(1) from O(log n) from O(n) - is recorded alongside the raw run
+           times rather than instead of them.
+
+        Garbage collection is paused during each timed region, as
+        :mod:`timeit` does by default, with a collection forced beforehand.
+        Node-heavy structures such as trees allocate enough to trigger
+        collections mid-measurement, and a pause that lands inside one run
+        but not another is noise rather than signal.
+
+        Args:
+            operation: Callable taking the value returned by ``setup``, or
+                None when there is no setup.
+            setup: Optional zero-argument callable, run off the clock before
+                every warm-up and every measured run.
+            runs: Measured runs. At least 1.
+            input_size: Size of the structure operated on, recorded as
+                :attr:`BenchmarkResult.input_size`. Defaults to
+                ``ops_per_run``.
+            ops_per_run: Elementary operations performed by one run.
+            name: Display name the result is stored under. Defaults to the
+                operation's ``__name__``.
+            warmup_runs: Overrides ``self.warmup_runs`` for this call - for
+                when a single run is costly enough that discarding one is not
+                worth paying for.
+            disable_gc: Pause garbage collection while timing.
+
+        Returns:
+            A :class:`BenchmarkResult` whose times are per *run*. The
+            per-operation mean and minimum are in ``metadata["per_op_time"]``
+            and ``metadata["per_op_min"]``.
+
+        Raises:
+            TypeError: If ``operation`` or ``setup`` is not callable.
+            ValueError: If ``runs``, ``ops_per_run`` or ``warmup_runs`` is out
+                of range.
+
+        Examples:
+            >>> bench = AlgorithmBenchmark(warmup_runs=0, precision=9)
+            >>> result = bench.time_operation(
+            ...     lambda table: [table.get(k) for k in range(1000)],
+            ...     setup=lambda: {k: k for k in range(1000)},
+            ...     runs=3, input_size=1000, ops_per_run=1000, name="dict get")
+            >>> result.algorithm_name, result.input_size, result.metadata["runs"]
+            ('dict get', 1000, 3)
+            >>> result.metadata["per_op_time"] < result.average_time
+            True
+        """
+        if not callable(operation):
+            raise TypeError(
+                f"operation must be callable, got {type(operation).__name__}"
+            )
+        if setup is not None and not callable(setup):
+            raise TypeError(f"setup must be callable, got {type(setup).__name__}")
+        if runs < 1:
+            raise ValueError(f"runs must be >= 1, got {runs}")
+        if ops_per_run < 1:
+            raise ValueError(f"ops_per_run must be >= 1, got {ops_per_run}")
+        warmups = self.warmup_runs if warmup_runs is None else warmup_runs
+        if warmups < 0:
+            raise ValueError(f"warmup_runs must be >= 0, got {warmups}")
+
+        label = name or getattr(operation, "__name__", type(operation).__name__)
+
+        def one_run() -> float:
+            state = setup() if setup is not None else None
+            was_enabled = gc.isenabled()
+            if disable_gc:
+                gc.collect()
+                gc.disable()
+            try:
+                start = time.perf_counter()
+                operation(state)
+                return time.perf_counter() - start
+            finally:
+                if disable_gc and was_enabled:
+                    gc.enable()
+
+        for _ in range(warmups):
+            one_run()
+        timings = [one_run() for _ in range(runs)]
+
+        mean = statistics.fmean(timings)
+        result = BenchmarkResult(
+            algorithm_name=label,
+            input_size=ops_per_run if input_size is None else input_size,
+            average_time=round(mean, self.precision),
+            std_deviation=round(
+                statistics.stdev(timings) if runs > 1 else 0.0, self.precision
+            ),
+            min_time=round(min(timings), self.precision),
+            max_time=round(max(timings), self.precision),
+            metadata={
+                "runs": runs,
+                "warmup_runs": warmups,
+                "ops_per_run": ops_per_run,
+                "per_op_time": mean / ops_per_run,
+                "per_op_min": min(timings) / ops_per_run,
+                "raw_times": [round(t, self.precision) for t in timings],
+                "timer": "time.perf_counter",
+                "gc_disabled": disable_gc,
+                "python_version": platform.python_version(),
+                "platform": platform.platform(),
+            },
+        )
+        self.results.setdefault(label, []).append(result)
+        return result
+
+    # ------------------------------------------------------------------
     # 3. Running a whole suite
     # ------------------------------------------------------------------
     def benchmark_suite(
@@ -682,7 +823,7 @@ class AlgorithmBenchmark:
 
         Args:
             algorithms: Mapping of display name to callable. The display
-                name — not the function's ``__name__`` — is what appears in
+                name - not the function's ``__name__`` - is what appears in
                 the results, the charts and the CSV.
             sizes: Input sizes to sweep, in elements.
             data_types: Data shapes to sweep. Defaults to ``["random"]``.

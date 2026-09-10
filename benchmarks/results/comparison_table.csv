@@ -1,0 +1,24 @@
+structure,operation,asymptotic,expected_per_op,ns_per_op_n1000,ns_per_op_n10000,ns_per_op_n100000,ns_per_op_n1000000,runs_n1000,runs_n10000,runs_n100000,runs_n1000000,loglog_slope,growth_measured,growth_predicted,empirical_class,agrees
+Heap (mine),insert,O(log n) worst,O(1),227.44,230.71,232.82,234.9,5,5,3,1,0.005,1.033,1.0,O(1),True
+Heap (mine),insert (descending),O(log n),O(log n),517.43,715.47,913.84,1142.29,5,5,3,1,0.114,2.208,2.0,O(log n),True
+Heap (mine),extract_min,O(log n),O(log n),848.52,1167.13,1486.91,2087.98,5,5,3,1,0.128,2.461,2.0,O(log n),True
+Heap (mine),heapify,O(n) total,O(1),149.11,135.23,130.8,145.68,5,5,3,1,-0.004,0.977,1.0,O(1),True
+heapq,insert,O(log n) worst,O(1),54.52,45.26,39.11,40.13,5,5,3,1,-0.046,0.736,1.0,O(1),True
+heapq,insert (descending),O(log n),O(log n),81.07,103.64,122.69,159.64,5,5,3,1,0.096,1.969,2.0,O(log n),True
+heapq,extract_min,O(log n),O(log n),130.83,188.39,243.88,565.73,5,5,3,1,0.202,4.324,2.0,O(log n),True
+heapq,heapify,O(n) total,O(1),22.5,20.61,18.98,22.53,5,5,3,1,-0.003,1.001,1.0,O(1),True
+AVL tree,insert,O(log n),O(log n),2180.36,2893.08,3592.58,4663.15,5,5,3,1,0.108,2.139,2.0,O(log n),True
+AVL tree,search,O(log n),O(log n),343.47,472.55,577.55,1068.26,5,5,3,1,0.157,3.11,2.0,O(log n),True
+AVL tree,delete,O(log n),O(log n),1879.92,2694.7,3300.45,4662.01,5,5,3,1,0.127,2.48,2.0,O(log n),True
+dict,insert,O(1) amortised,O(1),47.98,36.03,43.21,49.16,5,5,3,1,0.011,1.024,1.0,O(1),True
+dict,search,O(1) average,O(1),30.53,36.47,34.32,82.04,5,5,3,1,0.126,2.687,1.0,O(log n),False
+dict,delete,O(1) average,O(1),30.01,39.11,44.27,95.47,5,5,3,1,0.156,3.181,1.0,O(log n),False
+list,insert (append),O(1) amortised,O(1),22.47,13.25,12.73,13.51,5,5,3,1,-0.068,0.601,1.0,O(1),True
+list,search,O(n),O(n),2288.22,22056.12,216764.31,2355602.09,5,5,3,1,1.003,1029.445,1000.0,O(n),True
+list,delete,O(n),O(n),1437.9,30534.9,281334.49,3080578.75,5,5,3,1,1.096,2142.416,1000.0,O(n),True
+Hash (chaining),insert,O(1) amortised,O(1),546.84,494.27,673.74,889.08,5,5,3,1,0.077,1.626,1.0,O(log n),False
+Hash (chaining),search,O(1) average,O(1),151.02,181.52,179.72,465.23,5,5,3,1,0.146,3.081,1.0,O(log n),False
+Hash (chaining),delete,O(1) average,O(1),282.17,271.08,317.29,556.67,5,5,3,1,0.095,1.973,1.0,O(log n),False
+Hash (linear probing),insert,O(1) amortised,O(1),488.06,516.46,493.37,560.22,5,5,3,1,0.016,1.148,1.0,O(1),True
+Hash (linear probing),search,O(1) average,O(1),156.93,135.01,137.93,253.23,5,5,3,1,0.063,1.614,1.0,O(log n),False
+Hash (linear probing),delete,O(1) average,O(1),208.53,172.74,186.98,297.61,5,5,3,1,0.05,1.427,1.0,O(log n),False

@@ -9,22 +9,22 @@ Run it from the repository root, with the project virtual environment active::
 Four things are checked, and every failure is reported by name rather than
 as a bare non-zero exit:
 
-1. **Python version** — 3.9 or later is required. Anything older is a hard
+1. **Python version** - 3.9 or later is required. Anything older is a hard
    failure, because the project uses the built-in generic type syntax and
    :func:`statistics.fmean`.
-2. **Packages** — all nine required third-party packages import cleanly,
+2. **Packages** - all nine required third-party packages import cleanly,
    with their installed versions printed. Anything missing is listed with
    the exact ``pip install`` command that would fix it.
-3. **Project structure** — every directory and file the assignment
+3. **Project structure** - every directory and file the assignment
    specifies is present. Anything absent is named.
-4. **Version control** — ``git`` is on PATH and the working directory is
+4. **Version control** - ``git`` is on PATH and the working directory is
    inside a Git working tree.
 
 Exit status is ``0`` when everything passes and ``1`` when anything fails,
 so the script is usable as a gate in a shell script or in CI.
 
 Author:
-    Robert Deibel — CSC 5300 Advanced Algorithms, Concordia University Texas.
+    Robert Deibel - CSC 5300 Advanced Algorithms, Concordia University Texas.
 """
 
 from __future__ import annotations
@@ -117,6 +117,16 @@ REQUIRED_FILES: List[str] = [
     "analysis/week2_report.md",
     "analysis/week2_recurrences.md",
     "examples/week2_demo.py",
+    # Week 3 - data structures
+    "src/structures/heap.py",
+    "src/structures/avl_tree.py",
+    "src/structures/hash_table.py",
+    "tests/test_heap.py",
+    "tests/test_avl_tree.py",
+    "tests/test_hash_table.py",
+    "tests/test_data_structure_comparison.py",
+    "benchmarks/week3_structures_benchmark.py",
+    "examples/week3_demo.py",
 ]
 
 OK = "[ OK ]"
@@ -152,7 +162,7 @@ def check_python_version() -> bool:
     print(f"       machine    : {platform.machine()}")
 
     if version[:2] < MINIMUM_PYTHON:
-        print(f"{FAIL} Python {printed} is too old — this project requires {required}+.")
+        print(f"{FAIL} Python {printed} is too old - this project requires {required}+.")
         print("       Install a newer Python and rebuild the virtual environment:")
         print("           python3 -m venv algorithms_course")
         return False
@@ -184,7 +194,7 @@ def check_packages() -> bool:
         try:
             module = importlib.import_module(module_name)
         except ImportError as exc:
-            print(f"{FAIL} {distribution:<14} not importable — {exc}")
+            print(f"{FAIL} {distribution:<14} not importable - {exc}")
             missing.append(distribution)
             continue
 
@@ -322,7 +332,7 @@ def main() -> int:
         ``0`` if all checks passed, ``1`` otherwise.
     """
     print("=" * 72)
-    print("CSC 5300 Advanced Algorithms — Environment Check")
+    print("CSC 5300 Advanced Algorithms - Environment Check")
     print("Robert Deibel · Week 1 Project: Algorithm Laboratory Setup")
     print("=" * 72)
 

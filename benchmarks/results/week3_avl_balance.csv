@@ -1,0 +1,5 @@
+n,height_random,height_sorted,perfect_height,avl_max_height,rotations_per_insert,rebalances_per_delete,most_rebalances_one_delete
+1000,12,10,10,14,0.623,0.298,2
+10000,16,14,14,18,0.7005,0.3082,4
+100000,20,17,17,23,0.6952,0.3009,4
+1000000,24,20,20,28,0.6976,0.2992,5

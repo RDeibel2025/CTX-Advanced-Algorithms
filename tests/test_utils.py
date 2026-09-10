@@ -8,22 +8,25 @@ algorithms it measures:
   same seed really produces the same list;
 * :meth:`~src.utils.benchmark.AlgorithmBenchmark.time_algorithm` returns a
   well-formed result whose statistics are internally consistent;
-* correctness verification actually *rejects* a broken sort — three
+* correctness verification actually *rejects* a broken sort - three
   different ways of being broken are tried, including one that is
   perfectly ordered;
 * results survive a round trip to CSV and back;
 * the chart functions produce real, non-empty PNG files.
 
 Author:
-    Robert Deibel — CSC 5300 Advanced Algorithms, Concordia University Texas.
+    Robert Deibel - CSC 5300 Advanced Algorithms, Concordia University Texas.
 """
 
 from __future__ import annotations
 
 import csv
+import gc
 import json
 import math
 import os
+import statistics
+import time
 
 import matplotlib.pyplot as plt
 import pytest
@@ -100,7 +103,7 @@ class TestDataGeneration:
         assert data == sorted(data, reverse=True)
 
     def test_nearly_sorted_is_a_permutation_of_sorted_but_not_sorted(self, bench):
-        """A few transpositions of ``range(n)`` — still every element, no longer ordered."""
+        """A few transpositions of ``range(n)`` - still every element, no longer ordered."""
         size = 400
         data = bench.generate_test_data(size, "nearly_sorted", seed=5)
         assert has_same_elements(data, list(range(size)))
@@ -307,14 +310,14 @@ class TestTimeAlgorithm:
 
 
 class TestCorrectnessVerification:
-    """Verification must reject broken sorts — that is its whole purpose."""
+    """Verification must reject broken sorts - that is its whole purpose."""
 
     def test_accepts_a_correct_sort(self, bench):
         result = bench.time_algorithm(selection_sort, random_list(100), runs=2)
         assert result.metadata["verified"] is True
 
     def test_rejects_a_sort_that_drops_an_element(self, bench):
-        """Ordered output, one element short — only the multiset check catches it."""
+        """Ordered output, one element short - only the multiset check catches it."""
         data = random_list(50)
         assert is_sorted(broken_sort_drops_element(data))  # ordering alone passes
         with pytest.raises(CorrectnessError) as caught:
@@ -714,7 +717,7 @@ class TestTestingHelpers:
         assert all(-10 <= v <= 10 for v in random_list(50, low=-10, high=10))
 
     def test_stability_record_orders_on_the_key_alone(self):
-        """A tie must be a real tie — this is what makes stability observable."""
+        """A tie must be a real tie - this is what makes stability observable."""
         first, second = StabilityRecord(1, 0), StabilityRecord(1, 1)
         assert not (first < second) and not (second < first)
         assert not (first > second) and not (second > first)
@@ -727,3 +730,138 @@ class TestTestingHelpers:
         assert not is_valid_sort(data, broken_sort_drops_element(data))
         assert not is_valid_sort(data, broken_sort_returns_zeros(data))
         assert not is_valid_sort(data, broken_sort_unsorted(data))
+
+
+# ----------------------------------------------------------------------
+# Week 3: timing arbitrary operations
+# ----------------------------------------------------------------------
+class TestTimeOperation:
+    """time_operation: the Week 3 extension for data-structure benchmarks."""
+
+    def test_returns_a_well_formed_result(self, bench):
+        result = bench.time_operation(
+            lambda table: [table.get(k) for k in range(100)],
+            setup=lambda: {k: k for k in range(100)},
+            runs=4, input_size=100, ops_per_run=100, name="dict get",
+        )
+        assert isinstance(result, BenchmarkResult)
+        assert result.algorithm_name == "dict get"
+        assert result.input_size == 100
+        assert result.min_time <= result.average_time <= result.max_time
+        meta = result.metadata
+        assert meta["runs"] == 4 and len(meta["raw_times"]) == 4
+        assert meta["ops_per_run"] == 100
+        assert meta["timer"] == "time.perf_counter"
+
+    def test_per_op_time_is_the_mean_run_time_over_ops(self, bench):
+        result = bench.time_operation(
+            lambda _state: sum(range(2000)), runs=5, ops_per_run=50
+        )
+        per_op = result.metadata["per_op_time"]
+        assert per_op * 50 == pytest.approx(result.average_time, abs=1e-6)
+        assert result.metadata["per_op_min"] <= per_op
+
+    def test_setup_is_not_timed(self, bench):
+        """A 50 ms setup must not appear in a run that does almost nothing."""
+        result = bench.time_operation(
+            lambda _state: None, setup=lambda: time.sleep(0.05), runs=3
+        )
+        assert result.max_time < 0.01
+
+    def test_setup_runs_before_every_warmup_and_every_run(self):
+        calls = {"setup": 0, "operation": 0}
+
+        def setup():
+            calls["setup"] += 1
+
+        def operation(_state):
+            calls["operation"] += 1
+
+        instance = AlgorithmBenchmark(warmup_runs=2)
+        instance.verbose = False
+        instance.time_operation(operation, setup=setup, runs=3)
+        assert calls == {"setup": 5, "operation": 5}
+
+    def test_operation_receives_the_value_setup_returned(self, bench):
+        seen = []
+        bench.time_operation(seen.append, setup=lambda: "fresh", runs=2)
+        assert seen == ["fresh", "fresh"]
+
+    def test_a_mutating_operation_always_gets_a_fresh_structure(self, bench):
+        """Draining a list would fail on the second run if setup were shared."""
+
+        def drain(values):
+            while values:
+                values.pop()
+            assert values == []
+
+        bench.time_operation(drain, setup=lambda: list(range(500)), runs=4)
+
+    def test_warmup_override(self):
+        calls = {"n": 0}
+        instance = AlgorithmBenchmark(warmup_runs=3)
+        instance.verbose = False
+        result = instance.time_operation(
+            lambda _s: calls.__setitem__("n", calls["n"] + 1),
+            runs=2, warmup_runs=0,
+        )
+        assert calls["n"] == 2
+        assert result.metadata["warmup_runs"] == 0
+
+    def test_input_size_defaults_to_ops_per_run(self, bench):
+        result = bench.time_operation(lambda _s: None, ops_per_run=37)
+        assert result.input_size == 37
+
+    def test_gc_is_paused_while_timing_and_restored_after(self, bench):
+        observed = []
+        assert gc.isenabled()
+        bench.time_operation(lambda _s: observed.append(gc.isenabled()), runs=2)
+        assert observed == [False, False]
+        assert gc.isenabled()
+
+    def test_gc_stays_off_if_it_was_off_beforehand(self, bench):
+        gc.disable()
+        try:
+            bench.time_operation(lambda _s: None, runs=2)
+            assert not gc.isenabled()
+        finally:
+            gc.enable()
+
+    def test_gc_can_be_left_running(self, bench):
+        observed = []
+        bench.time_operation(
+            lambda _s: observed.append(gc.isenabled()), runs=2, disable_gc=False
+        )
+        assert observed == [True, True]
+
+    def test_result_is_stored_and_exports_to_csv(self, bench, tmp_path):
+        bench.time_operation(lambda _s: None, runs=2, name="noop")
+        assert len(bench.results["noop"]) == 1
+        target = tmp_path / "ops.csv"
+        bench.export_results(str(target))
+        with open(target, newline="", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
+        assert [row["algorithm_name"] for row in rows] == ["noop"]
+        assert json.loads(rows[0]["metadata"])["ops_per_run"] == 1
+
+    def test_timings_reflect_the_work_done(self, bench):
+        """Ten times the work should take clearly longer."""
+        small = bench.time_operation(lambda _s: sum(range(20_000)), runs=5)
+        large = bench.time_operation(lambda _s: sum(range(200_000)), runs=5)
+        assert large.min_time > small.min_time * 3
+
+    @pytest.mark.parametrize(
+        "kwargs, error",
+        [
+            ({"operation": "not callable"}, TypeError),
+            ({"operation": lambda s: None, "setup": 5}, TypeError),
+            ({"operation": lambda s: None, "runs": 0}, ValueError),
+            ({"operation": lambda s: None, "ops_per_run": 0}, ValueError),
+            ({"operation": lambda s: None, "warmup_runs": -1}, ValueError),
+        ],
+        ids=["operation", "setup", "runs", "ops_per_run", "warmup_runs"],
+    )
+    def test_invalid_arguments_are_rejected(self, bench, kwargs, error):
+        operation = kwargs.pop("operation")
+        with pytest.raises(error):
+            bench.time_operation(operation, **kwargs)
