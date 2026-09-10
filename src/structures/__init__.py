@@ -14,6 +14,7 @@ Author:
     Robert Deibel - CSC 5300 Advanced Algorithms, Concordia University Texas.
 """
 
+from src.structures.avl_tree import AVLTree
 from src.structures.heap import MaxHeap, MinHeap, PriorityQueue
 
-__all__ = ["MinHeap", "MaxHeap", "PriorityQueue"]
+__all__ = ["MinHeap", "MaxHeap", "PriorityQueue", "AVLTree"]
