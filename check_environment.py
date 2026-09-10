@@ -127,6 +127,11 @@ REQUIRED_FILES: List[str] = [
     "tests/test_data_structure_comparison.py",
     "benchmarks/week3_structures_benchmark.py",
     "examples/week3_demo.py",
+    "analysis/week3_report.md",
+    "benchmarks/results/heap_performance.png",
+    "benchmarks/results/tree_performance.png",
+    "benchmarks/results/hash_performance.png",
+    "benchmarks/results/comparison_table.csv",
 ]
 
 OK = "[ OK ]"

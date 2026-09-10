@@ -2,8 +2,8 @@
 
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
-Covers every assignment in this repository. Week 1 is documented first,
-Week 2 below it.
+Covers every assignment in this repository, in order: Week 1, Week 2,
+then Week 3.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -13,7 +13,7 @@ reader can tell exactly which parts of the project the tool produced.
 
 ---
 
-# Week 1 — Algorithm Laboratory Setup
+# Week 1 - Algorithm Laboratory Setup
 
 ## Tool used
 
@@ -23,10 +23,10 @@ was used.
 
 ## How it was used
 
-I wrote a detailed specification of the assignment's requirements —
+I wrote a detailed specification of the assignment's requirements -
 derived from the Blackboard assignment instructions, the Detailed Grading
 Criteria, and Chapter 1 §§1.6–1.10 of Amakobe, *Advanced Computational
-Algorithms* (2nd ed., 2026) — and directed the tool to implement the
+Algorithms* (2nd ed., 2026) - and directed the tool to implement the
 project against it. I reviewed the output, ran the tests and benchmarks
 myself, and made the decisions about scope, structure and what the report
 should claim.
@@ -59,7 +59,7 @@ by the model against my specification:
 **The measurements.** Every timing, standard deviation, complexity fit,
 comparison count and chart in `benchmarks/results/` and `docs/figures/`
 was produced by actually running `benchmarks/sorting_benchmarks.py` on my
-machine — an Apple M2 Max under macOS 14.5 and Python 3.12.4. The full
+machine - an Apple M2 Max under macOS 14.5 and Python 3.12.4. The full
 study took 187 seconds. No result was estimated, adjusted, or invented,
 and the report is written from the output of that run.
 
@@ -67,13 +67,13 @@ To make that verifiable rather than merely asserted, every number in
 `docs/performance_analysis.md` is computed from the result CSVs by
 `tools/build_report.py` at render time. None of the figures in the report
 were typed in by hand, by me or by the model, so none of them can have
-been fabricated — re-running the two commands regenerates the document
+been fabricated - re-running the two commands regenerates the document
 from the data.
 
 **The judgement calls.** Which findings the report is entitled to claim,
 and how strongly, is mine. One example is worth naming: the report's §3.4
 concludes that insertion sort does **not** become linear on this
-project's `nearly_sorted` data — it wins a large constant factor and stays
+project's `nearly_sorted` data - it wins a large constant factor and stays
 quadratic. That is contrary to the usual textbook shorthand, and it is
 what the measured exponent and doubling ratio actually show for this
 particular definition of "nearly sorted". Reporting the measurement rather
@@ -92,14 +92,14 @@ me, which the table above discloses; it is not quoted material.
 * Blackboard: the CSC 5300 Week 1 assignment instructions, submission
   checklist and Detailed Grading Criteria.
 * Amakobe, *Advanced Computational Algorithms*, 2nd ed. (2026), Chapter 1
-  §§1.6–1.10 — the source of the required project structure, the
+  §§1.6–1.10 - the source of the required project structure, the
   `AlgorithmBenchmark` interface, and the package list.
 * Standard library and package documentation for Python 3.12, pytest,
   matplotlib, scipy and pandas.
 
 ## Why I am comfortable submitting this
 
-The learning objectives of this assignment are the empirical method — set
+The learning objectives of this assignment are the empirical method - set
 up a laboratory, measure real algorithms, and draw conclusions that the
 data supports. I directed that process, ran it, checked it, and made the
 calls about what the results mean. The specific finding in §3.4 came out
@@ -108,7 +108,7 @@ expectation, which is the part of the work that was worth doing.
 
 ---
 
-# Week 2 — Divide and Conquer Implementation Project
+# Week 2 - Divide and Conquer Implementation Project
 
 ## Tool used
 
@@ -155,7 +155,7 @@ Lomuto, and it would have been the obvious thing to write. It is also
 quadratic on duplicate-heavy input, and two of this assignment's six
 required data types have only 10 and 3 distinct values. I had the Lomuto
 version implemented as well and benchmarked both, which is how the report
-is able to show the difference — a measured 245× gap at n=16,000 — instead
+is able to show the difference - a measured 245× gap at n=16,000 - instead
 of merely claiming one.
 
 *Recursing into the smaller partition and looping on the larger.* Python's
@@ -182,7 +182,79 @@ attribution.
 * The Blackboard Week 2 assignment instructions, the Week 2 Plan, and
   Dr. Amakobe's Week 2 announcement of 31 August 2026.
 * Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
-  ed. — Ch. 2.3–2.4 (merge sort), Ch. 4 (the Master Theorem), Ch. 7
+  ed. - Ch. 2.3–2.4 (merge sort), Ch. 4 (the Master Theorem), Ch. 7
   (quicksort, and the Hoare partition problem).
 * Amakobe, *Advanced Computational Algorithms*, 2nd ed., Ch. 2.
+* Python, pytest, matplotlib and pandas documentation.
+
+---
+
+# Week 3 - Data Structures
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same working method and division of labour as Weeks 1 and 2. I wrote a
+specification from the Blackboard Week 3 instructions and their Submission
+Checklist, and directed the tool to implement against it. The specification
+fixed the design points that decide correctness - bottom-up `heapify`, a
+counter as the priority queue's tie-breaker, rebalancing every ancestor on
+AVL deletion, tombstones for linear-probing deletion, separate resize
+thresholds for the two hash strategies - and the argument the report is
+built around. The model drafted the code, the tests and the first draft of
+the report; I reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/structures/heap.py`, `avl_tree.py`, `hash_table.py` | AI-drafted, reviewed by me |
+| `tests/test_heap.py`, `test_avl_tree.py`, `test_hash_table.py`, `test_data_structure_comparison.py`, and the `conftest.py` additions | AI-drafted, reviewed by me |
+| `time_operation` in `src/utils/benchmark.py`, and its tests | AI-drafted, reviewed by me |
+| `benchmarks/week3_structures_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week3_demo.py`, `tools/week3_facts.py` | AI-drafted, reviewed by me |
+| `analysis/week3_report.md`, the README's Week 3 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every timing, probe count and chart this week in
+`benchmarks/results/` came from running
+`benchmarks/week3_structures_benchmark.py` on my machine; the full study
+took 121 seconds. Nothing was estimated or adjusted. The report's figures
+are printed from the result CSVs by `tools/week3_facts.py`, so they can be
+re-checked against a fresh run in one command.
+
+**What the report claims.** Two findings ran against the argument the
+report was planned around, and both are reported as measured rather than
+bent to fit. The AVL tree's search gap against `dict` turned out to be
+almost exactly log₂ n - an asymptotic difference, not the constant factor
+I expected. And seven O(1) hash-table series classify as O(log n) because
+of a step at 10⁶; the report keeps the classifier's verdict and shows,
+with operation counts, that the step is memory rather than work.
+
+**A bug the tests caught.** The first `AVLTree` constructor treated any
+2-tuple in its input as a (key, value) pair, so tuple keys were silently
+misread. The test suite caught it, and the fix decides by the input's type:
+a mapping supplies pairs, anything else supplies keys.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 3 assignment instructions and Submission Checklist.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed. - Ch. 6 (heaps), Ch. 11 (hash tables), Ch. 12-13 (search trees; AVL
+  trees are Problem 13-3), §16.4 (dynamic tables).
+* Amakobe, *Advanced Computational Algorithms*, 2nd ed., Ch. 3.
+* Knuth, *The Art of Computer Programming*, Vol. 3, §6.4, for the expected
+  probe counts under linear probing.
 * Python, pytest, matplotlib and pandas documentation.
