@@ -15,6 +15,7 @@ Author:
 """
 
 from src.structures.avl_tree import AVLTree
+from src.structures.hash_table import HashTable
 from src.structures.heap import MaxHeap, MinHeap, PriorityQueue
 
-__all__ = ["MinHeap", "MaxHeap", "PriorityQueue", "AVLTree"]
+__all__ = ["MinHeap", "MaxHeap", "PriorityQueue", "AVLTree", "HashTable"]
