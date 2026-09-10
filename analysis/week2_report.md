@@ -31,7 +31,7 @@ every run is verified a sorted permutation. Median relative SD: 0.7%.
 
 **The O(n²) size cap.** The quadratics were measured only to n = 10,000; the
 eighteen cells at n = 50,000 appear in
-[`comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/comparison_table.csv) as `omitted`
+[`sorting_comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/sorting_comparison_table.csv) as `omitted`
 with reasons. Fitting t = c·n² projects 64 s, 28 s and 28 s
 per run on random data - about an hour. I measured them anyway and checked the
 projection (§4).

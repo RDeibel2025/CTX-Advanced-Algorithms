@@ -11,8 +11,8 @@ graph
     Graph algorithms (reserved for a later week).
 dynamic_programming
     Dynamic-programming algorithms (reserved for a later week).
-data_structures
-    Supporting data structures (reserved for a later week).
+structures
+    Week 3: binary heaps, a priority queue, an AVL tree and a hash table.
 utils
     Shared tooling: the benchmarking framework, plotting helpers and
     testing helpers used by every other sub-package.

@@ -53,7 +53,7 @@ def replace_table(text: str, header: str, new_rows: list) -> str:
 
 
 def main() -> int:
-    table = pd.read_csv(os.path.join(RESULTS, "comparison_table.csv"))
+    table = pd.read_csv(os.path.join(RESULTS, "sorting_comparison_table.csv"))
     measured = table[table.status == "measured"].copy()
     measured["mean_time"] = measured.mean_time.astype(float)
     ratios = pd.read_csv(os.path.join(RESULTS, "doubling_ratios.csv"))

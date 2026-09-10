@@ -38,7 +38,7 @@ It contains three things:
    the order of its input.
 
 The remaining directories (`src/searching/`, `src/graph/`,
-`src/dynamic_programming/`, `src/data_structures/`) are the semester's
+`src/dynamic_programming/`) are the semester's
 scaffolding. They are real Python packages with documented placeholders,
 ready for later weeks.
 
@@ -64,7 +64,6 @@ Advanced Algorithms/
 │   ├── searching/                  Reserved for a later week
 │   ├── graph/                      Reserved for a later week
 │   ├── dynamic_programming/        Reserved for a later week
-│   ├── data_structures/            Reserved for a later week
 │   └── utils/
 │       ├── benchmark.py            BenchmarkResult, AlgorithmBenchmark
 │       ├── visualization.py        Supplementary charts

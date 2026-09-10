@@ -1,7 +1,0 @@
-"""Data structures — reserved for a later week.
-
-This package is part of the required project structure for the CSC 5300
-Week 1 laboratory setup. Week 1 implements no custom data structures;
-heaps, balanced trees and hash structures will be added here in a later
-week.
-"""

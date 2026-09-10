@@ -32,7 +32,7 @@ Outputs, all under ``benchmarks/results/``:
 File                                    Contents
 ======================================= ====================================
 ``random_data.png`` … ``few_unique.png`` One chart per data shape
-``comparison_table.csv``                Every cell, measured or omitted
+``sorting_comparison_table.csv``        Every cell, measured or omitted
 ``doubling_ratios.csv``                 Observed vs predicted growth
 ``partition_scheme_study.csv``          Lomuto vs Hoare vs three-way
 ======================================= ====================================
@@ -790,7 +790,7 @@ def main(argv: List[str] = None) -> int:
 
     print("\n=== writing results ===")
     write_comparison_table(
-        matrix, bench.omitted, os.path.join(RESULTS_DIR, "comparison_table.csv")
+        matrix, bench.omitted, os.path.join(RESULTS_DIR, "sorting_comparison_table.csv")
     )
     write_csv(
         os.path.join(RESULTS_DIR, "doubling_ratios.csv"),
