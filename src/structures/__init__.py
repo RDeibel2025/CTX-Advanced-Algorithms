@@ -13,3 +13,7 @@ so its cost can be measured rather than taken on trust:
 Author:
     Robert Deibel - CSC 5300 Advanced Algorithms, Concordia University Texas.
 """
+
+from src.structures.heap import MaxHeap, MinHeap, PriorityQueue
+
+__all__ = ["MinHeap", "MaxHeap", "PriorityQueue"]
