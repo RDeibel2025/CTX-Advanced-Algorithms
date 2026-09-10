@@ -216,7 +216,7 @@ the report; I reviewed them and decided what the results support.
 | `tests/test_heap.py`, `test_avl_tree.py`, `test_hash_table.py`, `test_data_structure_comparison.py`, and the `conftest.py` additions | AI-drafted, reviewed by me |
 | `time_operation` in `src/utils/benchmark.py`, and its tests | AI-drafted, reviewed by me |
 | `benchmarks/week3_structures_benchmark.py` | AI-drafted, reviewed by me |
-| `examples/week3_demo.py`, `tools/week3_facts.py` | AI-drafted, reviewed by me |
+| `examples/week3_demo.py`, `tools/week3_facts.py`, `tools/build_week3_pdf.py` | AI-drafted, reviewed by me |
 | `analysis/week3_report.md`, the README's Week 3 section | AI-drafted, edited by me |
 | Git commit messages | AI-drafted |
 

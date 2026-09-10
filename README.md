@@ -111,6 +111,7 @@ Advanced Algorithms/
 │   ├── week2_sync_report.py        Keeps the Week 2 report's tables in step with the CSVs
 │   ├── build_week2_pdf.py          Builds the Week 2 submission PDF
 │   ├── week3_facts.py              Prints every figure the Week 3 report quotes
+│   ├── build_week3_pdf.py          Builds the Week 3 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
