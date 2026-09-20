@@ -132,6 +132,24 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/results/tree_performance.png",
     "benchmarks/results/hash_performance.png",
     "benchmarks/results/structures_comparison_table.csv",
+    # Week 4 - graph algorithms
+    "src/graphs/graph.py",
+    "src/graphs/bfs.py",
+    "src/graphs/dfs.py",
+    "src/graphs/dijkstra.py",
+    "src/utils/graph_generator.py",
+    "tests/test_graph_representation.py",
+    "tests/test_bfs.py",
+    "tests/test_dfs.py",
+    "tests/test_dijkstra.py",
+    "tests/test_graph_benchmark.py",
+    "benchmarks/week4_graph_benchmark.py",
+    "examples/week4_demo.py",
+    "analysis/week4_report.md",
+    "benchmarks/results/bfs_vs_dfs_sparse.png",
+    "benchmarks/results/bfs_vs_dfs_dense.png",
+    "benchmarks/results/dijkstra_performance.png",
+    "benchmarks/results/comparison_table.csv",
 ]
 
 OK = "[ OK ]"
