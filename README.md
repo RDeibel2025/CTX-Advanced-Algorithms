@@ -10,6 +10,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 1 | Algorithm Laboratory Setup | [`docs/performance_analysis.md`](docs/performance_analysis.md) |
 | 2 | Divide and Conquer | [`analysis/week2_report.md`](analysis/week2_report.md) · [`analysis/week2_recurrences.md`](analysis/week2_recurrences.md) |
 | 3 | Data Structures | [`analysis/week3_report.md`](analysis/week3_report.md) |
+| 4 | Graph Algorithms | [`analysis/week4_report.md`](analysis/week4_report.md) |
 
 ---
 
@@ -18,7 +19,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains four things:
+It contains five things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -34,13 +35,18 @@ It contains four things:
    and linear probing. Each is benchmarked against the Python built-in
    that does the same job (`heapq`, `dict`), with a plain `list` as the
    linear baseline.
-3. **A benchmarking framework** that generates eight different shapes of
+3. **Three graph algorithms** (Week 4) - BFS, DFS in both iterative and
+   recursive form, and Dijkstra's shortest paths built on the Week 3
+   priority queue, over one `Graph` class that holds both an adjacency
+   list and a numpy-backed adjacency matrix. The three are deliberately
+   one loop with three different containers.
+4. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-4. **A performance study each week** built from a real run of that
+5. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -73,11 +79,16 @@ Advanced Algorithms/
 │   │   ├── avl_tree.py             AVL tree with deletion rebalancing
 │   │   └── hash_table.py           Separate chaining and linear probing
 │   ├── searching/                  Reserved for a later week
-│   ├── graphs/                     Week 4: Graph, BFS, DFS, Dijkstra
+│   ├── graphs/
+│   │   ├── graph.py                Graph: adjacency list and numpy matrix
+│   │   ├── bfs.py                  Breadth-first traversal, explicit queue
+│   │   ├── dfs.py                  Depth-first, iterative and recursive
+│   │   └── dijkstra.py             Shortest paths on the Week 3 heap
 │   ├── dynamic_programming/        Reserved for a later week
 │   └── utils/
 │       ├── benchmark.py            BenchmarkResult, AlgorithmBenchmark
-│       ├── visualization.py        Supplementary charts
+│       ├── visualization.py        Supplementary charts, traversal figures
+│       ├── graph_generator.py      Seeded sparse/dense/random graphs
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Shared fixtures and parametrisation
@@ -89,18 +100,25 @@ Advanced Algorithms/
 │   ├── test_avl_tree.py            AVL invariants after every operation
 │   ├── test_hash_table.py          Both strategies, tombstones, rehashing
 │   ├── test_data_structure_comparison.py   All three structures must agree
+│   ├── test_graph_representation.py  List and matrix must agree
+│   ├── test_bfs.py                 BFS order against an independent oracle
+│   ├── test_dfs.py                 Iterative and recursive must match
+│   ├── test_dijkstra.py            Hand-computed paths, negative weights
+│   ├── test_graph_benchmark.py     The harness runs and writes its outputs
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
 │   ├── sorting_benchmarks.py       The Week 1 end-to-end benchmark driver
 │   ├── week2_performance.py        The Week 2 divide-and-conquer benchmark
 │   ├── week3_structures_benchmark.py   The Week 3 data structures benchmark
+│   ├── week4_graph_benchmark.py    The Week 4 graph benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
 │   ├── week2_report.md             Week 2 technical report
 │   ├── week2_recurrences.md        Master Theorem solutions
-│   └── week3_report.md             Week 3 technical report
+│   ├── week3_report.md             Week 3 technical report
+│   └── week4_report.md             Week 4 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -112,13 +130,15 @@ Advanced Algorithms/
 │   ├── build_week2_pdf.py          Builds the Week 2 submission PDF
 │   ├── week3_facts.py              Prints every figure the Week 3 report quotes
 │   ├── build_week3_pdf.py          Builds the Week 3 submission PDF
+│   ├── week4_facts.py              Prints every figure the Week 4 report quotes
+│   ├── build_week4_pdf.py          Builds the Week 4 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
 ├── notebooks/                      Reserved for exploratory work
 └── examples/
     ├── week2_demo.py               Runnable Week 2 demonstration
-    └── week3_demo.py               Runnable Week 3 demonstration
+    ├── week3_demo.py               Runnable Week 3 demonstration
 ```
 
 ---
@@ -140,7 +160,8 @@ pip install -r requirements.txt
 ```
 
 The nine required packages are numpy, matplotlib, pandas, jupyter, pytest,
-scipy, scikit-learn, plotly and seaborn. `requirements.txt` also pins
+scipy, scikit-learn, plotly and seaborn. Week 4 adds `networkx`, which
+draws the traversal figures. `requirements.txt` also pins
 `markdown`, which only `tools/md_to_pdf.py` uses when exporting
 `SUBMISSION.md` to PDF; nothing in `src/`, `tests/` or `benchmarks/`
 depends on it.
@@ -185,10 +206,106 @@ get, delete, rehash and load factor, including the linear-probing
 tombstone case; and a cross-check that all three structures agree on
 membership for the same keys.
 
+Week 4 adds five more: the adjacency list and the adjacency matrix must
+agree on every ordered pair of nodes; BFS visit order is checked against
+an independent brute-force level expansion; iterative and recursive DFS
+must return identical orders, and the recursion limit must be restored
+afterwards; Dijkstra is checked against a hand-computed graph, against
+BFS hop levels on unweighted input, and against its own O(V^2) baseline;
+and the benchmark harness is run end to end to confirm it writes every
+output. The suite is 2,630 tests.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
+```
+
+---
+
+## Week 4: graph algorithms
+
+Week 4 adds one `networkx` dependency, already pinned in
+`requirements.txt`. Everything else is the standard library and numpy.
+
+### The four modules
+
+| Module | Contents |
+|---|---|
+| [`src/graphs/graph.py`](src/graphs/graph.py) | `Graph`, covering directed/undirected and weighted/unweighted in one class. Adjacency list is the primary store; `to_adjacency_matrix()` returns the second representation, backed by numpy. |
+| [`src/graphs/bfs.py`](src/graphs/bfs.py) | `bfs`, `bfs_component`, `bfs_levels`, `bfs_tree`. An explicit `collections.deque`. |
+| [`src/graphs/dfs.py`](src/graphs/dfs.py) | `dfs`, `dfs_iterative`, `dfs_recursive`, `dfs_component`. Both forms return identical orders. |
+| [`src/graphs/dijkstra.py`](src/graphs/dijkstra.py) | `dijkstra`, `shortest_path`, `reconstruct_path`, and `dijkstra_linear_scan` as the O(V^2) baseline. Built on the Week 3 `PriorityQueue`, not `heapq`. |
+
+Graphs for benchmarks and demos come from
+[`src/utils/graph_generator.py`](src/utils/graph_generator.py), seeded at 42.
+
+```python
+from src.graphs.bfs import bfs, bfs_levels
+from src.graphs.dfs import dfs_iterative, dfs_recursive
+from src.graphs.dijkstra import dijkstra, shortest_path
+from src.graphs.graph import Graph
+
+graph = Graph()                      # undirected, unweighted
+for u, v in [(1, 2), (1, 3), (2, 4), (3, 4)]:
+    graph.add_edge(u, v)             # add_edge creates missing nodes
+graph.get_neighbors(1)               # [2, 3]
+bfs(graph, 1)                        # [1, 2, 3, 4] - every component
+bfs_levels(graph, 1)                 # {1: 0, 2: 1, 3: 1, 4: 2}
+dfs_iterative(graph, 1) == dfs_recursive(graph, 1)      # True
+
+dense = graph.to_adjacency_matrix()  # numpy uint8, rows in insertion order
+dense.matrix.nbytes                  # 16
+
+roads = Graph(weighted=True)
+for u, v, w in [("A", "B", 4), ("A", "C", 2), ("C", "B", 1)]:
+    roads.add_edge(u, v, w)
+distances, predecessors = dijkstra(roads, "A")          # {'A': 0.0, 'B': 3.0, 'C': 2.0}
+shortest_path(roads, "A", "B")                          # (['A', 'C', 'B'], 3.0)
+```
+
+### Running the demonstration
+
+```bash
+python examples/week4_demo.py
+```
+
+Five sections on graphs small enough to read: the four kinds of graph, both
+representations agreeing on the same graph, BFS and DFS differing by nothing
+but their container, Dijkstra on a hand-checkable graph including the
+unreachable and negative-weight cases, and all three algorithms on one
+graph. Every claim it prints is asserted. It runs in about 0.6 seconds.
+
+### Running the benchmark
+
+```bash
+python benchmarks/week4_graph_benchmark.py
+```
+
+Four studies: adjacency list against matrix for memory and edge-lookup cost
+at V = 100, 1,000 and 10,000; BFS against both DFS forms on sparse and dense
+graphs; Dijkstra on the Week 3 heap against an O(V^2) linear scan; and the
+drawn traversal figures. The full run takes about 9 seconds on an M2 Max and
+writes `bfs_vs_dfs_sparse.png`, `bfs_vs_dfs_dense.png`,
+`dijkstra_performance.png` and `comparison_table.csv`, plus the supporting
+CSVs and figures, to [`benchmarks/results/`](benchmarks/results/).
+
+Both runtime limits are handled by reducing and recording rather than
+dropping a point: a matrix past a 512 MB cap is skipped with the reason
+written into the CSV, and the linear-scan Dijkstra is capped at V = 2,000
+while the heap runs to 8,000.
+
+For a smoke run, send it somewhere else so it does not overwrite the
+committed results:
+
+```bash
+python benchmarks/week4_graph_benchmark.py --quick --out /tmp/week4_quick
+```
+
+Every figure quoted in the Week 4 report is recomputed from the CSVs by:
+
+```bash
+python tools/week4_facts.py
 ```
 
 ---
@@ -355,7 +472,8 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents; I specified the requirements, directed the work,
+written documents, Week 4's graph algorithms included; I specified the
+requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a
 quotation.

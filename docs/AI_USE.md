@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1, Week 2,
-then Week 3.
+Week 3, then Week 4.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -25,7 +25,7 @@ was used.
 
 I wrote a detailed specification of the assignment's requirements -
 derived from the Blackboard assignment instructions, the Detailed Grading
-Criteria, and Chapter 1 §§1.6–1.10 of Amakobe, *Advanced Computational
+Criteria, and Chapter 1 §§1.6-1.10 of Amakobe, *Advanced Computational
 Algorithms* (2nd ed., 2026) - and directed the tool to implement the
 project against it. I reviewed the output, ran the tests and benchmarks
 myself, and made the decisions about scope, structure and what the report
@@ -92,7 +92,7 @@ me, which the table above discloses; it is not quoted material.
 * Blackboard: the CSC 5300 Week 1 assignment instructions, submission
   checklist and Detailed Grading Criteria.
 * Amakobe, *Advanced Computational Algorithms*, 2nd ed. (2026), Chapter 1
-  §§1.6–1.10 - the source of the required project structure, the
+  §§1.6-1.10 - the source of the required project structure, the
   `AlgorithmBenchmark` interface, and the package list.
 * Standard library and package documentation for Python 3.12, pytest,
   matplotlib, scipy and pandas.
@@ -120,7 +120,7 @@ locally. No other AI tool was used.
 The same working method as Week 1, and the same division of labour. I
 wrote a specification of the requirements from the Blackboard instructions,
 Dr. Amakobe's Week 2 announcement, the Week 2 Plan and the assigned reading
-(CLRS Ch. 2.3–2.4 and Ch. 4, Amakobe Ch. 2), and directed the tool to
+(CLRS Ch. 2.3-2.4 and Ch. 4, Amakobe Ch. 2), and directed the tool to
 implement against it. The model drafted the code, the tests and the first
 draft of the written documents; I set the requirements, made the design
 decisions, ran the benchmarks and decided what the results support.
@@ -182,7 +182,7 @@ attribution.
 * The Blackboard Week 2 assignment instructions, the Week 2 Plan, and
   Dr. Amakobe's Week 2 announcement of 31 August 2026.
 * Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
-  ed. - Ch. 2.3–2.4 (merge sort), Ch. 4 (the Master Theorem), Ch. 7
+  ed. - Ch. 2.3-2.4 (merge sort), Ch. 4 (the Master Theorem), Ch. 7
   (quicksort, and the Hoare partition problem).
 * Amakobe, *Advanced Computational Algorithms*, 2nd ed., Ch. 2.
 * Python, pytest, matplotlib and pandas documentation.
@@ -258,3 +258,80 @@ attribution.
 * Knuth, *The Art of Computer Programming*, Vol. 3, §6.4, for the expected
   probe counts under linear probing.
 * Python, pytest, matplotlib and pandas documentation.
+
+---
+
+# Week 4 - Graph Algorithms
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 3. I wrote a
+specification from the Blackboard Week 4 instructions and their Submission
+Checklist and directed the tool to implement against it. The specification
+fixed the decisions that decide correctness: one Graph class covering all
+four directed/weighted combinations, a numpy-backed adjacency matrix rather
+than nested lists, DFS in both iterative and recursive form, Dijkstra built
+on the Week 3 priority queue rather than heapq, and the argument the report
+is built around. The model drafted the code, the tests and the first draft
+of the report; I reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/graphs/graph.py`, `bfs.py`, `dfs.py`, `dijkstra.py` | AI-drafted, reviewed by me |
+| `src/utils/graph_generator.py`, and the traversal figures added to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/test_graph_representation.py`, `test_bfs.py`, `test_dfs.py`, `test_dijkstra.py`, `test_graph_benchmark.py` | AI-drafted, reviewed by me |
+| `benchmarks/week4_graph_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week4_demo.py`, `tools/week4_facts.py`, `tools/build_week4_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week4_report.md`, the README's Week 4 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every timing, memory figure and chart this week came
+from running `benchmarks/week4_graph_benchmark.py` on my machine; the full
+study takes 9.0 seconds. Nothing was estimated or adjusted, and the
+report's figures are printed from the result CSVs by
+`tools/week4_facts.py`, so they can be re-checked against a fresh run in
+one command.
+
+**The engineering judgment.** Three decisions this week were mine and each
+changed the result. Backing the adjacency matrix with numpy rather than
+nested Python lists is what made V = 10,000 measurable at all: 10^8 cells
+as `uint8` is 100 MB, and as nested lists it is gigabytes. Capping the
+O(V^2) linear-scan Dijkstra at V = 2,000 while letting the heap version run
+to 8,000, and saying plainly in the report that the two series cover
+different ranges, follows the rule set in Week 1: reduce and document,
+never silently drop a required data point. And reporting the two
+classification disagreements as measured, rather than quietly relabelling
+them, is the same call I made in Week 3.
+
+**What the report claims.** The report's thesis is that the container
+decides which traversal you have, and it names the two places that breaks
+rather than hiding them. The second one is a real limit: the Week 3
+priority queue has no decrease-key, so Dijkstra uses lazy deletion and the
+heap holds O(E) entries rather than O(V). That is stated in the docstring
+and in the report because it changes the analysis.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 4 assignment instructions and Submission Checklist.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed. - Ch. 22, Elementary Graph Algorithms, pp. 589-619, and Ch. 24.3,
+  pp. 658-666.
+* Dijkstra, E. W. (1959). "A Note on Two Problems in Connexion with
+  Graphs." *Numerische Mathematik* 1(1), 269-271.
+* Amakobe, *Advanced Computational Algorithms*, 2nd ed.
+* networkx, numpy, matplotlib, pytest and Python documentation.
