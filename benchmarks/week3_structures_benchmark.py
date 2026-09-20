@@ -1042,7 +1042,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print("\n=== writing results ===")
     bench.export_results(os.path.join(out, "week3_raw_results.csv"))
-    write_csv(os.path.join(out, "comparison_table.csv"), comparison_rows(matrix, config.sizes))
+    write_csv(os.path.join(out, "structures_comparison_table.csv"), comparison_rows(matrix, config.sizes))
     write_csv(os.path.join(out, "week3_load_factor.csv"), load_rows)
     write_csv(os.path.join(out, "week3_worst_case.csv"), worst_rows)
     write_csv(os.path.join(out, "week3_amortized.csv"), amortized_rows)

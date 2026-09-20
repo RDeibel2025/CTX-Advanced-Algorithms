@@ -32,7 +32,7 @@ def heading(text: str) -> None:
 
 
 def main() -> int:
-    table = pd.read_csv(os.path.join(RESULTS, "comparison_table.csv"))
+    table = pd.read_csv(os.path.join(RESULTS, "structures_comparison_table.csv"))
     load = pd.read_csv(os.path.join(RESULTS, "week3_load_factor.csv"))
     worst = pd.read_csv(os.path.join(RESULTS, "week3_worst_case.csv"))
     amortized = pd.read_csv(os.path.join(RESULTS, "week3_amortized.csv"))

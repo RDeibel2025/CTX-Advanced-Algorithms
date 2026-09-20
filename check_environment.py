@@ -61,7 +61,7 @@ REQUIRED_DIRECTORIES: List[str] = [
     "src",
     "src/sorting",
     "src/searching",
-    "src/graph",
+    "src/graphs",
     "src/dynamic_programming",
     "src/structures",
     "src/utils",
@@ -91,7 +91,7 @@ REQUIRED_FILES: List[str] = [
     "src/sorting/basic_sorts.py",
     "src/sorting/advanced_sorts.py",
     "src/searching/__init__.py",
-    "src/graph/__init__.py",
+    "src/graphs/__init__.py",
     "src/dynamic_programming/__init__.py",
     "src/structures/__init__.py",
     "src/utils/__init__.py",
@@ -131,7 +131,7 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/results/heap_performance.png",
     "benchmarks/results/tree_performance.png",
     "benchmarks/results/hash_performance.png",
-    "benchmarks/results/comparison_table.csv",
+    "benchmarks/results/structures_comparison_table.csv",
 ]
 
 OK = "[ OK ]"

@@ -117,7 +117,7 @@ consistent with outgrowing the processor's caches.
 | Probing get | O(1) average | 156.9 | 253.2 | O(log n)* |
 
 16 of the 23 series in
-[`comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/comparison_table.csv)
+[`structures_comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/structures_comparison_table.csv)
 (every size, run count, slope and growth ratio) match their expected class. All seven
 mismatches (*) are O(1) hash-table series growing at 10⁶, which §3.3 traces to memory,
 not work; the classifier's verdict stands unedited.

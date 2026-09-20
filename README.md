@@ -44,7 +44,7 @@ It contains four things:
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
-The remaining directories (`src/searching/`, `src/graph/`,
+The remaining directories (`src/searching/`,
 `src/dynamic_programming/`) are the semester's
 scaffolding. They are real Python packages with documented placeholders,
 ready for later weeks.
@@ -73,7 +73,7 @@ Advanced Algorithms/
 │   │   ├── avl_tree.py             AVL tree with deletion rebalancing
 │   │   └── hash_table.py           Separate chaining and linear probing
 │   ├── searching/                  Reserved for a later week
-│   ├── graph/                      Reserved for a later week
+│   ├── graphs/                     Week 4: Graph, BFS, DFS, Dijkstra
 │   ├── dynamic_programming/        Reserved for a later week
 │   └── utils/
 │       ├── benchmark.py            BenchmarkResult, AlgorithmBenchmark
@@ -262,7 +262,7 @@ lookup time against load factor, an engineered all-colliding key set,
 the per-insert cost of rehashing, and AVL height against its bounds. The
 full run takes about two minutes on an M2 Max, and writes the three
 required charts (`heap_performance.png`, `tree_performance.png`,
-`hash_performance.png`), `comparison_table.csv` (asymptotic against
+`hash_performance.png`), `structures_comparison_table.csv` (asymptotic against
 empirical, with run counts) and the supporting CSVs and charts to
 [`benchmarks/results/`](benchmarks/results/).
 
