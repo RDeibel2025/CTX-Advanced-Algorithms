@@ -1,0 +1,4 @@
+n,edges,density,list_bytes,list_lookup_ns,runs,matrix_bytes,matrix_lookup_ns,matrix_build_s,matrix_status
+100,200,0.040404,29520,77.98,5,10000,71.14,0.0001,measured
+1000,2000,0.004004,287616,88.08,5,1000000,93.73,0.0008,measured
+10000,20000,0.0004,2808344,153.83,2,100000000,158.53,0.0159,measured

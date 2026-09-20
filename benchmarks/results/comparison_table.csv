@@ -1,0 +1,19 @@
+structure,operation,asymptotic,expected_growth_class,unit,n_smallest,value_smallest,n_largest,value_largest,runs_smallest,runs_largest,loglog_slope,growth_measured,growth_predicted,empirical_class,agrees,note
+BFS (sparse),traverse every node,O(V + E),O(n),seconds,100,0.0001,10000,0.0042,5,2,0.9704,83.0,100.0,O(n),True,E ~ 2V
+BFS (sparse),per V+E unit,O(V + E),O(1),ns per V+E,100,165.916,10000,138.319,5,2,-0.0289,0.834,1.0,O(1),True,flat here is what O(V + E) means
+DFS (iterative) (sparse),traverse every node,O(V + E),O(n),seconds,100,0.0001,10000,0.0057,5,2,0.9474,78.466,100.0,O(n),True,E ~ 2V
+DFS (iterative) (sparse),per V+E unit,O(V + E),O(1),ns per V+E,100,244.667,10000,190.933,5,2,-0.0537,0.78,1.0,O(1),True,flat here is what O(V + E) means
+DFS (recursive) (sparse),traverse every node,O(V + E),O(n),seconds,100,0.0,10000,0.0053,5,2,1.0211,115.565,100.0,O(n),True,E ~ 2V
+DFS (recursive) (sparse),per V+E unit,O(V + E),O(1),ns per V+E,100,154.557,10000,177.212,5,2,0.0195,1.147,1.0,O(1),True,flat here is what O(V + E) means
+BFS (dense),traverse every node,O(V + E),O(n^2),seconds,50,0.0,800,0.0059,5,3,1.8378,160.703,256.0,O(n^2),True,E ~ V^2 / 4
+BFS (dense),per V+E unit,O(V + E),O(1),ns per V+E,50,55.186,800,37.023,5,3,-0.1395,0.671,1.0,O(1),True,flat here is what O(V + E) means
+DFS (iterative) (dense),traverse every node,O(V + E),O(n^2),seconds,50,0.0001,800,0.0128,5,3,1.8946,185.797,256.0,O(n^2),True,E ~ V^2 / 4
+DFS (iterative) (dense),per V+E unit,O(V + E),O(1),ns per V+E,50,103.915,800,79.828,5,3,-0.0857,0.768,1.0,O(1),True,flat here is what O(V + E) means
+DFS (recursive) (dense),traverse every node,O(V + E),O(n^2),seconds,50,0.0,800,0.0062,5,3,1.7747,144.023,256.0,O(n^2),True,E ~ V^2 / 4
+DFS (recursive) (dense),per V+E unit,O(V + E),O(1),ns per V+E,50,65.521,800,38.564,5,3,-0.2094,0.589,1.0,O(1),True,flat here is what O(V + E) means
+Dijkstra (heap priority queue),single source shortest paths,O((V + E) log V),O(n log n),seconds,100,0.0002,8000,0.025,5,2,1.118,130.995,156.124,O(n log n),True,
+Dijkstra (linear scan),single source shortest paths,O(V^2),O(n^2),seconds,100,0.0004,2000,0.1342,5,3,1.9821,365.728,400.0,O(n^2),True,"capped, so this series covers a shorter range"
+Adjacency list,memory held,O(V + E),O(n),bytes,100,29520.0,10000,2808344.0,5,2,0.9892,95.134,100.0,O(n),True,
+Adjacency matrix,memory held,O(V^2),O(n^2),bytes,100,10000.0,10000,100000000.0,5,2,2.0,10000.0,10000.0,O(n^2),True,
+Adjacency list,single edge lookup,O(1) average,O(1),ns,100,77.98,10000,153.83,5,2,0.1475,1.973,1.0,O(log n),False,
+Adjacency matrix,single edge lookup,O(1),O(1),ns,100,71.14,10000,158.53,5,2,0.174,2.228,1.0,O(log n),False,
