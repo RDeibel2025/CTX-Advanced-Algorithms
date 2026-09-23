@@ -35,6 +35,29 @@ from random positions. Without a seed the same graph is drawn differently on
 every run, the two panels of :func:`plot_bfs_vs_dfs` would not line up, and
 the figure would compare two pictures instead of two traversals.
 
+Week 5 adds the dynamic-programming figures. These three read the
+benchmark's measurement rows directly - the same list of dicts that becomes
+``benchmarks/results/dp_vs_recursive_table.csv`` - so the figures and the
+table cannot disagree about what was run.
+
+* :func:`plot_fibonacci_comparison` - runtime against n on a logarithmic
+  axis, one series per variant. The naive recursion runs out of budget
+  before n = 45, so the points past the measured range are drawn hollow on
+  a dashed segment and labelled as projections rather than being quietly
+  dropped or quietly passed off as measurements.
+* :func:`plot_knapsack_performance` - two panels, because the knapsack
+  table is O(n x W) and one pair of axes can only move one of those two
+  factors at a time.
+* :func:`plot_lcs_performance` - runtime against string length, with the
+  range plain recursion was actually run over shaded and named, so its
+  short series reads as a stated limit rather than as a line that stops
+  for no reason.
+
+Any numeric field in those rows can arrive as an empty string, which is how
+the benchmark records a value it did not produce. Every Week 5 function
+treats that as missing and drops the point. None of them substitutes a
+number the benchmark never measured.
+
 Every function returns the :class:`matplotlib.figure.Figure` it built and
 writes a 200 dpi PNG when given ``save_path``.
 
@@ -72,6 +95,9 @@ __all__ = [
     "graph_to_networkx",
     "plot_traversal_order",
     "plot_bfs_vs_dfs",
+    "plot_fibonacci_comparison",
+    "plot_knapsack_performance",
+    "plot_lcs_performance",
 ]
 
 
@@ -800,6 +826,731 @@ def plot_bfs_vs_dfs(
         fontsize=13,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.94))
+
+    _save(fig, save_path)
+    return fig
+
+
+# ----------------------------------------------------------------------
+# Week 5: dynamic programming figures
+# ----------------------------------------------------------------------
+# The benchmark hands these three functions its measurement rows unchanged:
+# one dict per (problem, variant, input size), carrying exactly the columns
+# of benchmarks/results/dp_vs_recursive_table.csv. Reading the same rows the
+# CSV is written from, rather than a reshaped copy, is what keeps the
+# figures and the table from ever disagreeing about what was run.
+_DP_VARIANT_ORDER: Tuple[str, ...] = ("naive", "recursive", "memo", "tab")
+
+# Colour, marker and line style all change together from variant to
+# variant. A reader who cannot separate the colours - greyscale print,
+# colour blindness, a projector - still has two other channels to read the
+# series by, which is this project's standing rule for every figure.
+_DP_VARIANT_STYLE: Dict[str, Dict[str, Any]] = {
+    "naive": {"color": "#c1121f", "marker": "o", "linestyle": "-"},
+    "recursive": {"color": "#c1121f", "marker": "o", "linestyle": "-"},
+    "memo": {"color": "#1d3557", "marker": "s", "linestyle": "--"},
+    "tab": {"color": "#2a9d8f", "marker": "^", "linestyle": "-."},
+}
+# "naive" and "recursive" share a style deliberately: no problem uses both
+# names, so across the three figures one red circle always means "the
+# version that remembers nothing".
+_DP_VARIANT_LABEL: Dict[str, str] = {
+    "naive": "naive recursion",
+    "recursive": "plain recursion",
+    "memo": "memoization (top-down)",
+    "tab": "tabulation (bottom-up)",
+}
+_DP_FALLBACK_MARKERS: Tuple[str, ...] = ("D", "v", "P", "X", "*")
+_DP_FALLBACK_LINESTYLES: Tuple[str, ...] = ("-", "--", "-.", ":")
+
+# The wording matters more than it looks: a projected point is arithmetic,
+# not a stopwatch reading, and the figure has to say which it is.
+_PROJECTED_LEGEND_TEXT = (
+    "projected, not timed: measured per-call cost\n"
+    "multiplied by the exact call count"
+)
+
+
+def _row_number(row: Dict[str, Any], key: str) -> Optional[float]:
+    """Read one numeric field out of a benchmark row, or ``None``.
+
+    The Week 5 CSV leaves a cell empty wherever the benchmark had no value
+    to put in it: ``speedup_vs_recursive`` on a projected row, ``calls`` on
+    a variant that was never instrumented. Read back, those cells arrive as
+    empty strings where a number would be. Every numeric read in the Week 5
+    figures goes through here and comes back either as a finite float or as
+    ``None``, so a missing measurement can be dropped from the chart
+    instead of being replaced by a number nobody measured.
+
+    Args:
+        row: One benchmark measurement row.
+        key: The column to read.
+
+    Returns:
+        The value as a float, or ``None`` when the key is absent, empty,
+        unparseable, or not finite.
+
+    Examples:
+        >>> _row_number({"mean_time_s": "0.25"}, "mean_time_s")
+        0.25
+        >>> _row_number({"mean_time_s": 0.5}, "mean_time_s")
+        0.5
+        >>> _row_number({"speedup_vs_recursive": ""}, "speedup_vs_recursive")
+        >>> _row_number({}, "calls")
+        >>> _row_number({"n": "n/a"}, "n")
+    """
+    value = row.get(key)
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        number = float(value)
+        return number if np.isfinite(number) else None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        number = float(text)
+    except ValueError:
+        return None
+    return number if np.isfinite(number) else None
+
+
+def _row_text(row: Dict[str, Any], key: str) -> str:
+    """Read one string field out of a benchmark row, lower-cased and stripped.
+
+    Used for ``problem``, ``variant`` and ``measurement``, the three columns
+    that are compared against literals. Normalising here means a stray
+    ``"Projected"`` or ``" tab"`` from a hand-edited CSV still matches.
+    """
+    value = row.get(key)
+    return "" if value is None else str(value).strip().lower()
+
+
+def _format_measure(value: float) -> str:
+    """Format a number for an axis label, a title or a legend entry.
+
+    Input sizes arrive as floats because they came through a CSV, but
+    ``W = 1,000`` reads better in a panel title than ``W = 1000.0``.
+    """
+    number = float(value)
+    return f"{int(number):,}" if number.is_integer() else f"{number:g}"
+
+
+def _dp_rows(rows: Sequence[Dict[str, Any]], problem: str) -> List[Dict[str, Any]]:
+    """Select the rows belonging to one problem: fibonacci, knapsack or lcs."""
+    return [row for row in rows if _row_text(row, "problem") == problem]
+
+
+def _ordered_variants(rows: Sequence[Dict[str, Any]]) -> List[str]:
+    """List the variants present, known ones first and in a fixed order.
+
+    Fixing the order fixes the legend order, so the three Week 5 figures
+    list their series the same way and can be read as a set rather than as
+    three unrelated charts. A variant the project does not know about is
+    still drawn, appended in the order it first appears.
+    """
+    seen: List[str] = []
+    for row in rows:
+        variant = _row_text(row, "variant")
+        if variant and variant not in seen:
+            seen.append(variant)
+    known = [name for name in _DP_VARIANT_ORDER if name in seen]
+    return known + [name for name in seen if name not in _DP_VARIANT_ORDER]
+
+
+def _variant_style(variant: str, index: int) -> Dict[str, Any]:
+    """Return the colour, marker and line style for one variant."""
+    style = _DP_VARIANT_STYLE.get(variant)
+    if style is not None:
+        return dict(style)
+    palette = plt.get_cmap("tab10").colors
+    return {
+        "color": palette[(index + 4) % len(palette)],
+        "marker": _DP_FALLBACK_MARKERS[index % len(_DP_FALLBACK_MARKERS)],
+        "linestyle": _DP_FALLBACK_LINESTYLES[index % len(_DP_FALLBACK_LINESTYLES)],
+    }
+
+
+def _dp_points(
+    rows: Sequence[Dict[str, Any]], x_key: str
+) -> List[Tuple[float, float, bool]]:
+    """Turn rows into ``(x, mean seconds, is_projected)`` triples, sorted by x.
+
+    A row with no x value, or no mean time, contributes nothing: there is
+    no honest place to put it on the axes. A non-positive mean time is
+    dropped for the same reason, since every Week 5 figure uses a
+    logarithmic runtime axis and a zero has no position on one.
+    """
+    points: List[Tuple[float, float, bool]] = []
+    for row in rows:
+        x_value = _row_number(row, x_key)
+        y_value = _row_number(row, "mean_time_s")
+        if x_value is None or y_value is None or y_value <= 0.0:
+            continue
+        points.append((x_value, y_value, _row_text(row, "measurement") == "projected"))
+    points.sort(key=lambda point: point[0])
+    return points
+
+
+def _plot_variant_series(
+    ax: Axes,
+    points: Sequence[Tuple[float, float, bool]],
+    style: Dict[str, Any],
+    label: str,
+) -> bool:
+    """Draw one variant's series, keeping projected points visibly apart.
+
+    Measured points are filled markers on the variant's own line style.
+    Projected points are hollow markers on a dashed segment that continues
+    the curve from the last measured point, so the projection reads as an
+    extension of the measurement it was computed from and never as another
+    reading of the clock.
+
+    Returns:
+        True if any projected point was drawn, which tells the caller
+        whether the figure needs the projected legend entry.
+    """
+    measured = [(x, y) for x, y, projected in points if not projected]
+    projected = [(x, y) for x, y, projected in points if projected]
+
+    if measured:
+        ax.plot(
+            [x for x, _ in measured],
+            [y for _, y in measured],
+            color=style["color"],
+            marker=style["marker"],
+            linestyle=style["linestyle"],
+            linewidth=1.9,
+            markersize=6.5,
+            label=label,
+            zorder=3,
+        )
+    if not projected:
+        return False
+
+    bridge = measured[-1:] + projected
+    ax.plot(
+        [x for x, _ in bridge],
+        [y for _, y in bridge],
+        color=style["color"],
+        linestyle="--",
+        linewidth=1.5,
+        marker="",
+        alpha=0.9,
+        zorder=2,
+    )
+    ax.plot(
+        [x for x, _ in projected],
+        [y for _, y in projected],
+        color=style["color"],
+        marker=style["marker"],
+        linestyle="",
+        markersize=9,
+        markerfacecolor="none",
+        markeredgecolor=style["color"],
+        markeredgewidth=1.9,
+        zorder=4,
+        label=None if measured else f"{label} (projected)",
+    )
+    return True
+
+
+def _draw_dp_series(
+    ax: Axes, rows: Sequence[Dict[str, Any]], x_key: str
+) -> Tuple[int, bool]:
+    """Draw every variant present in ``rows`` onto one axes.
+
+    Returns:
+        ``(series drawn, any projected point drawn)``.
+    """
+    drawn = 0
+    any_projected = False
+    for index, variant in enumerate(_ordered_variants(rows)):
+        subset = [row for row in rows if _row_text(row, "variant") == variant]
+        points = _dp_points(subset, x_key)
+        if not points:
+            continue
+        label = _DP_VARIANT_LABEL.get(variant, variant)
+        if _plot_variant_series(ax, points, _variant_style(variant, index), label):
+            any_projected = True
+        drawn += 1
+    return drawn, any_projected
+
+
+def _add_projected_legend_entry(ax: Axes) -> None:
+    """Add the proxy handle that explains what a hollow marker means.
+
+    The projected points carry no label of their own, because repeating
+    "projected" once per variant would crowd the legend and still not say
+    where the number came from. One neutral entry says it once.
+    """
+    ax.plot(
+        [],
+        [],
+        color="0.35",
+        linestyle="--",
+        linewidth=1.5,
+        marker="o",
+        markersize=9,
+        markerfacecolor="none",
+        markeredgecolor="0.35",
+        markeredgewidth=1.9,
+        label=_PROJECTED_LEGEND_TEXT,
+    )
+
+
+def _dominant_value(rows: Sequence[Dict[str, Any]], key: str) -> Optional[float]:
+    """Pick the value of ``key`` shared by the most rows, largest winning ties.
+
+    This is how :func:`plot_knapsack_performance` chooses what to hold
+    fixed when the caller does not say. The value the benchmark swept the
+    most points at is the one it meant as the control, and breaking ties on
+    the larger value keeps the choice deterministic across runs.
+    """
+    tally: Dict[float, int] = {}
+    for row in rows:
+        value = _row_number(row, key)
+        if value is None:
+            continue
+        tally[value] = tally.get(value, 0) + 1
+    if not tally:
+        return None
+    return max(tally, key=lambda value: (tally[value], value))
+
+
+def _rows_at(
+    rows: Sequence[Dict[str, Any]], key: str, value: float
+) -> List[Dict[str, Any]]:
+    """Select rows whose numeric ``key`` equals ``value``."""
+    return [row for row in rows if _row_number(row, key) == value]
+
+
+def plot_fibonacci_comparison(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot Fibonacci runtime against n for every variant, on a log axis.
+
+    This is the figure that makes the whole week's point in one picture.
+    The naive recursion and the two rememberers compute the same numbers,
+    and on a linear axis the DP series would be flat against the bottom of
+    the frame with nothing readable in them. On a logarithmic runtime axis
+    the naive series is a straight climbing line - which is what an
+    exponential looks like once the axis is logged - while memoization and
+    tabulation stay very nearly flat.
+
+    The naive series cannot be measured all the way out. A call to
+    ``fib_naive`` at n = 45 makes 3,672,623,805 of them, which is minutes
+    per run and far longer than a benchmark loop with warmups and repeats.
+    Those points are therefore projected from the per-call cost measured on
+    this machine and the exact closed-form call count, and the figure has
+    to say so: projected points are drawn as hollow markers on a dashed
+    continuation of the measured curve, with their own legend entry. A
+    projection presented as a measurement would be the most serious thing
+    this chart could get wrong, so it is marked in three ways at once -
+    marker fill, line style and legend text.
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/dp_vs_recursive_table.csv``. Rows for
+            other problems are ignored. Any numeric field may be an empty
+            string; a row missing ``n`` or ``mean_time_s`` is skipped
+            rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If no row carries ``problem == "fibonacci"`` together
+            with a usable ``n`` and ``mean_time_s``.
+
+    Time Complexity:
+        O(R log R) in the number of Fibonacci rows R. Each row is read a
+        constant number of times and each variant's points are sorted by n.
+
+    Space Complexity:
+        O(R) for the extracted points, plus the figure itself.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, n, seconds, measurement="measured"):
+        ...     return {"problem": "fibonacci", "variant": variant, "n": n,
+        ...             "secondary_param": "", "mean_time_s": seconds,
+        ...             "std_time_s": "", "min_time_s": "", "max_time_s": "",
+        ...             "calls": "", "max_depth": "", "peak_kib": "",
+        ...             "speedup_vs_recursive": "", "measurement": measurement}
+        >>> rows = [row("naive", 20, 0.0021), row("naive", 30, 0.26),
+        ...         row("naive", 40, 32.4, "projected"),
+        ...         row("memo", 20, 6.2e-06), row("memo", 30, 9.4e-06),
+        ...         row("memo", 40, 1.3e-05),
+        ...         row("tab", 20, 1.1e-06), row("tab", 30, 1.6e-06),
+        ...         row("tab", 40, 2.1e-06)]
+        >>> png = os.path.join(tempfile.mkdtemp(), "fibonacci_comparison.png")
+        >>> fig = plot_fibonacci_comparison(rows, png)
+        >>> fig.axes[0].get_yscale()
+        'log'
+        >>> os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        A row whose mean time was never produced is dropped, not invented:
+
+        >>> fig = plot_fibonacci_comparison(rows + [row("naive", 45, "")])
+        >>> plt.close(fig)
+
+        Nothing to draw is a caller error, not an empty picture:
+
+        >>> plot_fibonacci_comparison([])
+        Traceback (most recent call last):
+            ...
+        ValueError: no fibonacci rows with a usable n and mean_time_s
+    """
+    apply_house_style()
+    fibonacci_rows = _dp_rows(rows, "fibonacci")
+
+    fig, ax = plt.subplots(figsize=(8.8, 5.6))
+    drawn, any_projected = _draw_dp_series(ax, fibonacci_rows, "n")
+    if drawn == 0:
+        plt.close(fig)
+        raise ValueError("no fibonacci rows with a usable n and mean_time_s")
+    if any_projected:
+        _add_projected_legend_entry(ax)
+
+    ax.set_yscale("log")
+    ticks = sorted({point[0] for point in _dp_points(fibonacci_rows, "n")})
+    if 0 < len(ticks) <= 12:
+        ax.set_xticks(ticks)
+        ax.set_xticklabels([_format_measure(tick) for tick in ticks])
+    ax.set_xlabel("Fibonacci index n (term number)")
+    ax.set_ylabel("Mean runtime (seconds, log scale)")
+    ax.set_title(
+        "Fibonacci: one exponential recursion against two that remember\n"
+        "(log runtime axis; hollow markers on dashes are projected)"
+    )
+    # Upper left is the one corner the data cannot reach: the naive series
+    # climbs from the bottom left and the DP series stay along the floor.
+    ax.legend(loc="upper left", fontsize=8)
+    ax.grid(True, which="both", linestyle=":", linewidth=0.5, alpha=0.7)
+    fig.tight_layout()
+
+    _save(fig, save_path)
+    return fig
+
+
+def plot_knapsack_performance(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+    *,
+    fixed_capacity: Optional[float] = None,
+    fixed_n: Optional[float] = None,
+) -> Figure:
+    """Plot knapsack runtime against item count and against capacity.
+
+    The 0/1 knapsack table is O(n x W), and a single pair of axes can only
+    move one of those two factors at a time. Two panels is not a layout
+    preference here, it is the shape of the cost: the left panel holds the
+    capacity fixed and sweeps the item count, the right panel holds the
+    item count fixed and sweeps the capacity. Read together they show the
+    product, and each panel is titled with the value it held still so
+    neither can be mistaken for the whole story.
+
+    Both panels use a logarithmic runtime axis, because the recursive
+    variant is exponential in n while the two DP variants are linear in the
+    table size, and no linear axis holds both.
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/dp_vs_recursive_table.csv``. Rows for
+            other problems are ignored. Any numeric field may be an empty
+            string, and such a row is skipped rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+        fixed_capacity: The capacity the left panel holds fixed, matched
+            against ``secondary_param``. When omitted, the capacity that
+            the most knapsack rows were measured at is used, since that is
+            the sweep the benchmark treated as its control.
+        fixed_n: The item count the right panel holds fixed, matched
+            against ``n``. Chosen the same way when omitted.
+
+    Returns:
+        The two-panel :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If there are no knapsack rows at all, if no row carries
+            the column a panel sweeps against, or if an explicitly
+            requested ``fixed_capacity`` or ``fixed_n`` matches no row.
+            Silently drawing an empty panel would read as "the DP variants
+            were not run", which is a different claim entirely.
+
+    Time Complexity:
+        O(R log R) in the number of knapsack rows R: a constant number of
+        passes to tally and select, then a sort per variant per panel.
+
+    Space Complexity:
+        O(R) for the selected rows and extracted points, plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, n, capacity, seconds):
+        ...     return {"problem": "knapsack", "variant": variant, "n": n,
+        ...             "secondary_param": capacity, "mean_time_s": seconds,
+        ...             "std_time_s": "", "min_time_s": "", "max_time_s": "",
+        ...             "calls": "", "max_depth": "", "peak_kib": "",
+        ...             "speedup_vs_recursive": "", "measurement": "measured"}
+        >>> rows = [row("recursive", 10, 100, 0.004),
+        ...         row("recursive", 14, 100, 0.07),
+        ...         row("memo", 10, 100, 0.0006), row("memo", 14, 100, 0.0009),
+        ...         row("tab", 10, 100, 0.0004), row("tab", 14, 100, 0.0006),
+        ...         row("memo", 14, 200, 0.0017), row("tab", 14, 200, 0.0011)]
+        >>> png = os.path.join(tempfile.mkdtemp(), "knapsack_performance.png")
+        >>> fig = plot_knapsack_performance(rows, png, fixed_capacity=100,
+        ...                                 fixed_n=14)
+        >>> len(fig.axes)
+        2
+        >>> os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        Left alone, each panel holds fixed whatever was measured most:
+
+        >>> fig = plot_knapsack_performance(rows)
+        >>> fig.axes[0].get_title()
+        'Item count n at fixed capacity W = 100'
+        >>> fig.axes[1].get_title()
+        'Capacity W at fixed item count n = 14'
+        >>> plt.close(fig)
+
+        A capacity that was never run is a caller error, not a blank panel:
+
+        >>> plot_knapsack_performance(rows, fixed_capacity=999)
+        Traceback (most recent call last):
+            ...
+        ValueError: no knapsack rows at capacity W = 999
+    """
+    apply_house_style()
+    knapsack_rows = _dp_rows(rows, "knapsack")
+    if not knapsack_rows:
+        raise ValueError("no knapsack rows to plot")
+
+    capacity = (
+        _dominant_value(knapsack_rows, "secondary_param")
+        if fixed_capacity is None
+        else float(fixed_capacity)
+    )
+    item_count = (
+        _dominant_value(knapsack_rows, "n") if fixed_n is None else float(fixed_n)
+    )
+    if capacity is None:
+        raise ValueError("no knapsack rows carry a capacity in secondary_param")
+    if item_count is None:
+        raise ValueError("no knapsack rows carry an item count in n")
+
+    by_capacity = _rows_at(knapsack_rows, "secondary_param", capacity)
+    by_item_count = _rows_at(knapsack_rows, "n", item_count)
+    if not by_capacity:
+        raise ValueError(
+            f"no knapsack rows at capacity W = {_format_measure(capacity)}"
+        )
+    if not by_item_count:
+        raise ValueError(
+            f"no knapsack rows at item count n = {_format_measure(item_count)}"
+        )
+
+    fig, axes = plt.subplots(1, 2, figsize=(13.6, 5.4))
+    panels = (
+        (
+            axes[0],
+            by_capacity,
+            "n",
+            "Number of items n (items)",
+            f"Item count n at fixed capacity W = {_format_measure(capacity)}",
+        ),
+        (
+            axes[1],
+            by_item_count,
+            "secondary_param",
+            "Knapsack capacity W (weight units)",
+            f"Capacity W at fixed item count n = {_format_measure(item_count)}",
+        ),
+    )
+    for ax, panel_rows, x_key, xlabel, title in panels:
+        drawn, any_projected = _draw_dp_series(ax, panel_rows, x_key)
+        if drawn == 0:
+            plt.close(fig)
+            raise ValueError(f"no usable mean_time_s among the rows for: {title}")
+        if any_projected:
+            _add_projected_legend_entry(ax)
+        ax.set_yscale("log")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Mean runtime (seconds, log scale)")
+        ax.set_title(title)
+        ax.legend(fontsize=8)
+        ax.grid(True, which="both", linestyle=":", linewidth=0.5, alpha=0.7)
+
+    fig.suptitle(
+        "0/1 knapsack: the table is O(n x W), so each panel moves one factor",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+
+    _save(fig, save_path)
+    return fig
+
+
+def plot_lcs_performance(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot LCS runtime against string length, marking where recursion stopped.
+
+    The DP variants run the full length range the assignment asks for. The
+    plain recursion does not, and cannot: it is O(2^(n+m)), so it was run
+    only over the short lengths where it finishes at all. Drawn naively,
+    that series would simply stop part-way across the figure, which reads
+    like a gap in the data rather than a stated limit of the experiment.
+
+    So the range the recursion was actually run over is shaded, its right
+    edge is drawn as a boundary line, and the legend names the lengths. The
+    short series is then evidence - this is where exponential growth ran
+    out of budget - instead of an omission the reader has to notice.
+
+    Both axes are logarithmic. Lengths sweep two orders of magnitude and
+    runtimes sweep more, and on a log-log pair a polynomial cost is a
+    straight line whose slope is its exponent, which is the comparison the
+    report makes against the theoretical O(n x m).
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/dp_vs_recursive_table.csv``. Rows for
+            other problems are ignored. ``n`` is the string length. Any
+            numeric field may be an empty string, and such a row is skipped
+            rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If no row carries ``problem == "lcs"`` together with a
+            usable ``n`` and ``mean_time_s``.
+
+    Time Complexity:
+        O(R log R) in the number of LCS rows R: each row is read a constant
+        number of times, and each variant's points are sorted by length.
+
+    Space Complexity:
+        O(R) for the extracted points, plus the figure itself.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, length, seconds):
+        ...     return {"problem": "lcs", "variant": variant, "n": length,
+        ...             "secondary_param": length, "mean_time_s": seconds,
+        ...             "std_time_s": "", "min_time_s": "", "max_time_s": "",
+        ...             "calls": "", "max_depth": "", "peak_kib": "",
+        ...             "speedup_vs_recursive": "", "measurement": "measured"}
+        >>> rows = [row("recursive", 10, 0.0012), row("recursive", 14, 0.02),
+        ...         row("memo", 10, 0.0002), row("memo", 100, 0.02),
+        ...         row("tab", 10, 9e-05), row("tab", 100, 0.008),
+        ...         row("tab", 1000, 0.82)]
+        >>> png = os.path.join(tempfile.mkdtemp(), "lcs_performance.png")
+        >>> fig = plot_lcs_performance(rows, png)
+        >>> os.path.getsize(png) > 0
+        True
+
+        The legend states the limit rather than leaving a line to trail off:
+
+        >>> any("only over lengths 10 to 14" in text.get_text()
+        ...     for text in fig.axes[0].get_legend().get_texts())
+        True
+        >>> plt.close(fig)
+
+        With no recursive rows the figure is simply the DP series, unshaded:
+
+        >>> dp_only = [item for item in rows if item["variant"] != "recursive"]
+        >>> fig = plot_lcs_performance(dp_only)
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    lcs_rows = _dp_rows(rows, "lcs")
+
+    fig, ax = plt.subplots(figsize=(8.8, 5.6))
+    drawn, any_projected = _draw_dp_series(ax, lcs_rows, "n")
+    if drawn == 0:
+        plt.close(fig)
+        raise ValueError("no lcs rows with a usable n and mean_time_s")
+    if any_projected:
+        _add_projected_legend_entry(ax)
+
+    recursive_points = _dp_points(
+        [row for row in lcs_rows if _row_text(row, "variant") == "recursive"], "n"
+    )
+    longest = max(point[0] for point in _dp_points(lcs_rows, "n"))
+    if recursive_points:
+        shortest_run = recursive_points[0][0]
+        longest_run = recursive_points[-1][0]
+        band_label = (
+            f"plain recursion run only over lengths "
+            f"{_format_measure(shortest_run)} to {_format_measure(longest_run)}\n"
+            "(beyond it, only the DP variants were measured)"
+        )
+        if longest_run > shortest_run:
+            ax.axvspan(
+                shortest_run,
+                longest_run,
+                color="#c1121f",
+                alpha=0.10,
+                zorder=0,
+                label=band_label,
+            )
+            # The band carries the legend entry; this line only marks where
+            # it ends, which is the number the report quotes.
+            ax.axvline(
+                longest_run,
+                color="#c1121f",
+                linestyle=":",
+                linewidth=1.4,
+                zorder=1,
+            )
+        else:
+            # A single recursive point has no band to shade, so the
+            # boundary line carries the legend entry on its own.
+            ax.axvline(
+                longest_run,
+                color="#c1121f",
+                linestyle=":",
+                linewidth=1.4,
+                zorder=1,
+                label=band_label,
+            )
+        # Pinned to the foot of the boundary line rather than to the last
+        # recursive point, which sits in the middle of the DP series.
+        ax.annotate(
+            "exponential cost ends the series here",
+            xy=(longest_run, 0.03),
+            xycoords=("data", "axes fraction"),
+            xytext=(7, 0),
+            textcoords="offset points",
+            ha="left",
+            va="bottom",
+            fontsize=8,
+            color="#7f1d1d",
+        )
+        title_tail = f"plain recursion only to {_format_measure(longest_run)}"
+    else:
+        title_tail = "no recursive series in these rows"
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Input string length (characters per string)")
+    ax.set_ylabel("Mean runtime (seconds, log scale)")
+    ax.set_title(
+        f"LCS: DP measured to {_format_measure(longest)} characters, "
+        f"{title_tail}\n(log-log axes; a polynomial cost is a straight line)"
+    )
+    ax.legend(loc="upper left", fontsize=8)
+    ax.grid(True, which="both", linestyle=":", linewidth=0.5, alpha=0.7)
+    fig.tight_layout()
 
     _save(fig, save_path)
     return fig
