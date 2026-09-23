@@ -9,7 +9,7 @@ searching
     Search algorithms (reserved for a later week).
 graph
     Graph algorithms (reserved for a later week).
-dynamic_programming
+dp
     Dynamic-programming algorithms (reserved for a later week).
 structures
     Week 3: binary heaps, a priority queue, an AVL tree and a hash table.

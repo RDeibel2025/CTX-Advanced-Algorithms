@@ -50,10 +50,9 @@ It contains five things:
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
-The remaining directories (`src/searching/`,
-`src/dynamic_programming/`) are the semester's
-scaffolding. They are real Python packages with documented placeholders,
-ready for later weeks.
+The remaining directory, `src/searching/`, is the semester's scaffolding.
+It is a real Python package with a documented placeholder, ready for a
+later week.
 
 ---
 
@@ -84,7 +83,7 @@ Advanced Algorithms/
 │   │   ├── bfs.py                  Breadth-first traversal, explicit queue
 │   │   ├── dfs.py                  Depth-first, iterative and recursive
 │   │   └── dijkstra.py             Shortest paths on the Week 3 heap
-│   ├── dynamic_programming/        Reserved for a later week
+│   ├── dp/                         Week 5: Fibonacci, knapsack, LCS
 │   └── utils/
 │       ├── benchmark.py            BenchmarkResult, AlgorithmBenchmark
 │       ├── visualization.py        Supplementary charts, traversal figures
