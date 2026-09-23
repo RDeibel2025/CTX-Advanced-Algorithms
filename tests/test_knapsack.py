@@ -492,16 +492,15 @@ class TestTraceSolution:
     def test_a_tie_returns_the_earlier_item(self) -> None:
         """Two interchangeable items: the walk keeps the earlier index.
 
-        NOTE: ``trace_solution``'s docstring says a tie resolves to "the one
-        that prefers the later item, since the table is entered from the
-        last row". The observed behaviour is the opposite, and the walk
-        makes it so: entering from the last row, an item is recorded only
-        when ``table[i][room] != table[i - 1][room]``, and on a tie those
-        two cells are equal, so the later item is *skipped* and the earlier
-        one is picked up higher in the walk. Both subsets are optimal, so
-        the returned answer is correct either way; it is the docstring's
-        description of the tie-break that is backwards. Documented here as
-        observed behaviour, not fixed.
+        Entering from the last row, an item is recorded only when
+        ``table[i][room] != table[i - 1][room]``. On a tie those two cells
+        are equal, so the later item is skipped and the earlier one is
+        picked up higher in the walk. Both subsets are optimal, so either
+        answer would be correct; this pins the one the implementation
+        actually returns.
+
+        This test originally found the docstring describing the tie-break
+        the other way round, which has since been corrected.
         """
         assert trace_solution([2, 2], [3, 3], 2) == (3, [0])
         assert trace_solution([4, 4], [9, 9], 4) == (9, [0])

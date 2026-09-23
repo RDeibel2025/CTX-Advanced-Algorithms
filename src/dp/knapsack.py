@@ -781,10 +781,12 @@ def trace_solution(
     was not needed, and the walk moves up a row with the capacity
     unchanged. One step per row makes the walk O(n) on top of the table.
 
-    Where several subsets tie, this rule returns one of them - the one that
-    prefers the later item, since the table is entered from the last row.
-    A tie means the alternatives are worth exactly the same, so any of them
-    is a correct answer to the problem as posed.
+    Where several subsets tie, this rule returns the one built from the
+    earlier items. On a tie the two cells being compared are equal, so the
+    walk reads that as "item not needed", skips the later item and picks up
+    the earlier one further up the table. A tie means the alternatives are
+    worth exactly the same, so any of them is a correct answer to the
+    problem as posed.
 
     Args:
         weights: Item weights, one per item. Not modified.
