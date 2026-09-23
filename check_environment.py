@@ -150,6 +150,22 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/results/bfs_vs_dfs_dense.png",
     "benchmarks/results/dijkstra_performance.png",
     "benchmarks/results/comparison_table.csv",
+    # Week 5 - dynamic programming
+    "src/dp/fibonacci.py",
+    "src/dp/knapsack.py",
+    "src/dp/lcs.py",
+    "src/utils/timer.py",
+    "tests/test_fibonacci.py",
+    "tests/test_knapsack.py",
+    "tests/test_lcs.py",
+    "tests/test_dp_benchmark.py",
+    "benchmarks/week5_dp_benchmark.py",
+    "examples/week5_demo.py",
+    "analysis/week5_report.md",
+    "benchmarks/results/fibonacci_comparison.png",
+    "benchmarks/results/knapsack_performance.png",
+    "benchmarks/results/lcs_performance.png",
+    "benchmarks/results/dp_vs_recursive_table.csv",
 ]
 
 OK = "[ OK ]"

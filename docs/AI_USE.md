@@ -2,8 +2,8 @@
 
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
-Covers every assignment in this repository, in order: Week 1, Week 2,
-Week 3, then Week 4.
+Covers every assignment in this repository, in order: Week 1 through
+Week 5.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -335,3 +335,86 @@ attribution.
   Graphs." *Numerische Mathematik* 1(1), 269-271.
 * Amakobe, *Advanced Computational Algorithms*, 2nd ed.
 * networkx, numpy, matplotlib, pytest and Python documentation.
+
+---
+
+# Week 5 - Dynamic Programming
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 4. I wrote a
+specification from the Blackboard Week 5 instructions and their Submission
+Checklist and directed the tool to implement against it. The specification
+fixed the decisions that decide correctness: three problems each solved
+three ways, a hand-written dict memo rather than an lru_cache decorator,
+call counting through a counter object rather than a module global,
+trace_solution and lcs_reconstruct written even where the instructions call
+reconstruction optional, and the argument the report is built around. The
+model drafted the code, the tests and the first draft of the report; I
+reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/dp/fibonacci.py`, `knapsack.py`, `lcs.py` | AI-drafted, reviewed by me |
+| `src/utils/timer.py`, and the three Week 5 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/test_fibonacci.py`, `test_knapsack.py`, `test_lcs.py`, `test_dp_benchmark.py` | AI-drafted, reviewed by me |
+| `benchmarks/week5_dp_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week5_demo.py`, `tools/week5_facts.py`, `tools/build_week5_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week5_report.md`, the README's Week 5 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every timing, call count, memory figure and chart
+this week came from running `benchmarks/week5_dp_benchmark.py` on my
+machine; the full study takes 60 seconds. Nothing was estimated except the
+two Fibonacci points explicitly labelled as projections, and those are
+labelled as such in the CSV, drawn differently in the figure, and explained
+in the report. The report's figures are printed from the result CSVs by
+`tools/week5_facts.py`, so they can be re-checked against a fresh run in
+one command.
+
+**The engineering judgment.** Three decisions this week were mine and each
+changed what the study could show. Measuring naive Fibonacci to n = 35 and
+projecting 40 and 45 from the measured per-call cost times the exact
+closed-form call count, rather than either running it for most of an hour
+or quietly dropping the two largest points, follows the rule set in Week 1:
+reduce and document. Leaving `speedup_vs_recursive` blank wherever the
+baseline was projected keeps a ratio of a measurement to an estimate out of
+a column that otherwise reports measurements. And probing where memoized
+LCS fails at CPython's default recursion limit, before raising that limit
+for the main run, turned the report's central claim about which stack each
+approach spends into a measured threshold of 600 characters rather than an
+assertion.
+
+**What the report claims.** The report argues that memoization and
+tabulation differ only in who decides the order of the subproblems, and it
+names the place that argument breaks rather than hiding it. Knapsack is the
+honest counterexample: top-down was faster while the subproblem space was
+sparse, at 5.0% table occupancy and 10 items, and lost once it densified.
+Both outcomes are reported as measured.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 5 assignment instructions and Submission Checklist.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 14: §14.1 Rod Cutting, pp. 360-369; §14.3 Elements of Dynamic
+  Programming, pp. 378-386; §14.4 Longest Common Subsequence, pp. 386-392.
+* Bellman, R. (1966). "Dynamic Programming." *Science*, 153(3731), 34-37.
+* Needleman, S. B., and Wunsch, C. D. (1970). *Journal of Molecular
+  Biology*, 48(3), 443-453.
+* Amakobe, M. (2025). *Advanced Computational Algorithms*, 2nd ed., Ch. 6.
+* Python, pytest, matplotlib and pandas documentation.

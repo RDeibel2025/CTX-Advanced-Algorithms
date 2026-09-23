@@ -11,6 +11,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 2 | Divide and Conquer | [`analysis/week2_report.md`](analysis/week2_report.md) · [`analysis/week2_recurrences.md`](analysis/week2_recurrences.md) |
 | 3 | Data Structures | [`analysis/week3_report.md`](analysis/week3_report.md) |
 | 4 | Graph Algorithms | [`analysis/week4_report.md`](analysis/week4_report.md) |
+| 5 | Dynamic Programming | [`analysis/week5_report.md`](analysis/week5_report.md) |
 
 ---
 
@@ -19,7 +20,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains five things:
+It contains six things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -40,13 +41,17 @@ It contains five things:
    priority queue, over one `Graph` class that holds both an adjacency
    list and a numpy-backed adjacency matrix. The three are deliberately
    one loop with three different containers.
-4. **A benchmarking framework** that generates eight different shapes of
+4. **Three dynamic programming problems** (Week 5) - Fibonacci, 0/1
+   knapsack and longest common subsequence, each solved three ways:
+   plain recursion, top-down memoization and bottom-up tabulation, with
+   solution recovery for the two that have one.
+5. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-5. **A performance study each week** built from a real run of that
+6. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -83,11 +88,15 @@ Advanced Algorithms/
 │   │   ├── bfs.py                  Breadth-first traversal, explicit queue
 │   │   ├── dfs.py                  Depth-first, iterative and recursive
 │   │   └── dijkstra.py             Shortest paths on the Week 3 heap
-│   ├── dp/                         Week 5: Fibonacci, knapsack, LCS
+│   ├── dp/
+│   │   ├── fibonacci.py            Naive, memoized and tabulated
+│   │   ├── knapsack.py             0/1 knapsack, with solution tracing
+│   │   └── lcs.py                  LCS, with subsequence reconstruction
 │   └── utils/
 │       ├── benchmark.py            BenchmarkResult, AlgorithmBenchmark
 │       ├── visualization.py        Supplementary charts, traversal figures
 │       ├── graph_generator.py      Seeded sparse/dense/random graphs
+│       ├── timer.py                Timer, CallCounter, peak memory
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Shared fixtures and parametrisation
@@ -104,6 +113,10 @@ Advanced Algorithms/
 │   ├── test_dfs.py                 Iterative and recursive must match
 │   ├── test_dijkstra.py            Hand-computed paths, negative weights
 │   ├── test_graph_benchmark.py     The harness runs and writes its outputs
+│   ├── test_fibonacci.py           Three variants agree; the memo is hit
+│   ├── test_knapsack.py            Brute-force oracle; trace_solution
+│   ├── test_lcs.py                 Reconstruction is a real subsequence
+│   ├── test_dp_benchmark.py        The harness runs and writes its outputs
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -111,13 +124,15 @@ Advanced Algorithms/
 │   ├── week2_performance.py        The Week 2 divide-and-conquer benchmark
 │   ├── week3_structures_benchmark.py   The Week 3 data structures benchmark
 │   ├── week4_graph_benchmark.py    The Week 4 graph benchmark
+│   ├── week5_dp_benchmark.py       The Week 5 DP benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
 │   ├── week2_report.md             Week 2 technical report
 │   ├── week2_recurrences.md        Master Theorem solutions
 │   ├── week3_report.md             Week 3 technical report
-│   └── week4_report.md             Week 4 technical report
+│   ├── week4_report.md             Week 4 technical report
+│   └── week5_report.md             Week 5 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -131,6 +146,8 @@ Advanced Algorithms/
 │   ├── build_week3_pdf.py          Builds the Week 3 submission PDF
 │   ├── week4_facts.py              Prints every figure the Week 4 report quotes
 │   ├── build_week4_pdf.py          Builds the Week 4 submission PDF
+│   ├── week5_facts.py              Prints every figure the Week 5 report quotes
+│   ├── build_week5_pdf.py          Builds the Week 5 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -212,12 +229,101 @@ must return identical orders, and the recursion limit must be restored
 afterwards; Dijkstra is checked against a hand-computed graph, against
 BFS hop levels on unweighted input, and against its own O(V^2) baseline;
 and the benchmark harness is run end to end to confirm it writes every
-output. The suite is 2,630 tests.
+output.
+
+Week 5 adds four more: all three variants of each DP problem agree with
+each other and with an independent oracle (brute force over subsets for
+knapsack, a subsequence checker for LCS, the closed-form call count for
+Fibonacci); the memo table is proved to be hit rather than merely
+allocated; `trace_solution` returns items that fit and sum to the
+optimum; and `lcs_reconstruct` returns a genuine subsequence of both
+inputs.
 
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
+```
+
+---
+
+## Week 5: dynamic programming
+
+No new dependencies. Memory comes from `tracemalloc` and depth from
+`sys.setrecursionlimit`, both standard library.
+
+### The three problems, three ways each
+
+| Module | Functions |
+|---|---|
+| [`src/dp/fibonacci.py`](src/dp/fibonacci.py) | `fib_naive`, `fib_memo` (hand-written dict), `fib_tab` (O(1) space), `fib_lru`, `fib_counts`, `naive_call_count` |
+| [`src/dp/knapsack.py`](src/dp/knapsack.py) | `knapsack_recursive`, `knapsack_memo`, `knapsack_tab`, `knapsack_tab_rolling` (O(W) space), `trace_solution`, `knapsack_memo_cells` |
+| [`src/dp/lcs.py`](src/dp/lcs.py) | `lcs_recursive`, `lcs_memo`, `lcs_tab`, `lcs_reconstruct` |
+
+Instrumentation lives in [`src/utils/timer.py`](src/utils/timer.py): a
+`Timer`, `time_call` under the Week 1 warmup-and-repeat discipline,
+`peak_memory_kib`, and a `CallCounter` that tracks calls and recursion
+depth without a module-level global.
+
+```python
+from src.dp.fibonacci import fib_counts, fib_memo, fib_tab
+from src.dp.knapsack import knapsack_tab, trace_solution
+from src.dp.lcs import lcs_reconstruct, lcs_tab
+
+fib_tab(45)                          # 1134903170, in O(1) space
+fib_counts(30, "naive")[1]           # 2692537 calls
+fib_counts(30, "memo")[1]            # 59 calls
+
+weights, values = [1, 3, 4, 5], [1, 4, 5, 7]
+knapsack_tab(weights, values, 7)     # 9
+trace_solution(weights, values, 7)   # (9, [1, 2]) - the items weighing 3 and 4
+
+lcs_tab("AGGTAB", "GXTXAYB")         # 4
+lcs_reconstruct("AGGTAB", "GXTXAYB") # 'GTAB'
+```
+
+### Running the demonstration
+
+```bash
+python examples/week5_demo.py
+```
+
+Five sections on inputs small enough to check by hand: three routes up one
+recurrence, proof that the memo table is actually being hit, knapsack with
+the items its optimum is made of, LCS with the subsequence itself, and a
+demonstration of which stack each DP style spends. Every claim printed is
+asserted. It runs in about 0.8 seconds.
+
+### Running the benchmark
+
+```bash
+python benchmarks/week5_dp_benchmark.py
+```
+
+Fibonacci at n = 10 to 45, knapsack swept by item count and by capacity,
+and LCS at 10 to 1,000 characters, plus a probe of where memoized LCS
+exhausts CPython's default recursion limit. The full run takes about 60
+seconds and writes `fibonacci_comparison.png`, `knapsack_performance.png`,
+`lcs_performance.png` and `dp_vs_recursive_table.csv`, plus two supporting
+CSVs, to [`benchmarks/results/`](benchmarks/results/).
+
+Naive Fibonacci is measured to n = 35 and projected at 40 and 45 from the
+measured per-call cost times the exact call count; those rows are marked
+`projected` in the CSV and drawn with hollow markers in the figure. The
+recursive knapsack is capped at 20 items and the recursive LCS at 14
+characters.
+
+For a smoke run, send it somewhere else so it does not overwrite the
+committed results:
+
+```bash
+python benchmarks/week5_dp_benchmark.py --quick --out /tmp/week5_quick
+```
+
+Every figure quoted in the Week 5 report is recomputed from the CSVs by:
+
+```bash
+python tools/week5_facts.py
 ```
 
 ---
