@@ -1,0 +1,9 @@
+length,recursion_limit,memo_status,memo_result,tab_status,tab_result
+100,1000,ok,60,ok,60
+200,1000,ok,128,ok,128
+300,1000,ok,193,ok,193
+400,1000,ok,260,ok,260
+500,1000,ok,321,ok,321
+600,1000,RecursionError,,ok,380
+800,1000,RecursionError,,ok,511
+1000,1000,RecursionError,,ok,649

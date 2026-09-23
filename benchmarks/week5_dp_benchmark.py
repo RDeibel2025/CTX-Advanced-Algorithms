@@ -353,7 +353,15 @@ def knapsack_study(config: Config) -> Tuple[List[Dict[str, Any]], List[dict]]:
           flush=True)
     rng = random.Random(SEED + config.knapsack_fixed_n)
     weights, values = knapsack_instance(config.knapsack_fixed_n, rng)
+    # The first sweep already measured this item count at its fixed capacity.
+    # Measuring it twice would put two points on one x value and duplicate a
+    # row in the CSV, so that capacity is skipped here rather than repeated.
+    already = {config.knapsack_capacity} if config.knapsack_fixed_n in config.knapsack_sizes else set()
     for capacity in config.knapsack_capacities:
+        if capacity in already:
+            print(f"    (W={capacity} at n={config.knapsack_fixed_n} already measured above)",
+                  flush=True)
+            continue
         for variant, function in (("memo", knapsack_memo), ("tab", knapsack_tab)):
             call = (lambda f=function, w=weights, v=values, c=capacity: f(w, v, c))
             stats = measure(call)
