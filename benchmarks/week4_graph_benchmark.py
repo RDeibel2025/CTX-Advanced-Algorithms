@@ -694,7 +694,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     traversal_figures(config, out)
 
     print("\n=== writing results ===")
-    write_csv(os.path.join(out, "comparison_table.csv"),
+    write_csv(os.path.join(out, "graphs_comparison_table.csv"),
               comparison_rows(traversal, shortest, representation))
     write_csv(os.path.join(out, "week4_representation.csv"), representation)
     write_csv(os.path.join(out, "week4_traversal.csv"), traversal)

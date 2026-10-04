@@ -96,7 +96,7 @@ slope is 1.118, growing 131.0x against 156.1x predicted. That undershoot is wort
 | Adjacency matrix, lookup | O(1) | 0.174 | 2.23 / 1.00 | O(log n) \* |
 
 Sixteen of the eighteen series in
-[`comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/comparison_table.csv) match their
+[`graphs_comparison_table.csv`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/benchmarks/results/graphs_comparison_table.csv) match their
 expected class. Both disagreements (\*) are lookup rows, and the matrix one settles what
 they mean: `matrix[i, j]` is one array index whose operation count cannot vary with V,
 and it still grew 2.23x. What grew was the distance to the data, from a 10 KB array in L1

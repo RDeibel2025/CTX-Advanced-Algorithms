@@ -392,7 +392,7 @@ at V = 100, 1,000 and 10,000; BFS against both DFS forms on sparse and dense
 graphs; Dijkstra on the Week 3 heap against an O(V^2) linear scan; and the
 drawn traversal figures. The full run takes about 9 seconds on an M2 Max and
 writes `bfs_vs_dfs_sparse.png`, `bfs_vs_dfs_dense.png`,
-`dijkstra_performance.png` and `comparison_table.csv`, plus the supporting
+`dijkstra_performance.png` and `graphs_comparison_table.csv`, plus the supporting
 CSVs and figures, to [`benchmarks/results/`](benchmarks/results/).
 
 Both runtime limits are handled by reducing and recording rather than

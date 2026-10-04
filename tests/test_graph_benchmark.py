@@ -57,7 +57,7 @@ PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 #: The four tables the report reads.
 EXPECTED_CSVS: List[str] = [
-    "comparison_table.csv",
+    "graphs_comparison_table.csv",
     "week4_representation.csv",
     "week4_traversal.csv",
     "week4_dijkstra.csv",
@@ -212,13 +212,13 @@ class TestEndToEnd:
 # The comparison table the report is written from
 # ----------------------------------------------------------------------
 class TestComparisonTable:
-    """comparison_table.csv carries the columns the report quotes."""
+    """graphs_comparison_table.csv carries the columns the report quotes."""
 
     @pytest.fixture(scope="class")
     @classmethod
     def comparison(cls, quick_run):
         _code, out = quick_run
-        return read_table(out / "comparison_table.csv")
+        return read_table(out / "graphs_comparison_table.csv")
 
     @pytest.mark.parametrize(
         "column", REQUIRED_COMPARISON_COLUMNS, ids=REQUIRED_COMPARISON_COLUMNS

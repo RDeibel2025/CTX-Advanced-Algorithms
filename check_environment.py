@@ -149,7 +149,7 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/results/bfs_vs_dfs_sparse.png",
     "benchmarks/results/bfs_vs_dfs_dense.png",
     "benchmarks/results/dijkstra_performance.png",
-    "benchmarks/results/comparison_table.csv",
+    "benchmarks/results/graphs_comparison_table.csv",
     # Week 5 - dynamic programming
     "src/dp/fibonacci.py",
     "src/dp/knapsack.py",

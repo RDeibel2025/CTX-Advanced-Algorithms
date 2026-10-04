@@ -31,7 +31,7 @@ def heading(text: str) -> None:
 
 
 def main() -> int:
-    table = pd.read_csv(os.path.join(RESULTS, "comparison_table.csv"))
+    table = pd.read_csv(os.path.join(RESULTS, "graphs_comparison_table.csv"))
     representation = pd.read_csv(os.path.join(RESULTS, "week4_representation.csv"))
     traversal = pd.read_csv(os.path.join(RESULTS, "week4_traversal.csv"))
     shortest = pd.read_csv(os.path.join(RESULTS, "week4_dijkstra.csv"))
@@ -118,7 +118,7 @@ def main() -> int:
         print(f"  the two series cover different ranges on purpose: heap to "
               f"V={int(heap.n.max()):,}, scan capped at V={int(scan.n.max()):,}")
 
-    heading("4. Asymptotic against empirical (comparison_table.csv)")
+    heading("4. Asymptotic against empirical (graphs_comparison_table.csv)")
     for row in table.itertuples():
         flag = "" if row.agrees else "   <-- disagrees"
         print(f"  {row.structure:<26}{row.operation:<28}{row.asymptotic:<18}"
