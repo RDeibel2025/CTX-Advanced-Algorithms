@@ -12,6 +12,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 3 | Data Structures | [`analysis/week3_report.md`](analysis/week3_report.md) |
 | 4 | Graph Algorithms | [`analysis/week4_report.md`](analysis/week4_report.md) |
 | 5 | Dynamic Programming | [`analysis/week5_report.md`](analysis/week5_report.md) |
+| 6 | Dynamic Programming II | [`analysis/week6_report.md`](analysis/week6_report.md) |
 
 ---
 
@@ -20,7 +21,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains six things:
+It contains seven things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -45,13 +46,17 @@ It contains six things:
    knapsack and longest common subsequence, each solved three ways:
    plain recursion, top-down memoization and bottom-up tabulation, with
    solution recovery for the two that have one.
-5. **A benchmarking framework** that generates eight different shapes of
+5. **Four more dynamic programming algorithms** (Week 6) - a one-row 0/1
+   knapsack, matrix chain multiplication, Floyd-Warshall all-pairs
+   shortest paths, and the Held-Karp bitmask solution to the traveling
+   salesman problem.
+6. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-6. **A performance study each week** built from a real run of that
+7. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -82,6 +87,11 @@ Advanced Algorithms/
 │   │   ├── heap.py                 MinHeap, MaxHeap, PriorityQueue
 │   │   ├── avl_tree.py             AVL tree with deletion rebalancing
 │   │   └── hash_table.py           Separate chaining and linear probing
+│   ├── dp_advanced/
+│   │   ├── space_optimized_knapsack.py     0/1 knapsack in one row
+│   │   ├── matrix_chain_multiplication.py  Recursive, memoized, bottom-up
+│   │   ├── floyd_warshall.py               All-pairs paths, negative edges
+│   │   └── bitmask_traveling_salesman.py   Held-Karp and brute force
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -97,6 +107,8 @@ Advanced Algorithms/
 │       ├── visualization.py        Supplementary charts, traversal figures
 │       ├── graph_generator.py      Seeded sparse/dense/random graphs
 │       ├── timer.py                Timer, CallCounter, peak memory
+│       ├── matrix_utils.py         Weight matrices, parenthesization cost
+│       ├── bitmask_utils.py        Subset operations for Held-Karp
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Shared fixtures and parametrisation
@@ -117,6 +129,11 @@ Advanced Algorithms/
 │   ├── test_knapsack.py            Brute-force oracle; trace_solution
 │   ├── test_lcs.py                 Reconstruction is a real subsequence
 │   ├── test_dp_benchmark.py        The harness runs and writes its outputs
+│   ├── test_space_optimized_knapsack.py   Why the scan runs downward
+│   ├── test_matrix_chain_multiplication.py  Six hand-checked chains
+│   ├── test_floyd_warshall.py      CLRS matrix, agreement with Dijkstra
+│   ├── test_bitmask_tsp.py         Bitmask DP against brute force
+│   ├── test_benchmark_comparison.py  The harness runs and writes its outputs
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -125,6 +142,7 @@ Advanced Algorithms/
 │   ├── week3_structures_benchmark.py   The Week 3 data structures benchmark
 │   ├── week4_graph_benchmark.py    The Week 4 graph benchmark
 │   ├── week5_dp_benchmark.py       The Week 5 DP benchmark
+│   ├── week6_dp_advanced_benchmark.py  The Week 6 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -132,7 +150,8 @@ Advanced Algorithms/
 │   ├── week2_recurrences.md        Master Theorem solutions
 │   ├── week3_report.md             Week 3 technical report
 │   ├── week4_report.md             Week 4 technical report
-│   └── week5_report.md             Week 5 technical report
+│   ├── week5_report.md             Week 5 technical report
+│   └── week6_report.md             Week 6 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -148,6 +167,8 @@ Advanced Algorithms/
 │   ├── build_week4_pdf.py          Builds the Week 4 submission PDF
 │   ├── week5_facts.py              Prints every figure the Week 5 report quotes
 │   ├── build_week5_pdf.py          Builds the Week 5 submission PDF
+│   ├── week6_facts.py              Prints every figure the Week 6 report quotes
+│   ├── build_week6_pdf.py          Builds the Week 6 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -239,11 +260,101 @@ allocated; `trace_solution` returns items that fit and sum to the
 optimum; and `lcs_reconstruct` returns a genuine subsequence of both
 inputs.
 
+Week 6 adds five more, each asserting against values checked by hand: the
+knapsack proof test (a downward scan gives 7, an upward one 9), six matrix
+chains including the CLRS example, the CLRS all-pairs distance matrix and
+agreement with Week 4's Dijkstra, the four-city tour, and the benchmark
+harness end to end.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 6: dynamic programming II
+
+No new dependencies. Week 6 code lives in its own package,
+[`src/dp_advanced/`](src/dp_advanced/), separate from Week 5's `src/dp/`.
+
+### The four algorithms
+
+| Module | Functions |
+|---|---|
+| [`space_optimized_knapsack.py`](src/dp_advanced/space_optimized_knapsack.py) | `knapsack_space_optimized` (one row of W + 1 cells), `knapsack_ascending_scan` (deliberately wrong: the same loop run upward, which solves unbounded knapsack), `knapsack_space_optimized_with_items`, `compare_with_standard`, `print_comparison` |
+| [`matrix_chain_multiplication.py`](src/dp_advanced/matrix_chain_multiplication.py) | `mcm_recursive`, `mcm_memoized`, `mcm_bottom_up` (CLRS m and s tables), `optimal_parenthesization`, `matrix_chain_order` |
+| [`floyd_warshall.py`](src/dp_advanced/floyd_warshall.py) | `floyd_warshall` (distance and predecessor matrices), `floyd_warshall_3d`, `reconstruct_path`, `all_pairs_dijkstra` (Week 4's Dijkstra from every source), `NegativeCycleError` |
+| [`bitmask_traveling_salesman.py`](src/dp_advanced/bitmask_traveling_salesman.py) | `tsp_bitmask` (Held-Karp), `tsp_brute_force` |
+
+Helpers: [`src/utils/matrix_utils.py`](src/utils/matrix_utils.py) (weight
+matrices from a Week 4 `Graph`, seeded random matrices, and
+`parenthesization_cost`, which prices a parenthesization string so tests can
+verify it by cost) and [`src/utils/bitmask_utils.py`](src/utils/bitmask_utils.py)
+(the subset operations Held-Karp uses).
+
+```python
+from src.dp_advanced import (
+    knapsack_ascending_scan, knapsack_space_optimized, matrix_chain_order,
+    floyd_warshall, reconstruct_path, tsp_bitmask,
+)
+
+knapsack_space_optimized([2, 3], [3, 4], 6)   # 7 - both items, once each
+knapsack_ascending_scan([2, 3], [3, 4], 6)    # 9 - the weight-2 item three times
+
+matrix_chain_order([30, 35, 15, 5, 10, 20, 25])
+# (15125, '((A1(A2A3))((A4A5)A6))')
+
+INF = float("inf")
+dist, pred = floyd_warshall([[0, 3, INF], [INF, 0, -2], [1, INF, 0]])
+dist[0][2], reconstruct_path(pred, 0, 2)      # (1, [0, 1, 2])
+
+tsp_bitmask([[0, 10, 15, 20], [10, 0, 35, 25],
+             [15, 35, 0, 30], [20, 25, 30, 0]])[0]   # 80
+```
+
+### Running the demonstration
+
+```bash
+python examples/week6_demo.py
+```
+
+Runs all four algorithms on hand-checked inputs: the knapsack comparison
+table and runtime summary against Week 5's two-dimensional table, the CLRS
+matrix chain with its parenthesization, the CLRS all-pairs example with
+negative edges (distance and predecessor matrices, a reconstructed path,
+and Week 4's Dijkstra refusing the same graph), and the four-city tour.
+Every claim printed is asserted. It runs in about a second.
+
+### Running the benchmark
+
+```bash
+python benchmarks/week6_dp_advanced_benchmark.py
+```
+
+Standard against space-optimized knapsack, recursive against DP matrix
+chains, Floyd-Warshall scaling at n = 50, 100, 200 and 500 and against
+Dijkstra from every source at two densities, and bitmask against brute-force
+TSP. The full run takes about three minutes and writes
+`knapsack_space_comparison.png`, `mcm_performance.png`,
+`floyd_warshall_scaling.png`, `tsp_bitmask_runtime.png` and
+`comparison_table.csv`, plus `mcm_dp_table.png` and a negative-edge record,
+to [`benchmarks/results/`](benchmarks/results/).
+
+For a smoke run of a few seconds, written somewhere else so it does not
+overwrite the committed results:
+
+```bash
+python benchmarks/week6_dp_advanced_benchmark.py --smoke --out /tmp/week6_smoke
+```
+
+Every figure quoted in the Week 6 report is recomputed from the CSVs by
+`python tools/week6_facts.py`.
+
+**Week 4's comparison table moved.** Week 6 needed the name
+`comparison_table.csv`, so Week 4's graph table is now
+[`benchmarks/results/graphs_comparison_table.csv`](benchmarks/results/graphs_comparison_table.csv).
 
 ---
 
@@ -577,7 +688,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, Week 4's graph algorithms included; I specified the
+written documents, the Week 4 to Week 6 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a

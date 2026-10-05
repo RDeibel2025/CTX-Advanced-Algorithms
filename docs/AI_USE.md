@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 5.
+Week 6.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -418,3 +418,80 @@ attribution.
   Biology*, 48(3), 443-453.
 * Amakobe, M. (2025). *Advanced Computational Algorithms*, 2nd ed., Ch. 6.
 * Python, pytest, matplotlib and pandas documentation.
+
+---
+
+# Week 6 - Dynamic Programming II
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 5. I wrote a
+specification from the Blackboard Week 6 instructions, the Week 6 Plan and
+the readings, including every hand-checked anchor value the tests assert
+against, and directed the tool to implement against it. The specification
+fixed the decisions that decide correctness: Week 6 code in its own
+package, Week 5's knapsack reused as the baseline rather than rewritten, a
+deliberately wrong upward-scan knapsack to demonstrate why the scan runs
+downward, a hand-written memo for matrix chains, Week 4's Dijkstra reused
+unchanged for the comparison, and the two-pairs organization of the report.
+The model drafted the code, the tests and the first draft of the report; I
+reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/dp_advanced/` (all four modules and the package init) | AI-drafted, reviewed by me |
+| `src/utils/matrix_utils.py`, `src/utils/bitmask_utils.py`, and the Week 6 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/test_space_optimized_knapsack.py`, `test_matrix_chain_multiplication.py`, `test_floyd_warshall.py`, `test_bitmask_tsp.py`, `test_benchmark_comparison.py` | AI-drafted, reviewed by me |
+| `benchmarks/week6_dp_advanced_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week6_demo.py`, `tools/week6_facts.py`, `tools/build_week6_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week6_report.md`, the README's Week 6 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every timing, memory figure and chart this week came
+from running `benchmarks/week6_dp_advanced_benchmark.py` on my machine; the
+full study takes about three minutes. Every required size was measured,
+none projected. The report's figures are printed from the result CSVs by
+`tools/week6_facts.py`, so they can be re-checked against a fresh run in one
+command.
+
+**The anchor values.** The expected answers the tests assert - the six
+matrix-chain costs, the CLRS all-pairs distance matrix, the four-city tour
+cost and the 7-against-9 knapsack proof case - were worked out and checked
+before any code was written, so the tests check the code against known
+answers rather than against its own output.
+
+**What the report claims.** The report organizes the four algorithms as two
+pairs and states where the measurements depart from the textbook bounds,
+including one place the measurement corrected my own benchmark: plain
+matrix-chain recursion grew by a factor of three per added matrix, which
+matches its exact 3^(n-1) call count, so the benchmark's theory label was
+changed from the Catalan count of parenthesizations to O(3^n) before the
+final run.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 6 assignment instructions, Week 6 Plan and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., §14.2 Matrix-Chain Multiplication and §23.2 The Floyd-Warshall
+  algorithm.
+* Amakobe, M. (2025). *Advanced Computational Algorithms*, Ch. 6, §6.5,
+  §6.7 and §6.8.
+* Held, M., and Karp, R. M. (1962). *Journal of the Society for Industrial
+  and Applied Mathematics*, 10(1), 196-210.
+* Hirschberg, D. S. (1975). *Communications of the ACM*, 18(6), 341-343.
+* Python, pytest, numpy and matplotlib documentation.
