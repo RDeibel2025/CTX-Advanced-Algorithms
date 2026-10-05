@@ -58,6 +58,33 @@ the benchmark records a value it did not produce. Every Week 5 function
 treats that as missing and drops the point. None of them substitutes a
 number the benchmark never measured.
 
+Week 6 adds the advanced dynamic-programming figures. They read the rows
+behind ``benchmarks/results/comparison_table.csv`` the same way, and each
+one is built around the single comparison the week's analysis rests on:
+
+* :func:`plot_knapsack_space_comparison` - peak memory, runtime and the
+  memory ratio of Week 5's full 2D knapsack table against the one-row
+  version, all over capacity W at one fixed item count. Space is the only
+  thing the rolling row is meant to change, so memory gets the log axis and
+  runtime is there to show that it did not get worse.
+* :func:`plot_mcm_performance` - matrix-chain runtime for plain recursion,
+  memoization and the bottom-up table, beside a panel showing how many
+  times faster the table is than the recursion.
+* :func:`plot_floyd_warshall_scaling` - Floyd-Warshall against an n^3
+  reference, against Dijkstra run from every source at each edge density,
+  and against the 3D version that keeps every D(k) layer.
+* :func:`plot_tsp_runtime` - Held-Karp against brute force, each beside the
+  growth shape it should follow (n^2 2^n and n!), with the first size at
+  which the bitmask DP wins marked on the speedup panel.
+* :func:`plot_mcm_table` - the CLRS m table itself as a heatmap, every cell
+  carrying its cost and its optimal split point s[i][j].
+
+The Week 6 functions keep the Week 5 rule for missing values: an empty
+string is skipped and never filled in, and a ``"projected"`` row is drawn
+as a hollow marker on a dashed segment. Every series differs from its
+neighbours in marker and line style as well as colour, so none of these
+figures relies on colour alone.
+
 Every function returns the :class:`matplotlib.figure.Figure` it built and
 writes a 200 dpi PNG when given ``save_path``.
 
@@ -67,8 +94,9 @@ Author:
 
 from __future__ import annotations
 
+import math
 import os
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import matplotlib
 
@@ -98,6 +126,11 @@ __all__ = [
     "plot_fibonacci_comparison",
     "plot_knapsack_performance",
     "plot_lcs_performance",
+    "plot_knapsack_space_comparison",
+    "plot_mcm_performance",
+    "plot_floyd_warshall_scaling",
+    "plot_tsp_runtime",
+    "plot_mcm_table",
 ]
 
 
@@ -1550,6 +1583,1175 @@ def plot_lcs_performance(
     )
     ax.legend(loc="upper left", fontsize=8)
     ax.grid(True, which="both", linestyle=":", linewidth=0.5, alpha=0.7)
+    fig.tight_layout()
+
+    _save(fig, save_path)
+    return fig
+
+
+# ----------------------------------------------------------------------
+# Week 6: advanced dynamic programming figures
+# ----------------------------------------------------------------------
+# These read the rows of benchmarks/results/comparison_table.csv, one dict
+# per (problem, variant, n, secondary_param). They go through the same Week 5
+# row readers above, so an empty cell means the same thing in both weeks:
+# the benchmark did not produce it, and the figure does not draw it.
+_W6_VARIANT_ORDER: Dict[str, Tuple[str, ...]] = {
+    "knapsack": ("standard_2d", "space_optimized_1d"),
+    "mcm": ("recursive", "memoized", "bottom_up"),
+    "floyd_warshall": ("floyd_warshall", "floyd_warshall_3d", "all_pairs_dijkstra"),
+    "tsp": ("bitmask", "brute_force"),
+}
+
+# The Week 5 rule again: within one figure no two series share a marker or a
+# line style, so colour is never the only way to tell them apart. The slow
+# baseline of each problem is the red circle, as it was in Week 5.
+_W6_VARIANT_STYLE: Dict[str, Dict[str, Any]] = {
+    "standard_2d": {"color": "#c1121f", "marker": "o", "linestyle": "-"},
+    "space_optimized_1d": {"color": "#2a9d8f", "marker": "^", "linestyle": "-."},
+    "recursive": {"color": "#c1121f", "marker": "o", "linestyle": "-"},
+    "memoized": {"color": "#1d3557", "marker": "s", "linestyle": "--"},
+    "bottom_up": {"color": "#2a9d8f", "marker": "^", "linestyle": "-."},
+    "floyd_warshall": {"color": "#1d3557", "marker": "s", "linestyle": "-"},
+    "floyd_warshall_3d": {"color": "#c1121f", "marker": "o", "linestyle": "--"},
+    "all_pairs_dijkstra": {"color": "#2a9d8f", "marker": "^", "linestyle": "-."},
+    "bitmask": {"color": "#2a9d8f", "marker": "^", "linestyle": "-"},
+    "brute_force": {"color": "#c1121f", "marker": "o", "linestyle": "--"},
+}
+_W6_VARIANT_LABEL: Dict[str, str] = {
+    "standard_2d": "standard 2D table (Week 5 knapsack_tab)",
+    "space_optimized_1d": "space-optimized 1D row",
+    "recursive": "plain recursion (no memo)",
+    "memoized": "memoized (top-down)",
+    "bottom_up": "bottom-up table",
+    "floyd_warshall": "Floyd-Warshall (one n x n matrix)",
+    "floyd_warshall_3d": "Floyd-Warshall 3D (every D(k) layer kept)",
+    "all_pairs_dijkstra": "Dijkstra from every source",
+    "bitmask": "Held-Karp bitmask DP",
+    "brute_force": "brute force (every permutation)",
+}
+# A ratio is derived from two variants rather than being one, so it gets a
+# style no variant uses: a purple diamond on a solid line.
+_W6_RATIO_STYLE: Dict[str, Any] = {"color": "#6a4c93", "marker": "D", "linestyle": "-"}
+_W6_REFERENCE_COLOUR = "0.35"
+# The Floyd-Warshall comparison panel draws one series per (variant,
+# density) pair. Indexing all three channels by the pair's position gives
+# every series its own marker and its own line style, for any number of
+# densities up to the length of the shortest tuple.
+_W6_PAIR_COLOURS: Tuple[str, ...] = (
+    "#1d3557", "#457b9d", "#2a9d8f", "#8ab17d", "#e76f51", "#f4a261",
+)
+_W6_PAIR_MARKERS: Tuple[str, ...] = ("s", "D", "^", "v", "o", "P", "X", "*")
+_W6_PAIR_LINESTYLES: Tuple[str, ...] = ("-", "--", "-.", ":")
+_FW_COMPARED: Tuple[str, ...] = ("floyd_warshall", "all_pairs_dijkstra")
+_FW_MEMORY: Tuple[str, ...] = ("floyd_warshall", "floyd_warshall_3d")
+_W6_PROJECTED_LEGEND_TEXT = "projected, not timed (hollow marker, dashed segment)"
+
+
+def _w6_variants(rows: Sequence[Dict[str, Any]], problem: str) -> List[str]:
+    """List the variants present for one Week 6 problem, known ones first.
+
+    The fixed order fixes the legend order, so each figure lists its series
+    the slow baseline first. An unknown variant is still drawn, after the
+    known ones, in the order it first appears.
+    """
+    preferred = _W6_VARIANT_ORDER.get(problem, ())
+    seen: List[str] = []
+    for row in rows:
+        variant = _row_text(row, "variant")
+        if variant and variant not in seen:
+            seen.append(variant)
+    known = [name for name in preferred if name in seen]
+    return known + [name for name in seen if name not in preferred]
+
+
+def _w6_style(variant: str, index: int) -> Dict[str, Any]:
+    """Return the colour, marker and line style for one Week 6 variant."""
+    style = _W6_VARIANT_STYLE.get(variant)
+    return dict(style) if style is not None else _variant_style(variant, index)
+
+
+def _metric_points(
+    rows: Sequence[Dict[str, Any]], x_key: str, y_key: str
+) -> List[Tuple[float, float, bool]]:
+    """Turn rows into ``(x, y, is_projected)`` triples for any metric, by x.
+
+    The Week 6 counterpart of :func:`_dp_points`, which only reads
+    ``mean_time_s``; these figures also plot ``peak_kib``. A row missing
+    either value contributes nothing, and a non-positive y is dropped too:
+    every metric here is a time or a memory size, strictly positive
+    whenever it was really produced, and most of them sit on log axes.
+
+    Examples:
+        >>> _metric_points([{"n": "8", "peak_kib": "2.5"},
+        ...                 {"n": 4, "peak_kib": ""}], "n", "peak_kib")
+        [(8.0, 2.5, False)]
+    """
+    points: List[Tuple[float, float, bool]] = []
+    for row in rows:
+        x_value = _row_number(row, x_key)
+        y_value = _row_number(row, y_key)
+        if x_value is None or y_value is None or y_value <= 0.0:
+            continue
+        points.append((x_value, y_value, _row_text(row, "measurement") == "projected"))
+    points.sort(key=lambda point: point[0])
+    return points
+
+
+def _variant_points(
+    rows: Sequence[Dict[str, Any]], variant: str, x_key: str, y_key: str
+) -> List[Tuple[float, float, bool]]:
+    """Return one variant's ``(x, y, is_projected)`` points, sorted by x."""
+    subset = [row for row in rows if _row_text(row, "variant") == variant]
+    return _metric_points(subset, x_key, y_key)
+
+
+def _same_number(left: float, right: float) -> bool:
+    """Compare two parameter values, tolerating float round-off.
+
+    Densities make the trip to CSV and back as text, so ``0.1`` is matched
+    with a tolerance rather than with ``==``.
+    """
+    return math.isclose(left, right, rel_tol=1e-9, abs_tol=1e-12)
+
+
+def _rows_near(
+    rows: Sequence[Dict[str, Any]], key: str, value: float
+) -> List[Dict[str, Any]]:
+    """Select rows whose numeric ``key`` matches ``value`` up to round-off."""
+    selected: List[Dict[str, Any]] = []
+    for row in rows:
+        number = _row_number(row, key)
+        if number is not None and _same_number(number, value):
+            selected.append(row)
+    return selected
+
+
+def _distinct_values(rows: Sequence[Dict[str, Any]], key: str) -> List[float]:
+    """List the distinct numeric values of ``key``, ascending, blanks skipped."""
+    values: List[float] = []
+    for row in rows:
+        number = _row_number(row, key)
+        if number is not None and not any(_same_number(number, v) for v in values):
+            values.append(number)
+    return sorted(values)
+
+
+def _ratio_points(
+    numerator: Sequence[Tuple[float, float, bool]],
+    denominator: Sequence[Tuple[float, float, bool]],
+) -> List[Tuple[float, float, bool]]:
+    """Divide one series by another at the x values both were run at.
+
+    A ratio is only as measured as its least measured term, so a point is
+    marked projected when either input was. Sizes only one series reached
+    are left out: a ratio with a missing term is not a ratio.
+
+    Examples:
+        >>> _ratio_points([(4.0, 6.0, False), (8.0, 9.0, True)],
+        ...               [(4.0, 2.0, False), (8.0, 3.0, False),
+        ...                (16.0, 5.0, False)])
+        [(4.0, 3.0, False), (8.0, 3.0, True)]
+    """
+    lookup = {x: (y, projected) for x, y, projected in denominator}
+    ratios: List[Tuple[float, float, bool]] = []
+    for x, y, projected in numerator:
+        if x in lookup:
+            base, base_projected = lookup[x]
+            ratios.append((x, y / base, projected or base_projected))
+    ratios.sort(key=lambda point: point[0])
+    return ratios
+
+
+def _draw_w6_series(
+    ax: Axes,
+    rows: Sequence[Dict[str, Any]],
+    variants: Sequence[str],
+    x_key: str,
+    y_key: str,
+) -> Tuple[int, bool]:
+    """Draw each listed variant's ``y_key`` against ``x_key`` onto one axes.
+
+    Returns:
+        ``(series drawn, any projected point drawn)``.
+    """
+    drawn = 0
+    any_projected = False
+    for index, variant in enumerate(variants):
+        points = _variant_points(rows, variant, x_key, y_key)
+        if not points:
+            continue
+        label = _W6_VARIANT_LABEL.get(variant, variant)
+        if _plot_variant_series(ax, points, _w6_style(variant, index), label):
+            any_projected = True
+        drawn += 1
+    return drawn, any_projected
+
+
+def _log_cubic(n: float) -> float:
+    """Natural log of n^3, the Floyd-Warshall growth shape."""
+    return 3.0 * math.log(n)
+
+
+def _log_held_karp(n: float) -> float:
+    """Natural log of n^2 2^n, the Held-Karp growth shape."""
+    return 2.0 * math.log(n) + n * math.log(2.0)
+
+
+def _log_factorial(n: float) -> float:
+    """Natural log of n!, through the gamma function so it never overflows."""
+    return math.lgamma(n + 1.0)
+
+
+def _draw_reference_shape(
+    ax: Axes,
+    points: Sequence[Tuple[float, float, bool]],
+    log_shape: Callable[[float], float],
+    label: str,
+    linestyle: Any,
+) -> bool:
+    """Draw a growth shape scaled to pass through a series' first point.
+
+    Only the shape is claimed, not the constant. Anchoring at the first
+    measured point removes the machine-dependent constant, so the gap that
+    opens up between the curve and the data further right is the evidence:
+    a series that bends away from its reference is not growing the way the
+    reference says. The shape is worked in logs, so ``20!`` costs nothing
+    to draw. The curve spans the series' own n range and no further, which
+    keeps a factorial from stretching the runtime axis to geological time.
+
+    Returns:
+        True if a curve was drawn. Fewer than two distinct sizes, or a
+        first size that is not positive, draws nothing.
+    """
+    anchors = [(x, y) for x, y, projected in points if not projected]
+    if not anchors:
+        anchors = [(x, y) for x, y, _ in points]
+    if not anchors:
+        return False
+    x_start, y_start = anchors[0]
+    x_end = points[-1][0]
+    if x_start <= 0.0 or x_end <= x_start:
+        return False
+    xs = np.linspace(x_start, x_end, 120)
+    base = log_shape(x_start)
+    ys = [y_start * math.exp(log_shape(float(x)) - base) for x in xs]
+    ax.plot(
+        xs,
+        ys,
+        color=_W6_REFERENCE_COLOUR,
+        linestyle=linestyle,
+        linewidth=1.3,
+        marker="",
+        label=label,
+        zorder=1,
+    )
+    return True
+
+
+def _draw_speedup(
+    ax: Axes, points: Sequence[Tuple[float, float, bool]], label: str
+) -> Tuple[int, bool]:
+    """Draw a speedup series with the break-even line at 1.
+
+    Returns:
+        ``(series drawn, any projected point drawn)``; ``(0, False)`` and
+        nothing on the axes when there are no shared sizes.
+    """
+    if not points:
+        return 0, False
+    projected = _plot_variant_series(ax, points, dict(_W6_RATIO_STYLE), label)
+    ax.axhline(
+        1.0,
+        color=_W6_REFERENCE_COLOUR,
+        linestyle=":",
+        linewidth=1.3,
+        label="speedup = 1 (equal runtime)",
+        zorder=1,
+    )
+    return 1, projected
+
+
+def _add_w6_projected_entry(ax: Axes) -> None:
+    """Add one neutral legend entry explaining the hollow projected markers."""
+    ax.plot(
+        [],
+        [],
+        color="0.35",
+        linestyle="--",
+        linewidth=1.5,
+        marker="o",
+        markersize=9,
+        markerfacecolor="none",
+        markeredgecolor="0.35",
+        markeredgewidth=1.9,
+        label=_W6_PROJECTED_LEGEND_TEXT,
+    )
+
+
+def _finish_w6_panel(
+    ax: Axes,
+    drawn: int,
+    any_projected: bool,
+    labels: Tuple[str, str, str],
+    empty_note: str,
+    *,
+    log_x: bool = False,
+    log_y: bool = False,
+    x_ticks: Sequence[float] = (),
+) -> None:
+    """Label one Week 6 panel, or say plainly why it is empty.
+
+    A panel with no data gets a sentence in the middle of the frame naming
+    what was missing, never a blank grid that could be read as "measured,
+    and zero". Scales are only switched to log when something was drawn,
+    since an empty log axis has no sensible limits.
+
+    Args:
+        ax: The panel.
+        drawn: How many series were drawn on it.
+        any_projected: Whether any projected point was drawn.
+        labels: ``(x label, y label, title)``.
+        empty_note: The sentence shown when ``drawn`` is 0.
+        log_x: Logarithmic x axis.
+        log_y: Logarithmic y axis.
+        x_ticks: Measured x values to tick explicitly on a log x axis, where
+            the default decade ticks would label none of them.
+    """
+    xlabel, ylabel, title = labels
+    if drawn:
+        if any_projected:
+            _add_w6_projected_entry(ax)
+        if log_x:
+            ax.set_xscale("log")
+            ticks = sorted(set(x_ticks))
+            if 0 < len(ticks) <= 10:
+                ax.set_xticks(ticks)
+                ax.set_xticklabels([_format_measure(tick) for tick in ticks])
+                ax.set_xticks([], minor=True)
+        if log_y:
+            ax.set_yscale("log")
+        if ax.get_legend_handles_labels()[0]:
+            ax.legend(fontsize=8)
+    else:
+        ax.text(
+            0.5,
+            0.5,
+            empty_note,
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=9,
+            color="0.35",
+            wrap=True,
+        )
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(True, which="both", linestyle=":", linewidth=0.5, alpha=0.7)
+
+
+def _table_entry(table: Sequence[Sequence[Any]], i: int, j: int) -> Optional[float]:
+    """Read ``table[i][j]`` as a finite float, or ``None`` if it is not there.
+
+    The CLRS tables leave row 0, column 0 and everything below the diagonal
+    unused, and an implementation may fill those with 0, ``None`` or
+    nothing at all. Reading through here means an unused cell is skipped
+    rather than drawn as a cost of zero.
+    """
+    try:
+        value = table[i][j]
+    except (IndexError, KeyError, TypeError):
+        return None
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def plot_knapsack_space_comparison(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+    *,
+    fixed_n: Optional[float] = None,
+) -> Figure:
+    """Plot peak memory, runtime and memory ratio of 2D against 1D knapsack.
+
+    The rolling row is a claim about space and only about space: both
+    versions fill the same n x (W + 1) cells in the same order, so their
+    runtimes should track each other while their memory should not. The
+    figure therefore holds the item count fixed and sweeps capacity W,
+    with three panels that each check one part of the claim:
+
+    1. Peak memory against W, on a log axis. The 2D table holds
+       ``(n + 1) x (W + 1)`` cells and the 1D row ``W + 1``, so the two
+       lines should run parallel on the log axis, a constant factor apart.
+    2. Mean runtime against W, on a linear axis, where O(n x W) at fixed n
+       is a straight line. Two lines lying close together is the point:
+       saving the memory did not cost time.
+    3. The memory ratio, 2D peak divided by 1D peak, at every W both were
+       traced at, beside the cell-count ratio ``n + 1``. The measured ratio
+       is read against that line rather than expected to sit on it, since
+       tracemalloc also counts list headers, int objects and the inputs,
+       none of which the cell count includes.
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/comparison_table.csv``. Rows for other
+            problems are ignored. Any numeric field may be an empty string
+            (``peak_kib`` is blank for runs too long to trace), and such a
+            value is skipped rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+        fixed_n: The item count to hold fixed, matched against ``n``. When
+            omitted, the item count the most knapsack rows share is used,
+            since that is the sweep the benchmark treated as its control.
+
+    Returns:
+        The three-panel :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If there are no knapsack rows, if none carries an item
+            count, if ``fixed_n`` matches no row, or if no row at that item
+            count carries a usable ``peak_kib`` or ``mean_time_s``.
+
+    Time Complexity:
+        O(R log R) in the number of knapsack rows R: a constant number of
+        passes to tally and select, then a sort per variant per panel.
+
+    Space Complexity:
+        O(R) for the selected rows and extracted points, plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, capacity, seconds, kib):
+        ...     return {"problem": "knapsack", "variant": variant, "n": 50,
+        ...             "secondary_param": capacity, "mean_time_s": seconds,
+        ...             "std_time_s": "", "min_time_s": "", "max_time_s": "",
+        ...             "runs": 5, "peak_kib": kib, "theoretical_time": "O(nW)",
+        ...             "theoretical_space": "", "speedup_vs_baseline": "",
+        ...             "baseline_variant": "", "measurement": "measured"}
+        >>> rows = [row("standard_2d", 100, 0.0021, 45.2),
+        ...         row("standard_2d", 400, 0.0083, 170.4),
+        ...         row("space_optimized_1d", 100, 0.0019, 1.4),
+        ...         row("space_optimized_1d", 400, 0.0074, 3.9),
+        ...         row("space_optimized_1d", 800, 0.0150, "")]
+        >>> png = os.path.join(tempfile.mkdtemp(), "knapsack_space.png")
+        >>> fig = plot_knapsack_space_comparison(rows, png)
+        >>> [axis.get_yscale() for axis in fig.axes]
+        ['log', 'linear', 'linear']
+        >>> os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        An item count that was never run is a caller error, not a blank
+        figure:
+
+        >>> plot_knapsack_space_comparison(rows, fixed_n=7)
+        Traceback (most recent call last):
+            ...
+        ValueError: no knapsack rows at item count n = 7
+    """
+    apply_house_style()
+    knapsack_rows = _dp_rows(rows, "knapsack")
+    if not knapsack_rows:
+        raise ValueError("no knapsack rows to plot")
+    item_count = (
+        _dominant_value(knapsack_rows, "n") if fixed_n is None else float(fixed_n)
+    )
+    if item_count is None:
+        raise ValueError("no knapsack rows carry an item count in n")
+    selected = _rows_at(knapsack_rows, "n", item_count)
+    held = f"n = {_format_measure(item_count)}"
+    if not selected:
+        raise ValueError(f"no knapsack rows at item count {held}")
+    variants = _w6_variants(selected, "knapsack")
+
+    fig, axes = plt.subplots(1, 3, figsize=(18.0, 5.4))
+    memory_drawn, memory_projected = _draw_w6_series(
+        axes[0], selected, variants, "secondary_param", "peak_kib"
+    )
+    time_drawn, time_projected = _draw_w6_series(
+        axes[1], selected, variants, "secondary_param", "mean_time_s"
+    )
+    if memory_drawn == 0 and time_drawn == 0:
+        plt.close(fig)
+        raise ValueError(
+            f"no usable peak_kib or mean_time_s among the knapsack rows at {held}"
+        )
+
+    ratios = _ratio_points(
+        _variant_points(selected, "standard_2d", "secondary_param", "peak_kib"),
+        _variant_points(selected, "space_optimized_1d", "secondary_param", "peak_kib"),
+    )
+    ratio_projected = False
+    if ratios:
+        ratio_projected = _plot_variant_series(
+            axes[2], ratios, dict(_W6_RATIO_STYLE), "measured peak ratio, 2D / 1D"
+        )
+        axes[2].axhline(
+            item_count + 1.0,
+            color=_W6_REFERENCE_COLOUR,
+            linestyle=":",
+            linewidth=1.3,
+            label=f"cell-count ratio n + 1 = {_format_measure(item_count + 1.0)}",
+            zorder=1,
+        )
+
+    xlabel = "Knapsack capacity W (weight units)"
+    _finish_w6_panel(
+        axes[0],
+        memory_drawn,
+        memory_projected,
+        (xlabel, "Peak memory (KiB, log scale)", f"Peak memory against W at {held}"),
+        "no peak_kib was produced for these rows",
+        log_y=True,
+    )
+    _finish_w6_panel(
+        axes[1],
+        time_drawn,
+        time_projected,
+        (xlabel, "Mean runtime (seconds)", f"Runtime against W at {held}"),
+        "no mean_time_s was produced for these rows",
+    )
+    _finish_w6_panel(
+        axes[2],
+        len(ratios),
+        ratio_projected,
+        (xlabel, "Peak-memory ratio, 2D / 1D (times)", "Memory saved by one row"),
+        "standard_2d and space_optimized_1d share no W with a peak_kib",
+    )
+    fig.suptitle(
+        "0/1 knapsack: one row of W + 1 cells in place of the "
+        "(n + 1) x (W + 1) table",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+
+    _save(fig, save_path)
+    return fig
+
+
+def plot_mcm_performance(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot matrix-chain runtime for all three variants, with a speedup panel.
+
+    Plain recursion re-solves every subchain each time a split asks for it
+    and is exponential in the chain length (CLRS shows Omega(2^n)), while
+    memoization and the bottom-up table each solve the O(n^2) subchains
+    once at O(n) per subchain, O(n^3) in all. The left panel puts all
+    three on one log runtime axis, where the recursion is a climbing
+    straight line and the two DP versions bend gently. The right panel
+    divides recursion by bottom-up at every n both were run at, which is
+    the factor the table saves, also on a log axis because that factor
+    itself grows exponentially.
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/comparison_table.csv``. Rows for other
+            problems are ignored. Any numeric field may be an empty string,
+            and such a row is skipped rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The two-panel :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If no row carries ``problem == "mcm"`` together with a
+            usable ``n`` and ``mean_time_s``.
+
+    Time Complexity:
+        O(R log R) in the number of matrix-chain rows R: each row is read a
+        constant number of times and each series is sorted by n.
+
+    Space Complexity:
+        O(R) for the extracted points, plus the figure itself.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, n, seconds, measurement="measured"):
+        ...     return {"problem": "mcm", "variant": variant, "n": str(n),
+        ...             "secondary_param": "", "mean_time_s": seconds,
+        ...             "std_time_s": "", "min_time_s": "", "max_time_s": "",
+        ...             "runs": "5", "peak_kib": "", "theoretical_time": "",
+        ...             "theoretical_space": "", "speedup_vs_baseline": "",
+        ...             "baseline_variant": "", "measurement": measurement}
+        >>> rows = [row("recursive", 6, "0.0009"), row("recursive", 10, "0.07"),
+        ...         row("recursive", 14, "5.2", "projected"),
+        ...         row("memoized", 6, "0.0001"), row("memoized", 10, "0.0004"),
+        ...         row("bottom_up", 6, "0.00005"), row("bottom_up", 10, "0.0002"),
+        ...         row("bottom_up", 14, "0.0005"), row("bottom_up", 18, "")]
+        >>> png = os.path.join(tempfile.mkdtemp(), "mcm_performance.png")
+        >>> fig = plot_mcm_performance(rows, png)
+        >>> [axis.get_yscale() for axis in fig.axes]
+        ['log', 'log']
+        >>> os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        Nothing to draw is a caller error, not an empty picture:
+
+        >>> plot_mcm_performance([])
+        Traceback (most recent call last):
+            ...
+        ValueError: no mcm rows with a usable n and mean_time_s
+    """
+    apply_house_style()
+    mcm_rows = _dp_rows(rows, "mcm")
+
+    fig, axes = plt.subplots(1, 2, figsize=(13.6, 5.4))
+    drawn, any_projected = _draw_w6_series(
+        axes[0], mcm_rows, _w6_variants(mcm_rows, "mcm"), "n", "mean_time_s"
+    )
+    if drawn == 0:
+        plt.close(fig)
+        raise ValueError("no mcm rows with a usable n and mean_time_s")
+
+    speedups = _ratio_points(
+        _variant_points(mcm_rows, "recursive", "n", "mean_time_s"),
+        _variant_points(mcm_rows, "bottom_up", "n", "mean_time_s"),
+    )
+    speed_drawn, speed_projected = _draw_speedup(
+        axes[1], speedups, "recursive runtime / bottom-up runtime"
+    )
+
+    xlabel = "Number of matrices n (matrices in the chain)"
+    _finish_w6_panel(
+        axes[0],
+        drawn,
+        any_projected,
+        (xlabel, "Mean runtime (seconds, log scale)", "Runtime against chain length"),
+        "",
+        log_y=True,
+    )
+    _finish_w6_panel(
+        axes[1],
+        speed_drawn,
+        speed_projected,
+        (
+            xlabel,
+            "Speedup of bottom-up over recursion (times, log scale)",
+            "How many times faster the table is",
+        ),
+        "recursive and bottom_up share no n with a mean_time_s",
+        log_y=True,
+    )
+    fig.suptitle(
+        "Matrix-chain multiplication: exponential recursion against the "
+        "O(n^3) table",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+
+    _save(fig, save_path)
+    return fig
+
+
+def plot_floyd_warshall_scaling(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+    *,
+    scaling_density: float = 0.5,
+) -> Figure:
+    """Plot Floyd-Warshall scaling, its Dijkstra comparison and its memory.
+
+    Three panels, one question each:
+
+    1. Does Floyd-Warshall really cost n^3? Its runtime at one density is
+       drawn on log-log axes beside an n^3 line anchored at the smallest
+       n, so a series that runs parallel to the line is cubic, and a gap
+       that opens up would be the evidence that it is not.
+    2. When is it the right tool? Floyd-Warshall's triple loop never looks
+       at an edge, so its cost does not move with density, while running
+       Dijkstra from every source costs O(V (V + E) log V) and does. Each
+       algorithm is drawn once per density present, every one of those
+       series with its own marker and line style, so whether Dijkstra
+       wins on sparse graphs and loses on dense ones can be read straight
+       off the panel.
+    3. What does dropping the k index save? The 3D version keeps all
+       n + 1 layers D(0)..D(n), Theta(n^3) cells, while the in-place
+       version keeps one n x n matrix. Peak memory for both, on a log
+       axis, shows that factor of n + 1 as a gap that widens with n.
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/comparison_table.csv``. Rows for other
+            problems are ignored. ``secondary_param`` is the edge density.
+            Any numeric field may be an empty string, and such a value is
+            skipped rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+        scaling_density: The density whose ``floyd_warshall`` rows the
+            first panel plots. The memory panel uses it too when any memory
+            was traced there, and otherwise the density traced most often.
+
+    Returns:
+        The three-panel :class:`matplotlib.figure.Figure`. A panel with no
+        rows to draw states what was missing instead of staying blank.
+
+    Raises:
+        ValueError: If there are no floyd_warshall rows, or if none of the
+            three panels has anything usable to draw.
+
+    Time Complexity:
+        O(R log R + D * R) in the number of Floyd-Warshall rows R and the
+        number of distinct densities D: each (variant, density) series is
+        selected by one pass and sorted by n.
+
+    Space Complexity:
+        O(R) for the selected rows and extracted points, plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, n, density, seconds, kib):
+        ...     return {"problem": "floyd_warshall", "variant": variant,
+        ...             "n": n, "secondary_param": density,
+        ...             "mean_time_s": seconds, "std_time_s": "",
+        ...             "min_time_s": "", "max_time_s": "", "runs": 5,
+        ...             "peak_kib": kib, "theoretical_time": "O(n^3)",
+        ...             "theoretical_space": "", "speedup_vs_baseline": "",
+        ...             "baseline_variant": "", "measurement": "measured"}
+        >>> rows = [row("floyd_warshall", 20, 0.5, 0.002, 30.1),
+        ...         row("floyd_warshall", 40, 0.5, 0.016, 110.5),
+        ...         row("floyd_warshall", 20, 0.1, 0.002, 29.8),
+        ...         row("floyd_warshall", 40, 0.1, 0.015, ""),
+        ...         row("all_pairs_dijkstra", 20, 0.5, 0.004, 12.0),
+        ...         row("all_pairs_dijkstra", 40, 0.5, 0.020, 40.2),
+        ...         row("all_pairs_dijkstra", 20, 0.1, 0.001, 8.0),
+        ...         row("all_pairs_dijkstra", 40, 0.1, 0.004, 22.1),
+        ...         row("floyd_warshall_3d", 20, 0.5, 0.003, 600.0),
+        ...         row("floyd_warshall_3d", 40, 0.5, 0.025, 4600.0)]
+        >>> png = os.path.join(tempfile.mkdtemp(), "floyd_warshall.png")
+        >>> fig = plot_floyd_warshall_scaling(rows, png, scaling_density=0.5)
+        >>> len(fig.axes[1].get_legend().get_texts())
+        4
+        >>> os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        A density nobody ran leaves the first panel saying so, not blank:
+
+        >>> fig = plot_floyd_warshall_scaling(rows, scaling_density=0.9)
+        >>> fig.axes[0].texts[0].get_text()
+        'no floyd_warshall rows at density 0.9'
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    fw_rows = _dp_rows(rows, "floyd_warshall")
+    if not fw_rows:
+        raise ValueError("no floyd_warshall rows to plot")
+    density = float(scaling_density)
+    density_text = _format_measure(density)
+    xlabel = "Number of vertices n (vertices)"
+    runtime_label = "Mean runtime (seconds, log scale)"
+
+    fig, axes = plt.subplots(1, 3, figsize=(19.0, 5.6))
+
+    # Panel 1: one variant at one density, against the n^3 shape.
+    scaling = _variant_points(
+        _rows_near(fw_rows, "secondary_param", density),
+        "floyd_warshall",
+        "n",
+        "mean_time_s",
+    )
+    scaling_projected = False
+    if scaling:
+        scaling_projected = _plot_variant_series(
+            axes[0],
+            scaling,
+            _w6_style("floyd_warshall", 0),
+            _W6_VARIANT_LABEL["floyd_warshall"],
+        )
+        _draw_reference_shape(
+            axes[0],
+            scaling,
+            _log_cubic,
+            r"$n^3$ reference, anchored at the smallest n",
+            ":",
+        )
+
+    # Panel 2: each compared variant at each density, one style per pair.
+    compare_rows = [row for row in fw_rows if _row_text(row, "variant") in _FW_COMPARED]
+    densities = _distinct_values(compare_rows, "secondary_param")
+    compare_drawn = 0
+    compare_projected = False
+    compare_x: List[float] = []
+    for variant_index, variant in enumerate(_FW_COMPARED):
+        for density_index, value in enumerate(densities):
+            pair = variant_index * len(densities) + density_index
+            points = _variant_points(
+                _rows_near(compare_rows, "secondary_param", value),
+                variant,
+                "n",
+                "mean_time_s",
+            )
+            if not points:
+                continue
+            style = {
+                "color": _W6_PAIR_COLOURS[pair % len(_W6_PAIR_COLOURS)],
+                "marker": _W6_PAIR_MARKERS[pair % len(_W6_PAIR_MARKERS)],
+                "linestyle": _W6_PAIR_LINESTYLES[pair % len(_W6_PAIR_LINESTYLES)],
+            }
+            label = f"{_W6_VARIANT_LABEL[variant]}, density {_format_measure(value)}"
+            if _plot_variant_series(axes[1], points, style, label):
+                compare_projected = True
+            compare_drawn += 1
+            compare_x.extend(point[0] for point in points)
+
+    # Panel 3: one matrix against every layer, at a single density.
+    memory_rows = [
+        row
+        for row in fw_rows
+        if _row_text(row, "variant") in _FW_MEMORY
+        and _row_number(row, "peak_kib") is not None
+    ]
+    memory_density = (
+        density
+        if _rows_near(memory_rows, "secondary_param", density)
+        else _dominant_value(memory_rows, "secondary_param")
+    )
+    if memory_density is not None:
+        memory_rows = _rows_near(memory_rows, "secondary_param", memory_density)
+    memory_drawn, memory_projected = _draw_w6_series(
+        axes[2], memory_rows, _FW_MEMORY, "n", "peak_kib"
+    )
+
+    if not scaling and compare_drawn == 0 and memory_drawn == 0:
+        plt.close(fig)
+        raise ValueError("no usable floyd_warshall measurements to plot")
+
+    _finish_w6_panel(
+        axes[0],
+        len(scaling),
+        scaling_projected,
+        (
+            xlabel,
+            runtime_label,
+            f"Floyd-Warshall against $n^3$ (density {density_text}, log-log)",
+        ),
+        f"no floyd_warshall rows at density {density_text}",
+        log_x=True,
+        log_y=True,
+        x_ticks=[point[0] for point in scaling],
+    )
+    _finish_w6_panel(
+        axes[1],
+        compare_drawn,
+        compare_projected,
+        (xlabel, runtime_label, "Floyd-Warshall against Dijkstra from every source"),
+        "no floyd_warshall or all_pairs_dijkstra rows carry a density",
+        log_x=True,
+        log_y=True,
+        x_ticks=compare_x,
+    )
+    memory_title = "Peak memory: one matrix against every layer"
+    if memory_density is not None:
+        memory_title += f" (density {_format_measure(memory_density)})"
+    _finish_w6_panel(
+        axes[2],
+        memory_drawn,
+        memory_projected,
+        (xlabel, "Peak memory (KiB, log scale)", memory_title),
+        "no peak_kib was produced for floyd_warshall or floyd_warshall_3d",
+        log_y=True,
+    )
+    fig.suptitle(
+        "All-pairs shortest paths: Floyd-Warshall's cubic time, its Dijkstra "
+        "alternative, and the layer it does not keep",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+
+    _save(fig, save_path)
+    return fig
+
+
+def plot_tsp_runtime(
+    rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot Held-Karp against brute-force TSP, with growth shapes and crossover.
+
+    Both algorithms are exponential, and the figure exists to show that
+    "exponential" covers very different things. Brute force with the start
+    fixed tries (n - 1)! tours; Held-Karp fills an n x 2^n table at O(n)
+    per cell, O(n^2 2^n) in all. The left panel puts both on a log runtime
+    axis beside those two shapes, each scaled to pass through the first
+    measured point of its own series, so the comparison is between growth
+    rates and not between machine constants.
+
+    For small n brute force can win, because its inner loop is a bare
+    permutation walk while Held-Karp pays for a 2^n table up front. The
+    right panel divides brute force by bitmask at every n both were run
+    at; above the line at 1 the bitmask DP is faster. The first measured n
+    where that happens is marked with a vertical line and annotated, since
+    that size is where the extra memory starts paying for itself.
+
+    Args:
+        rows: Benchmark measurement rows, as written to
+            ``benchmarks/results/comparison_table.csv``. Rows for other
+            problems are ignored. Any numeric field may be an empty string,
+            and such a row is skipped rather than guessed at.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The two-panel :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If no row carries ``problem == "tsp"`` together with a
+            usable ``n`` and ``mean_time_s``.
+
+    Time Complexity:
+        O(R log R) in the number of TSP rows R, plus a constant 120 points
+        per reference curve.
+
+    Space Complexity:
+        O(R) for the extracted points, plus the figure itself.
+
+    Examples:
+        >>> import tempfile
+        >>> def row(variant, n, seconds):
+        ...     return {"problem": "tsp", "variant": variant, "n": n,
+        ...             "secondary_param": "", "mean_time_s": seconds,
+        ...             "std_time_s": "", "min_time_s": "", "max_time_s": "",
+        ...             "runs": 5, "peak_kib": "", "theoretical_time": "",
+        ...             "theoretical_space": "", "speedup_vs_baseline": "",
+        ...             "baseline_variant": "", "measurement": "measured"}
+        >>> rows = [row("bitmask", 4, 4e-05), row("bitmask", 6, 0.0003),
+        ...         row("bitmask", 8, 0.002), row("bitmask", 10, 0.012),
+        ...         row("brute_force", 4, 1e-05), row("brute_force", 6, 0.0002),
+        ...         row("brute_force", 8, 0.012), row("brute_force", 10, 1.1),
+        ...         row("brute_force", 12, "")]
+        >>> png = os.path.join(tempfile.mkdtemp(), "tsp_runtime.png")
+        >>> fig = plot_tsp_runtime(rows, png)
+        >>> os.path.getsize(png) > 0
+        True
+
+        Brute force is still ahead at n = 6 and behind at n = 8, so the
+        crossover is marked at 8:
+
+        >>> any("n = 8" in text.get_text()
+        ...     for text in fig.axes[1].get_legend().get_texts())
+        True
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    tsp_rows = _dp_rows(rows, "tsp")
+
+    fig, axes = plt.subplots(1, 2, figsize=(13.6, 5.4))
+    drawn, any_projected = _draw_w6_series(
+        axes[0], tsp_rows, _w6_variants(tsp_rows, "tsp"), "n", "mean_time_s"
+    )
+    if drawn == 0:
+        plt.close(fig)
+        raise ValueError("no tsp rows with a usable n and mean_time_s")
+
+    bitmask = _variant_points(tsp_rows, "bitmask", "n", "mean_time_s")
+    brute = _variant_points(tsp_rows, "brute_force", "n", "mean_time_s")
+    _draw_reference_shape(
+        axes[0],
+        bitmask,
+        _log_held_karp,
+        r"$n^2 2^n$ shape, scaled to first bitmask point",
+        ":",
+    )
+    _draw_reference_shape(
+        axes[0],
+        brute,
+        _log_factorial,
+        r"$n!$ shape, scaled to first brute-force point",
+        "-.",
+    )
+
+    speedups = _ratio_points(brute, bitmask)
+    speed_drawn, speed_projected = _draw_speedup(
+        axes[1], speedups, "brute-force runtime / bitmask runtime"
+    )
+    speed_title = "Speedup of the bitmask DP over brute force"
+    crossover = next((point for point in speedups if point[1] > 1.0), None)
+    if crossover is not None:
+        cross_n, cross_speedup, cross_projected = crossover
+        cross_text = _format_measure(cross_n)
+        axes[1].axvline(
+            cross_n,
+            color="0.25",
+            linestyle="--",
+            linewidth=1.2,
+            label=f"first n where bitmask is faster: n = {cross_text}",
+            zorder=1,
+        )
+        axes[1].plot(
+            [cross_n],
+            [cross_speedup],
+            marker="*",
+            markersize=16,
+            color="#e9c46a",
+            markeredgecolor="black",
+            linestyle="",
+            zorder=5,
+        )
+        axes[1].annotate(
+            f"crossover at n = {cross_text}\n"
+            f"bitmask {cross_speedup:.3g}x faster"
+            + (" (projected)" if cross_projected else ""),
+            xy=(cross_n, cross_speedup),
+            xytext=(16, -30),
+            textcoords="offset points",
+            ha="left",
+            va="top",
+            fontsize=9,
+            arrowprops={"arrowstyle": "->", "color": "0.25"},
+        )
+        speed_title += f" (crossover at n = {cross_text})"
+    elif speedups:
+        speed_title += " (bitmask faster at no shared n)"
+
+    xlabel = "Number of cities n (cities)"
+    _finish_w6_panel(
+        axes[0],
+        drawn,
+        any_projected,
+        (xlabel, "Mean runtime (seconds, log scale)", "Runtime against city count"),
+        "",
+        log_y=True,
+    )
+    _finish_w6_panel(
+        axes[1],
+        speed_drawn,
+        speed_projected,
+        (xlabel, "Speedup of bitmask over brute force (times, log scale)", speed_title),
+        "bitmask and brute_force share no n with a mean_time_s",
+        log_y=True,
+    )
+    fig.suptitle(
+        r"Travelling salesman: Held-Karp's $O(n^2 2^n)$ against brute force's "
+        r"$O(n!)$",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+
+    _save(fig, save_path)
+    return fig
+
+
+def plot_mcm_table(
+    m: Sequence[Sequence[Any]],
+    s: Sequence[Sequence[Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Draw the CLRS matrix-chain m table as an annotated heatmap.
+
+    The bottom-up algorithm fills this table diagonal by diagonal: chains
+    of length 1 on the main diagonal, then length 2, up to the single cell
+    ``m[1][n]`` in the top right corner, which is the answer. Drawing the
+    table makes that band-by-band order visible, which a printed list of
+    numbers does not. Every cell carries its cost and, off the diagonal,
+    the split ``k = s[i][j]`` that achieved it; following those splits
+    down from the corner is exactly what the parenthesization printer does.
+    Cost is not monotone in chain length (a longer chain can be cheaper
+    than one of its subchains when its outer dimensions are small), so the
+    colour scale is read cell by cell, not as a gradient toward the corner.
+
+    Only ``1 <= i <= j <= n`` is defined. Row 0, column 0 and the lower
+    triangle are masked out and left blank rather than drawn as zero cost.
+
+    Args:
+        m: The 1-indexed ``(n + 1) x (n + 1)`` cost table from
+            ``mcm_bottom_up``, ``m[i][j]`` the minimum scalar
+            multiplications for ``A_i..A_j``.
+        s: The matching split table, ``s[i][j]`` the optimal k. A missing or
+            ``None`` entry simply leaves that cell without a ``k=`` line.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The :class:`matplotlib.figure.Figure`.
+
+    Raises:
+        ValueError: If ``m`` has fewer than two rows (n would be 0), or if
+            it holds no usable cost anywhere in its upper triangle.
+
+    Time Complexity:
+        O(n^2): one read, one colour lookup and one label per defined cell.
+
+    Space Complexity:
+        O(n^2) for the dense cost grid passed to the heatmap.
+
+    Examples:
+        >>> import tempfile
+        >>> m = [[0, 0, 0, 0], [0, 0, 1000, 2500], [0, 0, 0, 3000], [0, 0, 0, 0]]
+        >>> s = [[0, 0, 0, 0], [0, 0, 1, 2], [0, 0, 0, 2], [0, 0, 0, 0]]
+        >>> png = os.path.join(tempfile.mkdtemp(), "mcm_table.png")
+        >>> fig = plot_mcm_table(m, s, png)
+        >>> [text.get_text().replace(chr(10), " ") for text in fig.axes[0].texts]
+        ['0', '1,000 k=1', '2,500 k=2', '0', '3,000 k=2', '0']
+        >>> os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        A table with no matrices in it is a caller error:
+
+        >>> plot_mcm_table([[0]], [[0]])
+        Traceback (most recent call last):
+            ...
+        ValueError: m must be the 1-indexed (n + 1) x (n + 1) CLRS table with n >= 1
+    """
+    apply_house_style()
+    if len(m) < 2:
+        raise ValueError(
+            "m must be the 1-indexed (n + 1) x (n + 1) CLRS table with n >= 1"
+        )
+    n = len(m) - 1
+    costs = np.full((n, n), np.nan)
+    for i in range(1, n + 1):
+        for j in range(i, n + 1):
+            value = _table_entry(m, i, j)
+            if value is not None:
+                costs[i - 1, j - 1] = value
+    if np.all(np.isnan(costs)):
+        raise ValueError("m holds no usable cost for any 1 <= i <= j <= n")
+
+    cmap = matplotlib.colormaps["viridis"].with_extremes(bad="white")
+    side = max(4.8, 0.95 * n + 2.4)
+    fig, ax = plt.subplots(figsize=(side + 1.4, side))
+    image = ax.imshow(np.ma.masked_invalid(costs), cmap=cmap, aspect="equal")
+    bar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    bar.set_label("Minimum cost m[i][j] (scalar multiplications)")
+
+    font_size = 9 if n <= 8 else 7 if n <= 12 else 5
+    for i in range(1, n + 1):
+        for j in range(i, n + 1):
+            value = costs[i - 1, j - 1]
+            if np.isnan(value):
+                continue
+            split = _table_entry(s, i, j) if j > i else None
+            text = _format_measure(value)
+            if split is not None:
+                text += f"\nk={_format_measure(split)}"
+            ax.text(
+                j - 1,
+                i - 1,
+                text,
+                ha="center",
+                va="center",
+                fontsize=font_size,
+                color=_label_text_colour(cmap(image.norm(value))),
+            )
+
+    positions = list(range(n))
+    ax.set_xticks(positions)
+    ax.set_xticklabels([str(index + 1) for index in positions])
+    ax.set_yticks(positions)
+    ax.set_yticklabels([str(index + 1) for index in positions])
+    ax.set_xlabel("Chain end j (matrix index, last matrix $A_j$)")
+    ax.set_ylabel("Chain start i (matrix index, first matrix $A_i$)")
+    ax.set_title(
+        f"CLRS m table for {n} matrices: cost m[i][j] and split k = s[i][j]\n"
+        "(the answer m[1][n] is the top-right cell; the lower triangle is unused)"
+    )
+    ax.grid(False)
     fig.tight_layout()
 
     _save(fig, save_path)

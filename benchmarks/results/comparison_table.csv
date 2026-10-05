@@ -1,0 +1,91 @@
+problem,variant,n,secondary_param,mean_time_s,std_time_s,min_time_s,max_time_s,runs,peak_kib,theoretical_time,theoretical_space,speedup_vs_baseline,baseline_variant,measurement
+knapsack,standard_2d,100,100,0.000446758,0.000004882,0.000442542,0.000453208,5,130.7,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,100,100,0.000269742,0.000008773,0.000260292,0.000281083,5,5.8,O(n*W),O(W),1.656,standard_2d,measured
+knapsack,standard_2d,100,500,0.002453542,0.000048152,0.002407292,0.002534958,5,1052.5,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,100,500,0.001973300,0.000072124,0.001884500,0.002048625,5,21.4,O(n*W),O(W),1.243,standard_2d,measured
+knapsack,standard_2d,100,1000,0.005366834,0.000137483,0.005255250,0.005558334,5,2564.3,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,100,1000,0.004417233,0.000060370,0.004355292,0.004501125,5,40.9,O(n*W),O(W),1.215,standard_2d,measured
+knapsack,standard_2d,100,2500,0.014438433,0.000081434,0.014323375,0.014537417,5,8071.1,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,100,2500,0.012141300,0.000101787,0.012039417,0.012303541,5,99.5,O(n*W),O(W),1.189,standard_2d,measured
+knapsack,standard_2d,100,5000,0.029845617,0.000149507,0.029676375,0.030033292,5,17621.9,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,100,5000,0.025218583,0.000078561,0.025101584,0.025309958,5,197.2,O(n*W),O(W),1.183,standard_2d,measured
+knapsack,standard_2d,100,10000,0.060526217,0.000332455,0.060036667,0.060942333,5,36723.4,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,100,10000,0.051146458,0.000060154,0.051077291,0.051238792,5,392.5,O(n*W),O(W),1.183,standard_2d,measured
+knapsack,standard_2d,25,1000,0.001329825,0.000056232,0.001256000,0.001373458,5,772.1,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,25,1000,0.001134675,0.000038678,0.001073291,0.001171958,5,39.2,O(n*W),O(W),1.172,standard_2d,measured
+knapsack,standard_2d,50,1000,0.002641884,0.000060690,0.002605167,0.002749334,5,1326.6,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,50,1000,0.002193767,0.000067166,0.002113958,0.002266500,5,39.8,O(n*W),O(W),1.204,standard_2d,measured
+knapsack,standard_2d,200,1000,0.010804808,0.000161036,0.010540583,0.010929708,5,4204.3,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,200,1000,0.008681933,0.000075640,0.008601083,0.008769625,5,42.5,O(n*W),O(W),1.245,standard_2d,measured
+knapsack,standard_2d,400,1000,0.020883950,0.000127974,0.020701250,0.021035000,5,6978.4,O(n*W),O(n*W),,,measured
+knapsack,space_optimized_1d,400,1000,0.016910817,0.000158392,0.016668542,0.017071458,5,45.7,O(n*W),O(W),1.235,standard_2d,measured
+mcm,recursive,4,,0.000012450,0.000001926,0.000009292,0.000014500,5,0.4,O(3^n),O(n),,,measured
+mcm,memoized,4,,0.000013058,0.000004281,0.000008458,0.000018542,5,0.7,O(n^3),O(n^2),0.953,recursive,measured
+mcm,bottom_up,4,,0.000012642,0.000003910,0.000009209,0.000019083,5,1.0,O(n^3),O(n^2),0.985,recursive,measured
+mcm,recursive,6,,0.000030617,0.000004991,0.000024042,0.000037875,5,0.6,O(3^n),O(n),,,measured
+mcm,memoized,6,,0.000022067,0.000007124,0.000015458,0.000032375,5,1.3,O(n^3),O(n^2),1.387,recursive,measured
+mcm,bottom_up,6,,0.000016450,0.000003387,0.000012959,0.000020916,5,1.7,O(n^3),O(n^2),1.861,recursive,measured
+mcm,recursive,8,,0.000183775,0.000035797,0.000165625,0.000247542,5,0.8,O(3^n),O(n),,,measured
+mcm,memoized,8,,0.000028842,0.000002845,0.000026125,0.000032375,5,2.0,O(n^3),O(n^2),6.372,recursive,measured
+mcm,bottom_up,8,,0.000026450,0.000005427,0.000019375,0.000034042,5,2.8,O(n^3),O(n^2),6.948,recursive,measured
+mcm,recursive,10,,0.001533600,0.000058832,0.001489250,0.001633334,5,1.0,O(3^n),O(n),,,measured
+mcm,memoized,10,,0.000038525,0.000003483,0.000034375,0.000041709,5,2.9,O(n^3),O(n^2),39.808,recursive,measured
+mcm,bottom_up,10,,0.000038325,0.000008975,0.000027125,0.000045333,5,3.9,O(n^3),O(n^2),40.016,recursive,measured
+mcm,recursive,12,,0.013833067,0.000089710,0.013688458,0.013922750,5,1.1,O(3^n),O(n),,,measured
+mcm,memoized,12,,0.000062733,0.000010246,0.000054417,0.000078916,5,3.9,O(n^3),O(n^2),220.507,recursive,measured
+mcm,bottom_up,12,,0.000049208,0.000003757,0.000043125,0.000053125,5,5.4,O(n^3),O(n^2),281.114,recursive,measured
+mcm,recursive,14,,0.124653383,0.000212927,0.124347083,0.124936291,5,1.5,O(3^n),O(n),,,measured
+mcm,memoized,14,,0.000088142,0.000011177,0.000079375,0.000107292,5,5.1,O(n^3),O(n^2),1414.234,recursive,measured
+mcm,bottom_up,14,,0.000062108,0.000003782,0.000058166,0.000068208,5,7.0,O(n^3),O(n^2),2007.042,recursive,measured
+mcm,recursive,16,,1.119933500,0.002245949,1.117340500,1.121269375,3,1.6,O(3^n),O(n),,,measured
+mcm,memoized,16,,0.000121258,0.000008452,0.000111375,0.000131084,5,6.6,O(n^3),O(n^2),9235.956,recursive,measured
+mcm,bottom_up,16,,0.000093391,0.000024353,0.000079208,0.000136750,5,9.1,O(n^3),O(n^2),11991.878,recursive,measured
+mcm,memoized,25,,0.000413933,0.000030467,0.000387250,0.000458791,5,15.4,O(n^3),O(n^2),,,measured
+mcm,bottom_up,25,,0.000265616,0.000012321,0.000256667,0.000286666,5,20.9,O(n^3),O(n^2),,,measured
+mcm,memoized,50,,0.003045033,0.000107142,0.002924833,0.003164042,5,59.7,O(n^3),O(n^2),,,measured
+mcm,bottom_up,50,,0.001861433,0.000032118,0.001815000,0.001897708,5,81.8,O(n^3),O(n^2),,,measured
+mcm,memoized,100,,0.025343442,0.000145168,0.025120875,0.025524042,5,237.6,O(n^3),O(n^2),,,measured
+mcm,bottom_up,100,,0.015064216,0.000148967,0.014853000,0.015223334,5,323.7,O(n^3),O(n^2),,,measured
+mcm,memoized,200,,0.234362134,0.002416841,0.230366584,0.236368250,5,947.9,O(n^3),O(n^2),,,measured
+mcm,bottom_up,200,,0.123230767,0.000771673,0.122254125,0.124000375,5,1276.4,O(n^3),O(n^2),,,measured
+floyd_warshall,floyd_warshall,50,0.05,0.002063200,0.000018899,0.002032291,0.002078625,5,87.2,O(V^3),O(V^2),1.503,all_pairs_dijkstra,measured
+floyd_warshall,all_pairs_dijkstra,50,0.05,0.003100400,0.000069170,0.003031333,0.003193916,5,78.3,O(V (V+E) log V),O(V^2),,,measured
+floyd_warshall,floyd_warshall,100,0.05,0.020429333,0.000232098,0.020131792,0.020669958,5,396.5,O(V^3),O(V^2),1.049,all_pairs_dijkstra,measured
+floyd_warshall,all_pairs_dijkstra,100,0.05,0.021438317,0.000111043,0.021273791,0.021586917,5,340.2,O(V (V+E) log V),O(V^2),,,measured
+floyd_warshall,floyd_warshall,200,0.05,0.194137233,0.002060275,0.192572125,0.197601166,5,1547.8,O(V^3),O(V^2),0.686,all_pairs_dijkstra,measured
+floyd_warshall,all_pairs_dijkstra,200,0.05,0.133135783,0.000839453,0.131987667,0.133973000,5,1302.4,O(V (V+E) log V),O(V^2),,,measured
+floyd_warshall,floyd_warshall,25,0.5,0.000698833,0.000024608,0.000671375,0.000735292,5,24.4,O(V^3),O(V^2),,,measured
+floyd_warshall,floyd_warshall_3d,25,0.5,0.001870825,0.000036464,0.001828417,0.001929375,5,242.1,O(V^3),O(V^3),,,measured
+floyd_warshall,floyd_warshall,50,0.5,0.004280691,0.000137261,0.004131583,0.004407958,5,93.2,O(V^3),O(V^2),2.670,all_pairs_dijkstra,measured
+floyd_warshall,all_pairs_dijkstra,50,0.5,0.011431525,0.000047298,0.011358958,0.011489875,5,90.7,O(V (V+E) log V),O(V^2),,,measured
+floyd_warshall,floyd_warshall_3d,50,0.5,0.013946125,0.000087962,0.013870458,0.014091875,5,1416.5,O(V^3),O(V^3),,,measured
+floyd_warshall,floyd_warshall,100,0.5,0.030713858,0.000204040,0.030451375,0.030943333,5,389.9,O(V^3),O(V^2),2.261,all_pairs_dijkstra,measured
+floyd_warshall,all_pairs_dijkstra,100,0.5,0.069436833,0.000253945,0.069042416,0.069739667,5,350.2,O(V (V+E) log V),O(V^2),,,measured
+floyd_warshall,floyd_warshall_3d,100,0.5,0.110412950,0.000506988,0.109521000,0.110778459,5,10445.7,O(V^3),O(V^3),,,measured
+floyd_warshall,floyd_warshall,200,0.5,0.238549958,0.002417904,0.235055000,0.241869666,5,1533.8,O(V^3),O(V^2),1.884,all_pairs_dijkstra,measured
+floyd_warshall,all_pairs_dijkstra,200,0.5,0.449500458,0.001206726,0.447521958,0.450416292,5,1323.6,O(V (V+E) log V),O(V^2),,,measured
+floyd_warshall,floyd_warshall,500,0.5,4.358099055,0.070200615,4.278675041,4.411846584,3,,O(V^3),O(V^2),,,measured
+tsp,bitmask,4,,0.000033417,0.000005470,0.000027042,0.000040959,5,2.0,O(n^2 2^n),O(n 2^n),0.657,brute_force,measured
+tsp,brute_force,4,,0.000021942,0.000006679,0.000014708,0.000029917,5,0.8,O(n!),O(n),,,measured
+tsp,bitmask,5,,0.000050442,0.000010771,0.000039709,0.000067000,5,3.7,O(n^2 2^n),O(n 2^n),0.503,brute_force,measured
+tsp,brute_force,5,,0.000025367,0.000008830,0.000018459,0.000039875,5,1.0,O(n!),O(n),,,measured
+tsp,bitmask,6,,0.000063417,0.000005475,0.000058750,0.000072459,5,7.5,O(n^2 2^n),O(n 2^n),0.696,brute_force,measured
+tsp,brute_force,6,,0.000044142,0.000006880,0.000035875,0.000052667,5,1.1,O(n!),O(n),,,measured
+tsp,bitmask,7,,0.000126608,0.000015992,0.000110917,0.000144833,5,15.8,O(n^2 2^n),O(n 2^n),1.294,brute_force,measured
+tsp,brute_force,7,,0.000163892,0.000005128,0.000157959,0.000170459,5,1.3,O(n!),O(n),,,measured
+tsp,bitmask,8,,0.000232250,0.000009668,0.000222000,0.000243625,5,33.9,O(n^2 2^n),O(n 2^n),4.849,brute_force,measured
+tsp,brute_force,8,,0.001126275,0.000023414,0.001106000,0.001161083,5,1.4,O(n!),O(n),,,measured
+tsp,bitmask,9,,0.000562475,0.000098315,0.000487417,0.000731709,5,74.8,O(n^2 2^n),O(n 2^n),17.389,brute_force,measured
+tsp,brute_force,9,,0.009780975,0.000157964,0.009642542,0.010020709,5,1.8,O(n!),O(n),,,measured
+tsp,bitmask,10,,0.001075550,0.000071709,0.001031250,0.001202708,5,162.6,O(n^2 2^n),O(n 2^n),87.838,brute_force,measured
+tsp,brute_force,10,,0.094473658,0.000309114,0.094135333,0.094970541,5,2.0,O(n!),O(n),,,measured
+tsp,bitmask,11,,0.002567316,0.000116666,0.002471916,0.002759375,5,355.1,O(n^2 2^n),O(n 2^n),405.255,brute_force,measured
+tsp,brute_force,11,,1.040417597,0.015800357,1.025997458,1.057307334,3,2.3,O(n!),O(n),,,measured
+tsp,bitmask,12,,0.005483133,0.000120321,0.005356334,0.005612541,5,771.3,O(n^2 2^n),O(n 2^n),2280.252,brute_force,measured
+tsp,brute_force,12,,12.502923042,0.434202082,12.130630833,12.979896125,3,,O(n!),O(n),,,measured
+tsp,bitmask,13,,0.012679700,0.000085225,0.012596208,0.012774750,5,1718.6,O(n^2 2^n),O(n 2^n),,,measured
+tsp,bitmask,14,,0.027471425,0.000113351,0.027319750,0.027631583,5,3592.9,O(n^2 2^n),O(n 2^n),,,measured
+tsp,bitmask,15,,0.061365917,0.000380490,0.060840667,0.061879792,5,7713.5,O(n^2 2^n),O(n 2^n),,,measured
+tsp,bitmask,16,,0.126207766,0.000723471,0.125437541,0.127182666,5,16390.8,O(n^2 2^n),O(n 2^n),,,measured
+tsp,bitmask,17,,0.289791542,0.007241743,0.285292833,0.302607500,5,34837.0,O(n^2 2^n),O(n 2^n),,,measured
+tsp,bitmask,18,,0.647040722,0.000864331,0.646045666,0.647605083,3,73774.2,O(n^2 2^n),O(n 2^n),,,measured

@@ -1,0 +1,6 @@
+source,floyd_warshall_row,all_pairs_dijkstra
+0,0 1 -3 2 -4,"ValueError: negative weight -4.0 on edge (0, 4); weights must be >= 0"
+1,3 0 -4 1 -1,"ValueError: negative weight -4.0 on edge (0, 4); weights must be >= 0"
+2,7 4 0 5 3,"ValueError: negative weight -4.0 on edge (0, 4); weights must be >= 0"
+3,2 -1 -5 0 -2,"ValueError: negative weight -4.0 on edge (0, 4); weights must be >= 0"
+4,8 5 1 6 0,"ValueError: negative weight -4.0 on edge (0, 4); weights must be >= 0"
