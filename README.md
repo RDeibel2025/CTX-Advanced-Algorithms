@@ -13,6 +13,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 4 | Graph Algorithms | [`analysis/week4_report.md`](analysis/week4_report.md) |
 | 5 | Dynamic Programming | [`analysis/week5_report.md`](analysis/week5_report.md) |
 | 6 | Dynamic Programming II | [`analysis/week6_report.md`](analysis/week6_report.md) |
+| 7 | Randomized Algorithms | [`analysis/week7_report.md`](analysis/week7_report.md) |
 
 ---
 
@@ -21,7 +22,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains seven things:
+It contains eight things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -50,13 +51,18 @@ It contains seven things:
    knapsack, matrix chain multiplication, Floyd-Warshall all-pairs
    shortest paths, and the Held-Karp bitmask solution to the traveling
    salesman problem.
-6. **A benchmarking framework** that generates eight different shapes of
+6. **Five randomized algorithms** (Week 7) - randomized QuickSort and
+   QuickSelect (Las Vegas: always correct, random running time), the
+   Fermat and Miller-Rabin primality tests, a Bloom filter and MinHash
+   similarity (Monte Carlo: fixed running time, bounded error), each
+   measured against a deterministic or exact baseline.
+7. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-7. **A performance study each week** built from a real run of that
+8. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -92,6 +98,12 @@ Advanced Algorithms/
 │   │   ├── matrix_chain_multiplication.py  Recursive, memoized, bottom-up
 │   │   ├── floyd_warshall.py               All-pairs paths, negative edges
 │   │   └── bitmask_traveling_salesman.py   Held-Karp and brute force
+│   ├── randomized/
+│   │   ├── randomized_quicksort.py   Randomized and fixed-pivot quicksort
+│   │   ├── randomized_selection.py   QuickSelect and median of medians
+│   │   ├── montecarlo_primality.py   Fermat, Miller-Rabin, trial division
+│   │   ├── bloom_filter.py           Bloom filter, double hashing
+│   │   └── minhash_similarity.py     MinHash Jaccard estimation
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -109,6 +121,8 @@ Advanced Algorithms/
 │       ├── timer.py                Timer, CallCounter, peak memory
 │       ├── matrix_utils.py         Weight matrices, parenthesization cost
 │       ├── bitmask_utils.py        Subset operations for Held-Karp
+│       ├── random_utils.py         Seeded RNGs, derive_seed, blake2b hashing
+│       ├── probability_analysis.py Summaries, Wilson intervals, theory
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Shared fixtures and parametrisation
@@ -134,6 +148,12 @@ Advanced Algorithms/
 │   ├── test_floyd_warshall.py      CLRS matrix, agreement with Dijkstra
 │   ├── test_bitmask_tsp.py         Bitmask DP against brute force
 │   ├── test_benchmark_comparison.py  The harness runs and writes its outputs
+│   ├── test_randomized_quicksort.py  Expected comparisons, n(n-1)/2 worst case
+│   ├── test_randomized_selection.py  Every rank, both algorithms, seeded
+│   ├── test_montecarlo_primality.py  Liar counts, the fixed-base attack
+│   ├── test_bloom_filter.py        No false negatives; PYTHONHASHSEED-proof
+│   ├── test_minhash_similarity.py  Estimates against exact Jaccard
+│   ├── test_randomized_benchmark.py  Same seed, same CSV; outputs written
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -143,6 +163,7 @@ Advanced Algorithms/
 │   ├── week4_graph_benchmark.py    The Week 4 graph benchmark
 │   ├── week5_dp_benchmark.py       The Week 5 DP benchmark
 │   ├── week6_dp_advanced_benchmark.py  The Week 6 benchmark
+│   ├── week7_randomized_benchmark.py   The Week 7 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -151,7 +172,8 @@ Advanced Algorithms/
 │   ├── week3_report.md             Week 3 technical report
 │   ├── week4_report.md             Week 4 technical report
 │   ├── week5_report.md             Week 5 technical report
-│   └── week6_report.md             Week 6 technical report
+│   ├── week6_report.md             Week 6 technical report
+│   └── week7_report.md             Week 7 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -169,6 +191,8 @@ Advanced Algorithms/
 │   ├── build_week5_pdf.py          Builds the Week 5 submission PDF
 │   ├── week6_facts.py              Prints every figure the Week 6 report quotes
 │   ├── build_week6_pdf.py          Builds the Week 6 submission PDF
+│   ├── week7_facts.py              Prints every figure the Week 7 report quotes
+│   ├── build_week7_pdf.py          Builds the Week 7 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -176,6 +200,10 @@ Advanced Algorithms/
 └── examples/
     ├── week2_demo.py               Runnable Week 2 demonstration
     ├── week3_demo.py               Runnable Week 3 demonstration
+    ├── week4_demo.py               Runnable Week 4 demonstration
+    ├── week5_demo.py               Runnable Week 5 demonstration
+    ├── week6_demo.py               Runnable Week 6 demonstration
+    └── week7_demo.py               Runnable Week 7 demonstration
 ```
 
 ---
@@ -266,11 +294,116 @@ chains including the CLRS example, the CLRS all-pairs distance matrix and
 agreement with Week 4's Dijkstra, the four-city tour, and the benchmark
 harness end to end.
 
+Week 7 adds six more: QuickSort comparison counts against
+2(n+1)H_n - 4n and exactly n(n-1)/2 for the fixed pivot on sorted input;
+both selection algorithms at every rank; the hand-counted Fermat and
+strong-liar table and the fixed-base attack on 3,215,031,751; a Bloom
+filter that never returns a false negative and builds identical bits
+under two `PYTHONHASHSEED` values; MinHash estimates against exact Jaccard
+similarity; and the benchmark run twice with the same seed, which must
+produce the same CSV apart from the timing columns.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 7: randomized algorithms
+
+No new dependencies. Week 7 code lives in its own package,
+[`src/randomized/`](src/randomized/). Every random choice draws from a
+seeded `random.Random` instance, and the Bloom filter and MinHash hash
+with seeded blake2b rather than Python's `hash()`, so results do not
+change with `PYTHONHASHSEED`.
+
+### The five algorithms
+
+| Module | Functions |
+|---|---|
+| [`randomized_quicksort.py`](src/randomized/randomized_quicksort.py) | `randomized_quicksort`, `deterministic_quicksort` (last-element or median-of-three pivot, the baseline Week 2 did not have), `expected_comparisons`, `comparison_std_asymptotic` |
+| [`randomized_selection.py`](src/randomized/randomized_selection.py) | `randomized_select` (QuickSelect, k is 1-indexed), `deterministic_select` (median of medians), `median`, `SelectionStats` |
+| [`montecarlo_primality.py`](src/randomized/montecarlo_primality.py) | `fermat_test`, `miller_rabin`, `miller_rabin_fixed_bases`, `is_prime_deterministic` (trial division), `is_fermat_liar`, `is_strong_liar`, `count_liars` |
+| [`bloom_filter.py`](src/randomized/bloom_filter.py) | `BloomFilter` (Kirsch-Mitzenmacher double hashing, `from_capacity`, `theoretical_fp_rate`) |
+| [`minhash_similarity.py`](src/randomized/minhash_similarity.py) | `MinHash`, `jaccard`, `shingles`, `estimate_similarity` |
+
+Helpers: [`src/utils/random_utils.py`](src/utils/random_utils.py)
+(`make_rng`, `derive_seed`, `stable_hash64`, seeded list generators) and
+[`src/utils/probability_analysis.py`](src/utils/probability_analysis.py)
+(`summarize`, `wilson_interval`, `rule_of_three_upper`, and the Bloom and
+MinHash theory formulas).
+
+```python
+from src.randomized import (
+    randomized_quicksort, deterministic_quicksort, expected_comparisons,
+    randomized_select, count_liars, miller_rabin, miller_rabin_fixed_bases,
+    BloomFilter, jaccard, estimate_similarity,
+)
+
+randomized_quicksort([5, 3, 8, 1, 9, 2, 7], seed=42)     # [1, 2, 3, 5, 7, 8, 9]
+deterministic_quicksort(list(range(10)), pivot="last",
+                        count_comparisons=True)[1]       # 45, which is n(n-1)/2
+round(expected_comparisons(1000), 1)                     # 10985.9
+randomized_select([5, 3, 8, 1, 9, 2, 7], 4, seed=42)     # 5, the median
+
+count_liars(561)                                         # 318 Fermat liars of 558 bases
+miller_rabin_fixed_bases(3_215_031_751, [2, 3, 5, 7])    # True - fooled
+miller_rabin(3_215_031_751, k=20, seed=42)               # False - composite
+
+bloom = BloomFilter.from_capacity(1000, 0.01, seed=42)   # 9586 bits, 7 hashes
+bloom.add("item-7")
+"item-7" in bloom                                        # True; never a false negative
+
+a, b = set(range(60)), set(range(30, 90))
+jaccard(a, b)                                            # 0.333...
+estimate_similarity(a, b, num_perm=512, seed=42)         # 0.349609375
+```
+
+### Running the demonstration
+
+```bash
+python examples/week7_demo.py
+```
+
+Sorts one seeded list with both QuickSorts and prints their comparison
+counts next to the expected value; selects the minimum, median and maximum
+with both selection algorithms; runs the three primality tests on 561,
+3,215,031,751 (including the fixed-base attack) and 1,000,000,007; builds a
+Bloom filter and prints its measured and theoretical false-positive rates;
+and estimates one Jaccard similarity at k = 16 and k = 512 next to the true
+value. Every claim printed is asserted. It runs in under a second.
+
+### Running the benchmark
+
+```bash
+python benchmarks/week7_randomized_benchmark.py
+```
+
+QuickSort on random and sorted input with comparison-count distributions,
+QuickSelect against median of medians, Fermat and Miller-Rabin error rates
+with Wilson intervals and speed against trial division, the Bloom filter
+against load and bits per item, and MinHash error against signature length.
+The full run takes a little over two minutes and writes
+`quicksort_comparison.png`, `selection_runtime.png`, `primality_accuracy.png`,
+`bloom_filter_fp_rate.png`, `minhash_similarity_plot.png` and
+`summary_table.csv` (plus `week7_comparison_counts.csv` and
+`week7_selection_ratios.csv`) to [`benchmarks/results/`](benchmarks/results/).
+Four rows are projections and are marked `projected` in the CSV.
+
+The master seed defaults to 42; `--seed` changes it, and every sub-seed is
+derived from it and recorded in the CSV. For a smoke run of about ten seconds,
+written somewhere else so it does not overwrite the committed results:
+
+```bash
+python benchmarks/week7_randomized_benchmark.py --smoke --out /tmp/week7_smoke --seed 42
+```
+
+Every figure quoted in the Week 7 report is recomputed from the CSV by
+`python tools/week7_facts.py`. As in earlier weeks, the code, tests and
+report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -688,7 +821,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 6 algorithms included; I specified the
+written documents, the Week 4 to Week 7 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a

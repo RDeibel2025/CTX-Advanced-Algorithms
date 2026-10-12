@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 6.
+Week 7.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -494,4 +494,86 @@ attribution.
 * Held, M., and Karp, R. M. (1962). *Journal of the Society for Industrial
   and Applied Mathematics*, 10(1), 196-210.
 * Hirschberg, D. S. (1975). *Communications of the ACM*, 18(6), 341-343.
+* Python, pytest, numpy and matplotlib documentation.
+
+---
+
+# Week 7 - Randomized Algorithms
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 6. I wrote a
+specification from the Blackboard Week 7 instructions, the Week 7 Plan and
+the readings, including the anchor values the tests assert against, and
+directed the tool to implement against it. The specification fixed the
+decisions that decide correctness: Week 7 code in its own package; a
+fixed-pivot QuickSort built this week as the baseline, because Week 2's
+QuickSort was already randomized, with Week 2's code timed as a reference;
+every random choice drawn from a seeded generator, with sub-seeds derived
+from one master seed; blake2b instead of Python's salted `hash()` so the
+Bloom filter and MinHash give the same bits in every process; and the
+report's organization around how much extra work buys how much extra
+confidence. The model drafted the code, the tests and the first draft of
+the report; I reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/randomized/` (all five modules and the package init) | AI-drafted, reviewed by me |
+| `src/utils/random_utils.py`, `src/utils/probability_analysis.py`, and the Week 7 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/test_randomized_quicksort.py`, `test_randomized_selection.py`, `test_montecarlo_primality.py`, `test_bloom_filter.py`, `test_minhash_similarity.py`, `test_randomized_benchmark.py` | AI-drafted, reviewed by me |
+| `benchmarks/week7_randomized_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week7_demo.py`, `tools/week7_facts.py`, `tools/build_week7_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week7_report.md`, the README's Week 7 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every timing, error rate and chart this week came
+from running `benchmarks/week7_randomized_benchmark.py` on my machine with
+master seed 42; the full study takes a little over two minutes. Four values
+are projections rather than measurements, and the CSV and the report mark
+them as such: the fixed-pivot QuickSort on sorted input at n = 20,000,
+50,000 and 100,000, and trial division at 2^61 - 1. The report's figures
+are printed from the result CSV by `tools/week7_facts.py`, so they can be
+re-checked against a fresh run in one command.
+
+**The anchor values.** The expected answers the tests assert - the exact
+expected comparison counts for small n, the Fermat and strong-liar counts
+for the Carmichael numbers, the composite 3,215,031,751 = 151 x 751 x
+28,351 that passes the fixed bases 2, 3, 5 and 7, and the Bloom filter
+parameters for 1,000 items at 1% - were worked out before any code was
+written, so the tests check the code against known answers rather than
+against its own output.
+
+**What the report claims.** One measurement was checked rather than
+accepted. On 3,215,031,751 the first 10,000-trial run at k = 5 came out
+slightly above the 4^-5 bound. A 200,000-trial rerun gave 0.000915,
+consistent with the exact value of 9.38e-4, so the first result was
+sampling noise. Both runs are kept in the CSV, and the report states this.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 7 assignment instructions, Week 7 Plan and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., §7.3-7.4 (randomized quicksort and its analysis) and §9.2-9.3
+  (selection in expected and worst-case linear time).
+* Amakobe, M. (2025). *Advanced Computational Algorithms*, Ch. 7.
+* Rabin, M. O. (1980). *Journal of Number Theory*, 12(1), 128-138.
+* Bloom, B. H. (1970). *Communications of the ACM*, 13(7), 422-426.
+* Broder, A. Z. (1997). *Proceedings of Compression and Complexity of
+  Sequences 1997*, 21-29.
+* Kirsch, A., and Mitzenmacher, M. (2006). *ESA 2006*, LNCS 4168, 456-467.
 * Python, pytest, numpy and matplotlib documentation.
