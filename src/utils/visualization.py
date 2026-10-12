@@ -85,6 +85,33 @@ as a hollow marker on a dashed segment. Every series differs from its
 neighbours in marker and line style as well as colour, so none of these
 figures relies on colour alone.
 
+Week 7 adds the randomized-algorithm figures. Each reads the plain lists of
+dicts the Week 7 benchmark builds, and each is shaped by the kind of
+randomness its algorithm has. A Las Vegas algorithm is always right, so its
+figure is about time and work; a Monte Carlo algorithm can be wrong, so its
+figure measures the error, with an interval on every rate.
+
+* :func:`plot_quicksort_comparison` - randomized quicksort against fixed
+  pivot rules on random and on sorted input, the spread of its comparison
+  count around 2(n + 1)H_n - 4n, and its run-to-run variation.
+* :func:`plot_selection_runtime` - randomized select against median of
+  medians, the partition depth against log2(n), and how often a run stays
+  under 4n comparisons.
+* :func:`plot_primality_accuracy` - how often Fermat and Miller-Rabin call
+  a composite prime, against the 4^-k bound, and what each costs beside
+  trial division.
+* :func:`plot_bloom_fp_rate` - the Bloom filter's false-positive rate
+  against load and against bits per item, beside the memory it saves over
+  a Python set.
+* :func:`plot_minhash_similarity` - MinHash error shrinking as k^(-1/2),
+  and estimated against true Jaccard similarity.
+
+A value the Week 7 benchmark did not produce arrives as None and is skipped,
+never filled in, and missing data never raises: a panel with nothing to draw
+says so in words. A measured rate of zero has no place on a log axis, so it
+is drawn at the top of its 95% interval as a downward triangle and labelled
+as a bound rather than as a measurement.
+
 Every function returns the :class:`matplotlib.figure.Figure` it built and
 writes a 200 dpi PNG when given ``save_path``.
 
@@ -2754,5 +2781,1719 @@ def plot_mcm_table(
     ax.grid(False)
     fig.tight_layout()
 
+    _save(fig, save_path)
+    return fig
+
+
+# --- Week 7: randomized algorithms ---
+# The Week 7 benchmark hands these five functions plain lists of dicts, one
+# per measured point, with the keys each docstring lists. A value it did not
+# produce arrives as None (or, after a CSV round trip, as an empty string).
+# Every read goes through the Week 5 row reader, so a missing value is
+# skipped and never filled in, and missing data never raises: a panel with
+# nothing to draw says so in words instead of showing an empty grid.
+#
+# Two conventions are new this week. Every mean or rate carries its spread:
+# +/- 1 std for a time, the benchmark's 95% interval for a rate. And a
+# measured rate of zero, which has no place on a log axis, is drawn at the
+# top of its interval as a downward triangle, so it reads as "at most this
+# much" and never as a measured value.
+from matplotlib.legend_handler import HandlerTuple  # noqa: E402
+
+__all__ += [
+    "plot_quicksort_comparison",
+    "plot_selection_runtime",
+    "plot_primality_accuracy",
+    "plot_bloom_fp_rate",
+    "plot_minhash_similarity",
+]
+
+_W7_QUICKSORT_ORDER: Tuple[str, ...] = (
+    "randomized",
+    "deterministic_last",
+    "deterministic_median_of_three",
+    "week2_quick_sort",
+)
+_W7_SELECTION_ORDER: Tuple[str, ...] = ("randomized", "deterministic")
+_W7_K_LABEL_ORDER: Tuple[str, ...] = ("min", "median", "max")
+_W7_PRIMALITY_TESTS: Tuple[str, ...] = ("fermat", "miller_rabin")
+_W7_SPEED_ORDER: Tuple[str, ...] = ("trial_division", "fermat", "miller_rabin")
+
+# One style per named series. As in Weeks 5 and 6, no two series in a panel
+# share both a marker and a line style, and the slow or fixed baseline is
+# the red circle.
+_W7_STYLE: Dict[str, Dict[str, Any]] = {
+    "randomized": {"color": "#2a9d8f", "marker": "^", "linestyle": "-"},
+    "deterministic_last": {"color": "#c1121f", "marker": "o", "linestyle": "--"},
+    "deterministic_median_of_three": {
+        "color": "#1d3557",
+        "marker": "s",
+        "linestyle": "-.",
+    },
+    "week2_quick_sort": {"color": "#e76f51", "marker": "D", "linestyle": ":"},
+    "deterministic": {"color": "#c1121f", "marker": "o", "linestyle": "--"},
+    "trial_division": {"color": "#c1121f", "marker": "o", "linestyle": "--"},
+    "fermat": {"color": "#e76f51", "marker": "s", "linestyle": "-."},
+    "miller_rabin": {"color": "#2a9d8f", "marker": "^", "linestyle": "-"},
+}
+_W7_QUICKSORT_LABEL: Dict[str, str] = {
+    "randomized": "randomized pivot (Las Vegas)",
+    "deterministic_last": "last-element pivot (CLRS)",
+    "deterministic_median_of_three": "median-of-three pivot",
+    "week2_quick_sort": "Week 2 quick_sort",
+}
+_W7_SELECTION_LABEL: Dict[str, str] = {
+    "randomized": "randomized select",
+    "deterministic": "median of medians",
+}
+_W7_PRIMALITY_LABEL: Dict[str, str] = {
+    "trial_division": "trial division (exact)",
+    "fermat": "Fermat",
+    "miller_rabin": "Miller-Rabin",
+}
+# In the selection figure the order statistic gets the marker, and in the
+# depth panel it gets all three channels.
+_W7_K_STYLE: Dict[str, Dict[str, Any]] = {
+    "min": {"color": "#1d3557", "marker": "v", "linestyle": "-."},
+    "median": {"color": "#2a9d8f", "marker": "o", "linestyle": "-"},
+    "max": {"color": "#e76f51", "marker": "^", "linestyle": ":"},
+}
+# Groups that have no name of their own: a (test, n) pair, a k, a true J.
+# Six markers against four line styles keeps every pair distinct for twelve
+# groups. No "v" here, because the downward triangle means a zero-count
+# bound; no plain "--", because the theory lines use dashes.
+_W7_GROUP_COLOURS: Tuple[str, ...] = (
+    "#1d3557", "#c1121f", "#2a9d8f", "#e76f51", "#6a4c93", "#8ab17d",
+)
+_W7_GROUP_MARKERS: Tuple[str, ...] = ("o", "s", "D", "^", "P", "X")
+_W7_GROUP_LINESTYLES: Tuple[Any, ...] = ("-", "-.", ":", (0, (3, 1, 1, 1, 1, 1)))
+_W7_THEORY_DASHES: Tuple[Any, ...] = (
+    (0, (7, 3)), (0, (4, 2)), (0, (7, 2, 2, 2)), (0, (10, 4)), (0, (5, 1)),
+    (0, (3, 3)),
+)
+_W7_REFERENCE_COLOUR = "0.35"
+_W7_ZERO_LABEL = "0 observed (95% upper bound)"
+_W7_SELECT_THRESHOLD = 4.0
+_W7_SELECT_EXPECTED: Dict[str, float] = {
+    "median": 2.0 * (1.0 + math.log(2.0)),
+    "min": 2.0,
+    "max": 2.0,
+}
+_W7_MINHASH_SCATTER_K: Tuple[float, ...] = (16.0, 512.0)
+
+# (x, y, length of the bar below y, length above y, is_projected)
+_W7Point = Tuple[float, float, Optional[float], Optional[float], bool]
+
+
+def _w7_rows(rows: Any) -> List[Dict[str, Any]]:
+    """Return the dict rows of ``rows``, or an empty list when it is missing.
+
+    Examples:
+        >>> _w7_rows(None), _w7_rows([{"n": 1}, None])
+        ([], [{'n': 1}])
+    """
+    if not rows or isinstance(rows, (str, bytes, dict)):
+        return []
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def _w7_number(row: Dict[str, Any], key: str) -> Optional[float]:
+    """Read a numeric field as a finite float, or ``None``, without raising.
+
+    :func:`_row_number` does the reading. This adds the one case it lets
+    through, an integer too large for a float, which a primality row could
+    in principle carry.
+
+    Examples:
+        >>> _w7_number({"n": 561}, "n"), _w7_number({"n": None}, "n")
+        (561.0, None)
+        >>> _w7_number({"n": 10 ** 400}, "n") is None
+        True
+    """
+    try:
+        return _row_number(row, key)
+    except (OverflowError, TypeError, ValueError):
+        return None
+
+
+def _w7_value(value: Any) -> Optional[float]:
+    """Read one loose value, such as a list element, as :func:`_w7_number` would."""
+    return _w7_number({"value": value}, "value")
+
+
+def _w7_values(raw: Any) -> List[float]:
+    """Read a list of loose numbers, dropping anything missing or unusable.
+
+    Examples:
+        >>> _w7_values([3, None, "", 4.5]), _w7_values(None)
+        ([3.0, 4.5], [])
+    """
+    if raw is None or isinstance(raw, (str, bytes, dict)):
+        return []
+    try:
+        items = list(raw)
+    except TypeError:
+        return []
+    return [number for number in map(_w7_value, items) if number is not None]
+
+
+def _w7_names(
+    rows: Sequence[Dict[str, Any]], key: str, order: Sequence[str]
+) -> List[str]:
+    """List the distinct values of a text column, known ones first in ``order``."""
+    seen: List[str] = []
+    for row in rows:
+        name = _row_text(row, key)
+        if name and name not in seen:
+            seen.append(name)
+    return [name for name in order if name in seen] + [
+        name for name in seen if name not in order
+    ]
+
+
+def _w7_distinct(rows: Sequence[Dict[str, Any]], key: str) -> List[float]:
+    """List the distinct numeric values of ``key``, ascending, blanks skipped."""
+    values: List[float] = []
+    for row in rows:
+        number = _w7_number(row, key)
+        if number is not None and not any(_same_number(number, v) for v in values):
+            values.append(number)
+    return sorted(values)
+
+
+def _w7_near(
+    rows: Sequence[Dict[str, Any]], key: str, value: float
+) -> List[Dict[str, Any]]:
+    """Select rows whose numeric ``key`` matches ``value`` up to round-off."""
+    selected: List[Dict[str, Any]] = []
+    for row in rows:
+        number = _w7_number(row, key)
+        if number is not None and _same_number(number, value):
+            selected.append(row)
+    return selected
+
+
+def _w7_style(name: str, index: int) -> Dict[str, Any]:
+    """Return the colour, marker and line style for one named series."""
+    style = _W7_STYLE.get(name)
+    return dict(style) if style is not None else _variant_style(name, index)
+
+
+def _w7_k_style(k_label: str, index: int) -> Dict[str, Any]:
+    """Return the style for one order statistic: min, median or max."""
+    style = _W7_K_STYLE.get(k_label)
+    return dict(style) if style is not None else _w7_group_style(index + 3)
+
+
+def _w7_group_style(index: int) -> Dict[str, Any]:
+    """Return the style for the ``index``-th unnamed group in a panel.
+
+    ``theory`` is the dash pattern for the group's theoretical line, in the
+    group's own colour, so each theory line matches its measured series.
+    """
+    return {
+        "color": _W7_GROUP_COLOURS[index % len(_W7_GROUP_COLOURS)],
+        "marker": _W7_GROUP_MARKERS[index % len(_W7_GROUP_MARKERS)],
+        "linestyle": _W7_GROUP_LINESTYLES[index % len(_W7_GROUP_LINESTYLES)],
+        "theory": _W7_THEORY_DASHES[index % len(_W7_THEORY_DASHES)],
+    }
+
+
+def _w7_bar(
+    y: float, low_end: Optional[float], high_end: Optional[float], log_y: bool
+) -> Tuple[Optional[float], Optional[float]]:
+    """Turn the ends of an interval around ``y`` into bar lengths.
+
+    A log axis has no zero, and a bar that reaches zero or below makes
+    matplotlib drop every bar from its autoscaling. Such a lower end is cut
+    at one tenth of ``y``: the bar still visibly runs off the bottom of the
+    point's decade, and the panel keeps sensible limits.
+
+    Examples:
+        >>> _w7_bar(1.0, 0.8, 1.5, True)
+        (0.19999999999999996, 0.5)
+        >>> _w7_bar(1.0, -0.2, None, True)
+        (0.9, None)
+        >>> _w7_bar(1.0, -0.2, None, False)
+        (1.2, None)
+    """
+    below = None if low_end is None else max(0.0, y - low_end)
+    above = None if high_end is None else max(0.0, high_end - y)
+    if log_y and low_end is not None and low_end <= 0.0:
+        below = 0.9 * y
+    return below, above
+
+
+def _w7_points(
+    rows: Sequence[Dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    *,
+    std_key: Optional[str] = None,
+    low_key: Optional[str] = None,
+    high_key: Optional[str] = None,
+    log_x: bool = True,
+    log_y: bool = True,
+) -> List[_W7Point]:
+    """Turn rows into :data:`_W7Point` tuples, sorted by x.
+
+    The spread comes from ``std_key`` (a symmetric +/- 1 std bar) or from
+    ``low_key`` and ``high_key`` (the ends of an interval). A row missing x
+    or y contributes nothing, and neither does a non-positive value on a
+    log axis, since it has no position there.
+
+    Examples:
+        >>> _w7_points([{"n": 8, "t": 2.0, "s": 0.5}, {"n": 4, "t": None}],
+        ...            "n", "t", std_key="s")
+        [(8.0, 2.0, 0.5, 0.5, False)]
+    """
+    points: List[_W7Point] = []
+    for row in rows:
+        x_value = _w7_number(row, x_key)
+        y_value = _w7_number(row, y_key)
+        if x_value is None or y_value is None:
+            continue
+        if (log_x and x_value <= 0.0) or (log_y and y_value <= 0.0):
+            continue
+        low_end: Optional[float] = None
+        high_end: Optional[float] = None
+        if std_key is not None:
+            spread = _w7_number(row, std_key)
+            if spread is not None and spread >= 0.0:
+                low_end, high_end = y_value - spread, y_value + spread
+        else:
+            low_end = _w7_number(row, low_key) if low_key else None
+            high_end = _w7_number(row, high_key) if high_key else None
+        below, above = _w7_bar(y_value, low_end, high_end, log_y)
+        projected = _row_text(row, "measurement") == "projected"
+        points.append((x_value, y_value, below, above, projected))
+    points.sort(key=lambda point: point[0])
+    return points
+
+
+def _w7_line(
+    rows: Sequence[Dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    *,
+    log_x: bool,
+    log_y: bool,
+) -> List[Tuple[float, float]]:
+    """Return the ``(x, y)`` pairs of a theory column, sorted by x."""
+    pairs: List[Tuple[float, float]] = []
+    for row in rows:
+        x_value = _w7_number(row, x_key)
+        y_value = _w7_number(row, y_key)
+        if x_value is None or y_value is None:
+            continue
+        if (log_x and x_value <= 0.0) or (log_y and y_value <= 0.0):
+            continue
+        pairs.append((x_value, y_value))
+    pairs.sort()
+    return pairs
+
+
+def _w7_yerr(points: Sequence[_W7Point]) -> Optional[np.ndarray]:
+    """Build errorbar's 2 x N ``yerr``, or ``None`` when no point has a bar.
+
+    A point with only one end known gets a zero-length bar on the other
+    side, so the known half is still drawn. A point with neither gets NaN,
+    which matplotlib leaves undrawn.
+    """
+    below: List[float] = []
+    above: List[float] = []
+    for _, _, low, high, _ in points:
+        if low is None and high is None:
+            below.append(np.nan)
+            above.append(np.nan)
+        else:
+            below.append(0.0 if low is None else low)
+            above.append(0.0 if high is None else high)
+    if all(np.isnan(value) for value in below):
+        return None
+    return np.array([below, above])
+
+
+def _w7_errorbar(
+    ax: Axes,
+    points: Sequence[_W7Point],
+    style: Dict[str, Any],
+    label: Optional[str],
+    *,
+    connect: bool = True,
+) -> Tuple[Any, bool]:
+    """Draw one series with its error bars, projected points kept apart.
+
+    Measured points are filled markers on the series' own line style (or on
+    no line when ``connect`` is false). Projected points are hollow markers
+    on a dashed segment continuing from the last measured point, the Week 5
+    and Week 6 convention, so a projection never reads as a measurement.
+
+    Returns:
+        ``(handle, any projected)``: the artist that stands for the series
+        in a legend, or ``None`` if nothing was drawn.
+    """
+    measured = [point for point in points if not point[4]]
+    projected = [point for point in points if point[4]]
+    common = {"color": style["color"], "marker": style["marker"], "capsize": 3}
+    handle = None
+    if measured:
+        handle = ax.errorbar(
+            [point[0] for point in measured],
+            [point[1] for point in measured],
+            yerr=_w7_yerr(measured),
+            linestyle=style["linestyle"] if connect else "none",
+            linewidth=1.8,
+            elinewidth=1.0,
+            markersize=6.5,
+            label=label,
+            zorder=3,
+            **common,
+        )
+    if projected:
+        if connect:
+            bridge = measured[-1:] + projected
+            ax.plot(
+                [point[0] for point in bridge],
+                [point[1] for point in bridge],
+                color=style["color"],
+                linestyle="--",
+                linewidth=1.4,
+                marker="",
+                alpha=0.9,
+                zorder=2,
+            )
+        hollow = ax.errorbar(
+            [point[0] for point in projected],
+            [point[1] for point in projected],
+            yerr=_w7_yerr(projected),
+            linestyle="none",
+            elinewidth=1.0,
+            markersize=9,
+            markerfacecolor="none",
+            markeredgecolor=style["color"],
+            markeredgewidth=1.8,
+            label=f"{label} (projected)" if label and not measured else None,
+            zorder=4,
+            **common,
+        )
+        if handle is None:
+            handle = hollow
+    return handle, bool(projected)
+
+
+def _w7_draw_named(
+    ax: Axes,
+    rows: Sequence[Dict[str, Any]],
+    key: str,
+    order: Sequence[str],
+    labels: Dict[str, str],
+    y_key: str,
+    *,
+    std_key: Optional[str] = None,
+    log_y: bool = True,
+) -> Tuple[int, bool, List[float]]:
+    """Draw ``y_key`` against n for every named series in ``rows``.
+
+    Returns:
+        ``(series drawn, any projected point drawn, every x drawn)``.
+    """
+    drawn = 0
+    any_projected = False
+    xs: List[float] = []
+    for index, name in enumerate(_w7_names(rows, key, order)):
+        subset = [row for row in rows if _row_text(row, key) == name]
+        points = _w7_points(subset, "n", y_key, std_key=std_key, log_y=log_y)
+        if not points:
+            continue
+        style = _w7_style(name, index)
+        _, projected = _w7_errorbar(ax, points, style, labels.get(name, name))
+        any_projected = any_projected or projected
+        xs.extend(point[0] for point in points)
+        drawn += 1
+    return drawn, any_projected, xs
+
+
+def _w7_rate_group(
+    ax: Axes,
+    rows: Sequence[Dict[str, Any]],
+    x_key: str,
+    rate_key: str,
+    theory_key: str,
+    style: Dict[str, Any],
+    *,
+    log_y: bool,
+) -> Dict[str, Any]:
+    """Draw one group's measured rates, zero-count bounds and theory line.
+
+    Measured rates are markers with error bars from ``ci_low`` to
+    ``ci_high``, not joined by a line: the theory line carries the group's
+    line style, so the two differ in marker and in line style. On a log
+    axis a rate of exactly zero is drawn at ``ci_high`` as a downward
+    triangle; with no ``ci_high`` there is nothing honest to draw and the
+    point is left out.
+
+    Returns:
+        ``{"measured": handle, "zero": handle, "theory": handle}`` with
+        ``None`` for each part that was not drawn.
+    """
+    points = _w7_points(
+        rows,
+        x_key,
+        rate_key,
+        low_key="ci_low",
+        high_key="ci_high",
+        log_x=False,
+        log_y=log_y,
+    )
+    zeros: List[Tuple[float, float]] = []
+    if log_y:
+        for row in rows:
+            x_value = _w7_number(row, x_key)
+            rate = _w7_number(row, rate_key)
+            high = _w7_number(row, "ci_high")
+            if x_value is None or rate != 0.0 or high is None or high <= 0.0:
+                continue
+            zeros.append((x_value, high))
+        zeros.sort()
+    handles: Dict[str, Any] = {"measured": None, "zero": None, "theory": None}
+    if points:
+        handles["measured"], _ = _w7_errorbar(ax, points, style, None, connect=False)
+    if zeros:
+        (handles["zero"],) = ax.plot(
+            [x for x, _ in zeros],
+            [y for _, y in zeros],
+            color=style["color"],
+            marker="v",
+            linestyle="none",
+            markersize=8.5,
+            zorder=4,
+        )
+    theory = _w7_line(rows, x_key, theory_key, log_x=False, log_y=log_y)
+    if theory:
+        (handles["theory"],) = ax.plot(
+            [x for x, _ in theory],
+            [y for _, y in theory],
+            color=style["color"],
+            linestyle=style.get("theory", style["linestyle"]),
+            linewidth=1.6,
+            marker="",
+            zorder=2,
+        )
+    return handles
+
+
+def _w7_zero_proxy(ax: Axes) -> Any:
+    """Return a neutral downward triangle that explains the zero-count points."""
+    (proxy,) = ax.plot(
+        [], [], color="0.35", marker="v", linestyle="none", markersize=8.5
+    )
+    return proxy
+
+
+def _w7_legend(ax: Axes, entries: Sequence[Tuple[Any, str]]) -> None:
+    """Draw a legend from ``(handle or tuple of handles, label)`` pairs.
+
+    A tuple handle draws its parts side by side in one entry, which is how
+    a measured series and its theory line share one row of the legend.
+    """
+    if not entries:
+        return
+    ax.legend(
+        [handle for handle, _ in entries],
+        [label for _, label in entries],
+        handler_map={tuple: HandlerTuple(ndivide=None)},
+        fontsize=8,
+    )
+
+
+def _w7_mean_std(values: Sequence[float]) -> Tuple[float, Optional[float]]:
+    """Return the mean and the sample std (n - 1), the std ``None`` below two.
+
+    Examples:
+        >>> _w7_mean_std([1.0, 3.0]), _w7_mean_std([2.0])
+        ((2.0, 1.4142135623730951), (2.0, None))
+    """
+    mean = sum(values) / len(values)
+    if len(values) < 2:
+        return mean, None
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    return mean, math.sqrt(variance)
+
+
+def _w7_histogram(ax: Axes, values: Sequence[float], label: str, colour: str) -> None:
+    """Draw a histogram with about sqrt(R) bins, between 5 and 40."""
+    bins = int(min(40, max(5, round(math.sqrt(len(values))))))
+    ax.hist(
+        values,
+        bins=bins,
+        color=colour,
+        alpha=0.6,
+        edgecolor="0.25",
+        linewidth=0.6,
+        label=label,
+        zorder=2,
+    )
+
+
+def _w7_vertical_reference(
+    ax: Axes, x_value: float, label: str, colour: str, linestyle: Any
+) -> None:
+    """Draw one labelled vertical reference line across a histogram."""
+    ax.axvline(
+        x_value, color=colour, linestyle=linestyle, linewidth=2.0, label=label, zorder=3
+    )
+
+
+def _log_n_log_n(n: float) -> float:
+    """Natural log of n log n, the expected quicksort shape (needs n > 1)."""
+    return math.log(n) + math.log(math.log(n))
+
+
+def _log_quadratic(n: float) -> float:
+    """Natural log of n^2, the quicksort worst-case shape."""
+    return 2.0 * math.log(n)
+
+
+def _log_sqrt(n: float) -> float:
+    """Natural log of sqrt(n), the trial-division shape."""
+    return 0.5 * math.log(n)
+
+
+def _log_inverse_sqrt(k: float) -> float:
+    """Natural log of k^(-1/2), the MinHash error shape."""
+    return -0.5 * math.log(k)
+
+
+def _w7_triples(points: Sequence[_W7Point]) -> List[Tuple[float, float, bool]]:
+    """Drop the bar lengths, for :func:`_draw_reference_shape`."""
+    return [(x, y, projected) for x, y, _, _, projected in points]
+
+
+def _w7_reference(
+    ax: Axes,
+    rows: Sequence[Dict[str, Any]],
+    variant: str,
+    log_shape: Callable[[float], float],
+    shape: str,
+    linestyle: Any,
+    *,
+    min_n: float = 0.0,
+) -> None:
+    """Draw a growth shape through one variant's smallest point.
+
+    When that variant is absent the shape goes through the smallest point
+    of the whole panel instead, and the legend says which. ``min_n`` keeps
+    n log n away from n = 1, where its log is undefined.
+    """
+    subset = [row for row in rows if _row_text(row, "variant") == variant]
+    points = [p for p in _w7_points(subset, "n", "mean_s") if p[0] > min_n]
+    anchor = f"through {variant}'s smallest n"
+    if not points:
+        points = [p for p in _w7_points(rows, "n", "mean_s") if p[0] > min_n]
+        anchor = "through the smallest point"
+    _draw_reference_shape(
+        ax, _w7_triples(points), log_shape, f"{shape} shape, {anchor}", linestyle
+    )
+
+
+def plot_quicksort_comparison(
+    random_series: Sequence[Dict[str, Any]],
+    sorted_series: Sequence[Dict[str, Any]],
+    comparison_sample: Optional[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot randomized quicksort against fixed pivot rules, in four panels.
+
+    Randomized quicksort is LAS VEGAS: its output is always sorted, and
+    only its running time is random. So every panel here is about time and
+    work, never about correctness:
+
+    (a) Mean runtime against n on random input, log-log, +/- 1 std, for all
+        four variants. On random input a fixed pivot is already as good as
+        a random one, and this panel shows it.
+    (b) Sorted input, randomized against the last-element pivot. Sorted
+        input is exactly the adversarial case for a fixed rule, which falls
+        to n(n - 1)/2 comparisons. An n log n and an n^2 shape are drawn
+        through each series' smallest point, so the gap that opens between
+        the two is the quadratic case. Points the benchmark projected
+        rather than timed are hollow on a dashed segment.
+    (c) A histogram of comparison counts from repeated sorts of one input,
+        with the exact expectation 2(n + 1)H_n - 4n marked and a band of
+        +/- 1 asymptotic std, about 0.6483 n. The randomness is in the
+        algorithm, not the data, so this spread is what a user would see.
+    (d) The coefficient of variation of runtime against n: how much one
+        run differs from the next, as a fraction of the mean.
+
+    Args:
+        random_series: Dicts ``{variant, n, mean_s, std_s, cv}`` for the
+            variants ``randomized``, ``deterministic_last``,
+            ``deterministic_median_of_three`` and ``week2_quick_sort``.
+        sorted_series: Dicts ``{variant, n, mean_s, std_s, measurement}``
+            for ``randomized`` and ``deterministic_last``, ``measurement``
+            being ``"measured"`` or ``"projected"``.
+        comparison_sample: A dict ``{n, counts, expected, asymptotic_std}``,
+            ``counts`` a list of per-sort comparison counts. ``None`` leaves
+            panel (c) saying it has nothing to draw.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The four-panel :class:`matplotlib.figure.Figure`. Any value may be
+        ``None``; it is skipped and never replaced by a number.
+
+    Raises:
+        OSError: If ``save_path`` cannot be written. Missing or unusable
+            data never raises.
+
+    Time Complexity:
+        O(R log R + C) for R rows and C comparison counts: each variant's
+        rows are read once and sorted by n, and each count is binned once.
+
+    Space Complexity:
+        O(R + C) for the extracted points and counts, plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> random_series = [
+        ...     {"variant": "randomized", "n": 1000, "mean_s": 0.0021,
+        ...      "std_s": 0.0001, "cv": 0.05},
+        ...     {"variant": "randomized", "n": 4000, "mean_s": 0.0098,
+        ...      "std_s": None, "cv": None},
+        ...     {"variant": "deterministic_last", "n": 1000, "mean_s": 0.0019,
+        ...      "std_s": 0.0001, "cv": 0.04},
+        ...     {"variant": "deterministic_last", "n": 4000, "mean_s": 0.0090,
+        ...      "std_s": 0.0003, "cv": 0.03}]
+        >>> sorted_series = [
+        ...     {"variant": "randomized", "n": 1000, "mean_s": 0.0022,
+        ...      "std_s": 0.0001, "measurement": "measured"},
+        ...     {"variant": "randomized", "n": 4000, "mean_s": 0.0101,
+        ...      "std_s": 0.0004, "measurement": "measured"},
+        ...     {"variant": "deterministic_last", "n": 1000, "mean_s": 0.051,
+        ...      "std_s": 0.002, "measurement": "measured"},
+        ...     {"variant": "deterministic_last", "n": 4000, "mean_s": 0.82,
+        ...      "std_s": None, "measurement": "projected"}]
+        >>> sample = {"n": 100, "counts": [610, 640, 655, None, 700],
+        ...           "expected": 647.85, "asymptotic_std": 64.83}
+        >>> png = os.path.join(tempfile.mkdtemp(), "quicksort_comparison.png")
+        >>> fig = plot_quicksort_comparison(random_series, sorted_series,
+        ...                                 sample, png)
+        >>> len(fig.axes), fig.axes[0].get_xscale(), fig.axes[0].get_yscale()
+        (4, 'log', 'log')
+        >>> os.path.exists(png) and os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+
+        Nothing at all to draw is not an error; each panel says so:
+
+        >>> fig = plot_quicksort_comparison([], [], None)
+        >>> fig.axes[2].texts[0].get_text()
+        'no comparison counts were produced'
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    random_rows = _w7_rows(random_series)
+    sorted_rows = _w7_rows(sorted_series)
+    sample = comparison_sample if isinstance(comparison_sample, dict) else {}
+    n_label = "Input size n (elements, log scale)"
+    time_label = "Mean runtime (seconds, log scale)"
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 10.0))
+    ax_a, ax_b, ax_c, ax_d = axes.flat
+
+    # (a) Random input, every variant, +/- 1 std.
+    drawn_a, projected_a, _ = _w7_draw_named(
+        ax_a,
+        random_rows,
+        "variant",
+        _W7_QUICKSORT_ORDER,
+        _W7_QUICKSORT_LABEL,
+        "mean_s",
+        std_key="std_s",
+    )
+    _finish_w6_panel(
+        ax_a,
+        drawn_a,
+        projected_a,
+        (n_label, time_label, r"(a) Random input: mean runtime $\pm$ 1 std"),
+        "no random-input timings were produced",
+        log_x=True,
+        log_y=True,
+    )
+
+    # (b) Sorted input, with the two growth shapes it should separate into.
+    drawn_b, projected_b, _ = _w7_draw_named(
+        ax_b,
+        sorted_rows,
+        "variant",
+        ("randomized", "deterministic_last"),
+        _W7_QUICKSORT_LABEL,
+        "mean_s",
+        std_key="std_s",
+    )
+    if drawn_b:
+        _w7_reference(
+            ax_b,
+            sorted_rows,
+            "randomized",
+            _log_n_log_n,
+            r"$n \log n$",
+            ":",
+            min_n=1.0,
+        )
+        _w7_reference(
+            ax_b,
+            sorted_rows,
+            "deterministic_last",
+            _log_quadratic,
+            r"$n^2$",
+            (0, (5, 2, 1, 2)),
+        )
+    _finish_w6_panel(
+        ax_b,
+        drawn_b,
+        projected_b,
+        (n_label, time_label, "(b) Sorted input: the fixed pivot's worst case"),
+        "no sorted-input timings were produced",
+        log_x=True,
+        log_y=True,
+    )
+
+    # (c) The spread of the comparison count around its exact expectation.
+    counts = _w7_values(sample.get("counts"))
+    expected = _w7_number(sample, "expected")
+    spread = _w7_number(sample, "asymptotic_std")
+    sample_n = _w7_number(sample, "n")
+    drawn_c = 0
+    if counts:
+        mean, std = _w7_mean_std(counts)
+        summary = f"mean {mean:,.1f}" + ("" if std is None else f", std {std:,.1f}")
+        _w7_histogram(
+            ax_c, counts, f"observed counts ({len(counts)} sorts; {summary})", "#2a9d8f"
+        )
+        drawn_c += 1
+    if expected is not None:
+        if spread is not None and spread > 0.0:
+            ax_c.axvspan(
+                expected - spread,
+                expected + spread,
+                color="#1d3557",
+                alpha=0.13,
+                label=rf"expected $\pm$ 1 asymptotic std ({spread:,.1f})",
+                zorder=1,
+            )
+        _w7_vertical_reference(
+            ax_c,
+            expected,
+            rf"expected $2(n+1)H_n - 4n$ = {expected:,.1f}",
+            "#1d3557",
+            "--",
+        )
+        drawn_c += 1
+    title_c = "(c) Comparisons per sort"
+    if sample_n is not None:
+        title_c += f" at n = {_format_measure(sample_n)}"
+    _finish_w6_panel(
+        ax_c,
+        drawn_c,
+        False,
+        ("Comparisons in one sort (element-vs-pivot tests)", "Sorts (count)", title_c),
+        "no comparison counts were produced",
+    )
+
+    # (d) Run-to-run spread as a fraction of the mean.
+    drawn_d, projected_d, _ = _w7_draw_named(
+        ax_d,
+        random_rows,
+        "variant",
+        _W7_QUICKSORT_ORDER,
+        _W7_QUICKSORT_LABEL,
+        "cv",
+        log_y=False,
+    )
+    _finish_w6_panel(
+        ax_d,
+        drawn_d,
+        projected_d,
+        (
+            n_label,
+            "Coefficient of variation (std / mean, dimensionless)",
+            "(d) Run-to-run variation of runtime, random input",
+        ),
+        "no coefficient of variation was produced",
+        log_x=True,
+    )
+
+    fig.suptitle(
+        "Quicksort: a random pivot (Las Vegas) against fixed pivot rules",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    _save(fig, save_path)
+    return fig
+
+
+def plot_selection_runtime(
+    series: Sequence[Dict[str, Any]],
+    depth_series: Sequence[Dict[str, Any]],
+    ratio_sample: Optional[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot randomized select against median of medians, in three panels.
+
+    Randomized select is LAS VEGAS: it always returns the k-th smallest
+    element, so its probability of success is exactly 1 and is not worth
+    plotting. What varies is the work, and the informative probability is
+    how often a run finishes within 4n comparisons. The panels:
+
+    1. Runtime against n, log-log, +/- 1 std. The line style is the
+       algorithm and the marker is the order statistic (min, median, max),
+       so both are readable without colour. Both are linear in n; the
+       question is the constant.
+    2. Mean partition depth of randomized select against n (log x), with a
+       bar up to the deepest run seen and a log2(n) reference. The depth
+       grows logarithmically even though each round's split is random.
+    3. A histogram of comparisons / n over repeated runs, with the 4n
+       threshold and the expected leading constant marked: 2(1 + ln 2),
+       about 3.386, for the median, and 2 for the min or max.
+
+    Args:
+        series: Dicts ``{algorithm, k_label, n, mean_s, std_s}``,
+            ``algorithm`` being ``"randomized"`` or ``"deterministic"`` and
+            ``k_label`` one of ``"min"``, ``"median"``, ``"max"``.
+        depth_series: Dicts ``{k_label, n, depth_mean, depth_max}`` for the
+            randomized algorithm.
+        ratio_sample: A dict ``{n, k_label, ratios}``, ``ratios`` a list of
+            comparisons / n, one per run. ``None`` leaves panel 3 empty.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The three-panel :class:`matplotlib.figure.Figure`. Any value may be
+        ``None``; it is skipped and never replaced by a number.
+
+    Raises:
+        OSError: If ``save_path`` cannot be written. Missing or unusable
+            data never raises.
+
+    Time Complexity:
+        O(A K R log R + C) for A algorithms, K order statistics, R rows and
+        C ratios: each (algorithm, k) series is selected by one pass over
+        the rows and sorted by n.
+
+    Space Complexity:
+        O(R + C), plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> series = [
+        ...     {"algorithm": "randomized", "k_label": "median", "n": 1000,
+        ...      "mean_s": 0.0004, "std_s": 0.00005},
+        ...     {"algorithm": "randomized", "k_label": "median", "n": 8000,
+        ...      "mean_s": 0.0031, "std_s": None},
+        ...     {"algorithm": "deterministic", "k_label": "median", "n": 1000,
+        ...      "mean_s": 0.0019, "std_s": 0.0001},
+        ...     {"algorithm": "deterministic", "k_label": "median", "n": 8000,
+        ...      "mean_s": 0.0150, "std_s": 0.0006}]
+        >>> depth = [
+        ...     {"k_label": "median", "n": 1000, "depth_mean": 14.2,
+        ...      "depth_max": 21},
+        ...     {"k_label": "median", "n": 8000, "depth_mean": 19.8,
+        ...      "depth_max": None}]
+        >>> ratios = {"n": 1000, "k_label": "median",
+        ...           "ratios": [3.1, 3.4, 3.3, 4.2, None]}
+        >>> png = os.path.join(tempfile.mkdtemp(), "selection_runtime.png")
+        >>> fig = plot_selection_runtime(series, depth, ratios, png)
+        >>> [ax.get_xscale() for ax in fig.axes]
+        ['log', 'log', 'linear']
+        >>> os.path.exists(png) and os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    rows = _w7_rows(series)
+    depth_rows = _w7_rows(depth_series)
+    sample = ratio_sample if isinstance(ratio_sample, dict) else {}
+    n_label = "Input size n (elements, log scale)"
+
+    fig, axes = plt.subplots(1, 3, figsize=(19.0, 5.8))
+
+    # Panel 1: line style per algorithm, marker per order statistic.
+    drawn = 0
+    any_projected = False
+    k_labels = _w7_names(rows, "k_label", _W7_K_LABEL_ORDER)
+    algorithms = _w7_names(rows, "algorithm", _W7_SELECTION_ORDER)
+    for a_index, algorithm in enumerate(algorithms):
+        base = _w7_style(algorithm, a_index)
+        for k_index, k_label in enumerate(k_labels):
+            subset = [
+                row
+                for row in rows
+                if _row_text(row, "algorithm") == algorithm
+                and _row_text(row, "k_label") == k_label
+            ]
+            points = _w7_points(subset, "n", "mean_s", std_key="std_s")
+            if not points:
+                continue
+            style = dict(base, marker=_w7_k_style(k_label, k_index)["marker"])
+            name = _W7_SELECTION_LABEL.get(algorithm, algorithm)
+            _, projected = _w7_errorbar(
+                axes[0], points, style, f"{name}, k = {k_label}"
+            )
+            any_projected = any_projected or projected
+            drawn += 1
+    _finish_w6_panel(
+        axes[0],
+        drawn,
+        any_projected,
+        (
+            n_label,
+            "Mean runtime (seconds, log scale)",
+            r"Runtime against n ($\pm$ 1 std)",
+        ),
+        "no selection timings were produced",
+        log_x=True,
+        log_y=True,
+    )
+
+    # Panel 2: partition depth, bars up to the deepest run, log2(n) beside it.
+    depth_drawn = 0
+    depth_x: List[float] = []
+    depth_labels = _w7_names(depth_rows, "k_label", _W7_K_LABEL_ORDER)
+    for index, k_label in enumerate(depth_labels):
+        subset = [row for row in depth_rows if _row_text(row, "k_label") == k_label]
+        points = _w7_points(
+            subset, "n", "depth_mean", high_key="depth_max", log_y=False
+        )
+        if not points:
+            continue
+        _w7_errorbar(
+            axes[1],
+            points,
+            _w7_k_style(k_label, index),
+            f"randomized, k = {k_label}: mean (bar to max)",
+        )
+        depth_x.extend(point[0] for point in points)
+        depth_drawn += 1
+    if depth_drawn and max(depth_x) > min(depth_x):
+        xs = np.geomspace(min(depth_x), max(depth_x), 60)
+        axes[1].plot(
+            xs,
+            np.log2(xs),
+            color=_W7_REFERENCE_COLOUR,
+            linestyle=(0, (1, 2)),
+            linewidth=1.5,
+            label=r"$\log_2 n$ reference",
+            zorder=1,
+        )
+    _finish_w6_panel(
+        axes[1],
+        depth_drawn,
+        False,
+        (n_label, "Partition rounds (count)", "Randomized select: partition depth"),
+        "no partition depths were produced",
+        log_x=True,
+    )
+
+    # Panel 3: how the work is spread, against the 4n threshold.
+    ratios = _w7_values(sample.get("ratios"))
+    ratio_k = _row_text(sample, "k_label")
+    ratio_n = _w7_number(sample, "n")
+    ratio_drawn = 0
+    if ratios:
+        above = sum(1 for ratio in ratios if ratio > _W7_SELECT_THRESHOLD)
+        _w7_histogram(
+            axes[2],
+            ratios,
+            f"observed ({len(ratios)} runs; {above} above 4n)",
+            "#2a9d8f",
+        )
+        _w7_vertical_reference(
+            axes[2],
+            _W7_SELECT_THRESHOLD,
+            "4n threshold (comparisons / n = 4)",
+            "#c1121f",
+            "-.",
+        )
+        expected = _W7_SELECT_EXPECTED.get(ratio_k)
+        if expected is not None:
+            text = (
+                rf"expected $2(1 + \ln 2) \approx {expected:.3f}$ (median)"
+                if ratio_k == "median"
+                else f"expected 2 ({ratio_k})"
+            )
+            _w7_vertical_reference(axes[2], expected, text, "#1d3557", "--")
+        ratio_drawn = 1
+    ratio_title = "Comparisons / n over repeated runs"
+    details = []
+    if ratio_k:
+        details.append(f"k = {ratio_k}")
+    if ratio_n is not None:
+        details.append(f"n = {_format_measure(ratio_n)}")
+    if details:
+        ratio_title += f" ({', '.join(details)})"
+    _finish_w6_panel(
+        axes[2],
+        ratio_drawn,
+        False,
+        ("Comparisons / n (comparisons per element)", "Runs (count)", ratio_title),
+        "no comparison ratios were produced",
+    )
+
+    fig.suptitle(
+        "Selection: randomized select (Las Vegas) against median of medians",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    _save(fig, save_path)
+    return fig
+
+
+def plot_primality_accuracy(
+    accuracy_rows: Sequence[Dict[str, Any]],
+    speed_rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot how often Fermat and Miller-Rabin are fooled, and what they cost.
+
+    Both tests are MONTE CARLO with ONE-SIDED error: "composite" is always
+    right, because a witness was found, while "prime" can be wrong. So the
+    measured quantity is the false-positive rate on a known composite, and
+    the figure has two panels:
+
+    (a) False-positive rate against the number of rounds k, log y, for both
+        tests on each composite present (561 and 8911, both Carmichael
+        numbers). Measured rates carry their 95% interval; the predicted
+        rate is a line in the same colour; and the Miller-Rabin bound
+        4^-k is drawn for comparison. Fermat has no such bound, and on a
+        Carmichael number it visibly sits far above it. A rate of zero has
+        no place on a log axis, so it is drawn at its interval's upper end
+        as a downward triangle, labelled as a bound and not as a value.
+    (b) Runtime against n, log-log, for trial division, Fermat and
+        Miller-Rabin, with a sqrt(n) shape through the first trial-division
+        point. Projected points are hollow on a dashed segment.
+
+    Args:
+        accuracy_rows: Dicts ``{test, n, k, rate, ci_low, ci_high,
+            predicted, trials}``, ``test`` being ``"fermat"`` or
+            ``"miller_rabin"``.
+        speed_rows: Dicts ``{method, n, mean_s, std_s, measurement}``,
+            ``method`` being ``"trial_division"``, ``"fermat"`` or
+            ``"miller_rabin"``.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The two-panel :class:`matplotlib.figure.Figure`. Any value may be
+        ``None``; it is skipped and never replaced by a number.
+
+    Raises:
+        OSError: If ``save_path`` cannot be written. Missing or unusable
+            data never raises.
+
+    Time Complexity:
+        O(G R + R log R) for R rows and G (test, n) groups: each group is
+        selected by one pass over the rows and sorted by k.
+
+    Space Complexity:
+        O(R), plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> accuracy = [
+        ...     {"test": "fermat", "n": 561, "k": 1, "rate": 0.57,
+        ...      "ci_low": 0.54, "ci_high": 0.60, "predicted": 0.5699,
+        ...      "trials": 1000},
+        ...     {"test": "fermat", "n": 561, "k": 4, "rate": 0.11,
+        ...      "ci_low": 0.09, "ci_high": 0.13, "predicted": 0.1055,
+        ...      "trials": 1000},
+        ...     {"test": "miller_rabin", "n": 561, "k": 1, "rate": 0.015,
+        ...      "ci_low": 0.009, "ci_high": 0.025, "predicted": 0.0143,
+        ...      "trials": 1000},
+        ...     {"test": "miller_rabin", "n": 561, "k": 4, "rate": 0.0,
+        ...      "ci_low": 0.0, "ci_high": 0.0038, "predicted": None,
+        ...      "trials": 1000}]
+        >>> speed = [
+        ...     {"method": "trial_division", "n": 10 ** 6, "mean_s": 2e-5,
+        ...      "std_s": 1e-6, "measurement": "measured"},
+        ...     {"method": "trial_division", "n": 10 ** 12, "mean_s": 0.02,
+        ...      "std_s": None, "measurement": "projected"},
+        ...     {"method": "miller_rabin", "n": 10 ** 6, "mean_s": 8e-6,
+        ...      "std_s": 4e-7, "measurement": "measured"},
+        ...     {"method": "miller_rabin", "n": 10 ** 12, "mean_s": 1.4e-5,
+        ...      "std_s": 5e-7, "measurement": "measured"}]
+        >>> png = os.path.join(tempfile.mkdtemp(), "primality_accuracy.png")
+        >>> fig = plot_primality_accuracy(accuracy, speed, png)
+        >>> legend = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+        >>> "0 observed (95% upper bound)" in legend
+        True
+        >>> os.path.exists(png) and os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    accuracy = _w7_rows(accuracy_rows)
+    speed = _w7_rows(speed_rows)
+    fig, axes = plt.subplots(1, 2, figsize=(16.0, 6.0))
+
+    # (a) Measured false-positive rate, its prediction, and the 4^-k bound.
+    ax = axes[0]
+    entries: List[Tuple[Any, str]] = []
+    group = 0
+    any_zero = False
+    for test in _w7_names(accuracy, "test", _W7_PRIMALITY_TESTS):
+        test_rows = [row for row in accuracy if _row_text(row, "test") == test]
+        for n_value in _w7_distinct(test_rows, "n"):
+            style = _w7_group_style(group)
+            style["theory"] = style["linestyle"]
+            group += 1
+            parts = _w7_rate_group(
+                ax,
+                _w7_near(test_rows, "n", n_value),
+                "k",
+                "rate",
+                "predicted",
+                style,
+                log_y=True,
+            )
+            any_zero = any_zero or parts["zero"] is not None
+            shown = [parts["measured"] or parts["zero"], parts["theory"]]
+            handles = tuple(handle for handle in shown if handle is not None)
+            if handles:
+                name = _W7_PRIMALITY_LABEL.get(test, test)
+                entries.append((handles, f"{name}, n = {_format_measure(n_value)}"))
+    ks = [k for k in _w7_distinct(accuracy, "k") if k >= 0.0]
+    if entries and ks:
+        (bound,) = ax.plot(
+            ks,
+            [4.0 ** -k for k in ks],
+            color="black",
+            linestyle="--",
+            linewidth=1.4,
+            marker="",
+            zorder=1,
+        )
+        entries.append((bound, r"Miller-Rabin bound $4^{-k}$"))
+    if any_zero:
+        entries.append((_w7_zero_proxy(ax), _W7_ZERO_LABEL))
+    trials = _w7_distinct(accuracy, "trials")
+    title_a = "(a) Composites called prime (markers: 95% interval; lines: predicted)"
+    if len(trials) == 1:
+        title_a += f"\n{_format_measure(trials[0])} trials per point"
+    _finish_w6_panel(
+        ax,
+        len(entries),
+        False,
+        (
+            "Rounds k (random bases tried per test)",
+            "False-positive rate (fraction of trials, log scale)",
+            title_a,
+        ),
+        "no accuracy rows were produced",
+        log_y=True,
+    )
+    if entries:
+        if 0 < len(ks) <= 15:
+            ax.set_xticks(ks)
+            ax.set_xticklabels([_format_measure(k) for k in ks])
+        _w7_legend(ax, entries)
+
+    # (b) Cost against n, with sqrt(n) through the first trial-division point.
+    drawn_b, projected_b, _ = _w7_draw_named(
+        axes[1],
+        speed,
+        "method",
+        _W7_SPEED_ORDER,
+        _W7_PRIMALITY_LABEL,
+        "mean_s",
+        std_key="std_s",
+    )
+    trial_rows = [row for row in speed if _row_text(row, "method") == "trial_division"]
+    trial_points = _w7_points(trial_rows, "n", "mean_s")
+    if trial_points:
+        _draw_reference_shape(
+            axes[1],
+            _w7_triples(trial_points),
+            _log_sqrt,
+            r"$\sqrt{n}$ shape, through the first trial-division point",
+            ":",
+        )
+    _finish_w6_panel(
+        axes[1],
+        drawn_b,
+        projected_b,
+        (
+            "Number tested n (integer value, log scale)",
+            "Mean runtime per call (seconds, log scale)",
+            r"(b) Runtime against n ($\pm$ 1 std)",
+        ),
+        "no primality timings were produced",
+        log_x=True,
+        log_y=True,
+    )
+
+    fig.suptitle(
+        "Monte Carlo primality: one-sided error, measured against its bound",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    _save(fig, save_path)
+    return fig
+
+
+def plot_bloom_fp_rate(
+    load_rows: Sequence[Dict[str, Any]],
+    bits_rows: Sequence[Dict[str, Any]],
+    memory: Optional[Dict[str, Any]] = None,
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot a Bloom filter's false-positive rate and the memory it saves.
+
+    A Bloom filter is MONTE CARLO with ONE-SIDED error: "absent" is always
+    right and "present" may be a false positive. The rate of those false
+    positives is the whole cost of the structure, so it is what the figure
+    measures, each rate with its 95% interval beside the theoretical
+    ``(1 - e^(-kn/m))^k``:
+
+    1. FP rate against load factor n / m, on linear axes, where a rate of
+       zero is an ordinary point.
+    2. FP rate against bits per item m / n, log y, where each extra bit per
+       item should cut the rate by a constant factor. A rate of zero is
+       drawn at its interval's upper end as a downward triangle. When each
+       bits-per-item value appears once, the number of hashes k used there
+       is written beside the point; when the rows sweep several k at the
+       same budget, each k is its own series.
+    3. Only when ``memory`` is given: the filter's bytes against a Python
+       set holding the same items (log y), the filter's bar annotated with
+       its FP rate. The set is exact; the filter trades that for its size.
+
+    Args:
+        load_rows: Dicts ``{load_factor, measured, ci_low, ci_high,
+            theoretical}``.
+        bits_rows: Dicts ``{bits_per_item, k, measured, ci_low, ci_high,
+            theoretical}``.
+        memory: Optional dict ``{n, bloom_bytes, set_bytes, fp_rate}``.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The :class:`matplotlib.figure.Figure`, with three panels when
+        ``memory`` is a dict and two otherwise. Any value may be ``None``;
+        it is skipped and never replaced by a number.
+
+    Raises:
+        OSError: If ``save_path`` cannot be written. Missing or unusable
+            data never raises.
+
+    Time Complexity:
+        O(K R + R log R) for R rows and K distinct k values: each group is
+        selected by one pass and sorted.
+
+    Space Complexity:
+        O(R), plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> load = [
+        ...     {"load_factor": 0.05, "measured": 0.0, "ci_low": 0.0,
+        ...      "ci_high": 0.0004, "theoretical": 0.0002},
+        ...     {"load_factor": 0.1, "measured": 0.009, "ci_low": 0.007,
+        ...      "ci_high": 0.011, "theoretical": 0.0082},
+        ...     {"load_factor": 0.2, "measured": 0.13, "ci_low": None,
+        ...      "ci_high": None, "theoretical": 0.138}]
+        >>> bits = [
+        ...     {"bits_per_item": 4, "k": 3, "measured": 0.15, "ci_low": 0.14,
+        ...      "ci_high": 0.16, "theoretical": 0.147},
+        ...     {"bits_per_item": 16, "k": 11, "measured": 0.0, "ci_low": 0.0,
+        ...      "ci_high": 0.0004, "theoretical": 0.00046}]
+        >>> memory = {"n": 1000, "bloom_bytes": 1199, "set_bytes": 32984,
+        ...           "fp_rate": 0.01}
+        >>> png = os.path.join(tempfile.mkdtemp(), "bloom_fp_rate.png")
+        >>> fig = plot_bloom_fp_rate(load, bits, memory, png)
+        >>> len(fig.axes), fig.axes[1].get_yscale()
+        (3, 'log')
+        >>> os.path.exists(png) and os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    load = _w7_rows(load_rows)
+    bits = _w7_rows(bits_rows)
+    memory_row: Dict[str, Any] = memory if isinstance(memory, dict) else {}
+    has_memory = isinstance(memory, dict)
+    panels = 3 if has_memory else 2
+    fig, axes = plt.subplots(1, panels, figsize=(6.4 * panels, 5.8))
+    rate_label = "False-positive rate (fraction of queries"
+    single = {"color": "#1d3557", "marker": "o", "linestyle": "none", "theory": "-"}
+    theory_label = r"theoretical $(1 - e^{-kn/m})^k$"
+
+    # Panel 1: against load factor, linear axes.
+    parts = _w7_rate_group(
+        axes[0], load, "load_factor", "measured", "theoretical", single, log_y=False
+    )
+    entries: List[Tuple[Any, str]] = []
+    if parts["measured"] is not None:
+        entries.append((parts["measured"], "measured (95% interval)"))
+    if parts["theory"] is not None:
+        entries.append((parts["theory"], theory_label))
+    _finish_w6_panel(
+        axes[0],
+        len(entries),
+        False,
+        ("Load factor n / m (items per bit)", rate_label + ")", "FP rate against load"),
+        "no load-factor rows were produced",
+    )
+    _w7_legend(axes[0], entries)
+
+    # Panel 2: against bits per item, log y, zero rates as upper bounds.
+    budgets = [_w7_number(row, "bits_per_item") for row in bits]
+    known = [budget for budget in budgets if budget is not None]
+    by_k = len(_w7_distinct(bits, "bits_per_item")) < len(known)
+    groups: List[Tuple[Optional[float], List[Dict[str, Any]]]] = (
+        [(k, _w7_near(bits, "k", k)) for k in _w7_distinct(bits, "k")]
+        if by_k
+        else [(None, bits)]
+    )
+    entries = []
+    any_zero = False
+    for index, (k_value, subset) in enumerate(groups):
+        style = single if k_value is None else _w7_group_style(index)
+        if k_value is not None:
+            style["theory"] = style["linestyle"]
+        parts = _w7_rate_group(
+            axes[1],
+            subset,
+            "bits_per_item",
+            "measured",
+            "theoretical",
+            style,
+            log_y=True,
+        )
+        any_zero = any_zero or parts["zero"] is not None
+        shown = parts["measured"] or parts["zero"]
+        if k_value is None:
+            if shown is not None:
+                entries.append((shown, "measured (95% interval)"))
+            if parts["theory"] is not None:
+                entries.append((parts["theory"], theory_label))
+        else:
+            handles = tuple(h for h in (shown, parts["theory"]) if h is not None)
+            if handles:
+                entries.append((handles, f"k = {_format_measure(k_value)}"))
+    if not by_k:
+        for row in bits:
+            x_value = _w7_number(row, "bits_per_item")
+            k_value = _w7_number(row, "k")
+            rate = _w7_number(row, "measured")
+            y_value = _w7_number(row, "ci_high") if rate == 0.0 else rate
+            if None in (x_value, k_value, y_value) or y_value <= 0.0:
+                continue
+            axes[1].annotate(
+                f"k={_format_measure(k_value)}",
+                (x_value, y_value),
+                textcoords="offset points",
+                xytext=(5, 5),
+                fontsize=7,
+                color="0.3",
+            )
+    if any_zero:
+        entries.append((_w7_zero_proxy(axes[1]), _W7_ZERO_LABEL))
+    _finish_w6_panel(
+        axes[1],
+        len(entries),
+        False,
+        (
+            "Bits per item m / n (bits)",
+            rate_label + ", log scale)",
+            "FP rate against memory per item",
+        ),
+        "no bits-per-item rows were produced",
+        log_y=True,
+    )
+    _w7_legend(axes[1], entries)
+
+    # Panel 3: the memory trade, when the benchmark measured it.
+    if has_memory:
+        ax = axes[2]
+        n_items = _w7_number(memory_row, "n")
+        fp_rate = _w7_number(memory_row, "fp_rate")
+        bars = (
+            ("Bloom filter", "bloom_bytes", "#2a9d8f", "//"),
+            ("Python set", "set_bytes", "#c1121f", ".."),
+        )
+        drawn = 0
+        for position, (name, key, colour, hatch) in enumerate(bars):
+            value = _w7_number(memory_row, key)
+            if value is None or value <= 0.0:
+                continue
+            ax.bar(
+                position,
+                value,
+                width=0.6,
+                color=colour,
+                alpha=0.8,
+                hatch=hatch,
+                edgecolor="0.2",
+                label=f"{name}: {_format_measure(value)} bytes",
+                zorder=2,
+            )
+            if key == "bloom_bytes":
+                note = (
+                    "FP rate not recorded"
+                    if fp_rate is None
+                    else f"FP rate {fp_rate:.2%}"
+                )
+            else:
+                note = "exact: no false positives"
+            ax.annotate(
+                note,
+                (position, value),
+                textcoords="offset points",
+                xytext=(0, 4),
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+            drawn += 1
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels([name for name, _, _, _ in bars])
+        ax.set_xlim(-0.7, 1.7)
+        memory_title = "Memory for the same items"
+        if n_items is not None:
+            memory_title += f" (n = {_format_measure(n_items)})"
+        _finish_w6_panel(
+            ax,
+            drawn,
+            False,
+            (
+                "Structure holding the items (type)",
+                "Memory (bytes, log scale)",
+                memory_title,
+            ),
+            "no memory sizes were produced",
+            log_y=True,
+        )
+        if drawn:
+            ax.margins(y=0.25)
+
+    fig.suptitle(
+        "Bloom filter: one-sided Monte Carlo error against its theory",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    _save(fig, save_path)
+    return fig
+
+
+def plot_minhash_similarity(
+    error_rows: Sequence[Dict[str, Any]],
+    scatter_rows: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Plot how MinHash error falls with k, and estimates against truth.
+
+    MinHash is MONTE CARLO with TWO-SIDED error: the estimate of a Jaccard
+    similarity J is a fraction of k agreeing hash positions, so it can land
+    either side of J, with standard error sqrt(J (1 - J) / k). Two panels:
+
+    (a) Mean absolute error against k, log-log, one series per true J,
+        each with +/- 1 std bars and its theoretical error as a dashed line
+        in the same colour. A k^(-1/2) shape is drawn through the first
+        series, so a series that runs parallel to it is shrinking at the
+        predicted rate: quadrupling k halves the error. An error of exactly
+        zero (J = 1 is estimated exactly) has no place on a log axis; such
+        points are counted in a note instead of drawn.
+    (b) Estimated against true J at k = 16 and k = 512, every estimate as a
+        faint marker and the mean per J with +/- 1 std bars, beside the
+        line y = x. When neither k is present, every k given is drawn.
+
+    Args:
+        error_rows: Dicts ``{k, true_j, mean_abs_error, std_abs_error,
+            theoretical_mae}``.
+        scatter_rows: Dicts ``{k, true_j, estimate}``, one per estimate.
+        save_path: Optional PNG destination, written at 200 dpi.
+
+    Returns:
+        The two-panel :class:`matplotlib.figure.Figure`. Any value may be
+        ``None``; it is skipped and never replaced by a number.
+
+    Raises:
+        OSError: If ``save_path`` cannot be written. Missing or unusable
+            data never raises.
+
+    Time Complexity:
+        O(J R + R log R) for R rows and J distinct true similarities: each
+        group is selected by one pass and sorted.
+
+    Space Complexity:
+        O(R), plus the figure.
+
+    Examples:
+        >>> import tempfile
+        >>> errors = [
+        ...     {"k": 16, "true_j": 0.5, "mean_abs_error": 0.10,
+        ...      "std_abs_error": 0.07, "theoretical_mae": 0.0997},
+        ...     {"k": 256, "true_j": 0.5, "mean_abs_error": 0.025,
+        ...      "std_abs_error": 0.019, "theoretical_mae": 0.0249},
+        ...     {"k": 16, "true_j": 1.0, "mean_abs_error": 0.0,
+        ...      "std_abs_error": 0.0, "theoretical_mae": 0.0},
+        ...     {"k": 256, "true_j": 0.2, "mean_abs_error": None,
+        ...      "std_abs_error": None, "theoretical_mae": 0.02}]
+        >>> scatter = [
+        ...     {"k": 16, "true_j": 0.5, "estimate": 0.5625},
+        ...     {"k": 16, "true_j": 0.5, "estimate": 0.4375},
+        ...     {"k": 512, "true_j": 0.5, "estimate": 0.502},
+        ...     {"k": 512, "true_j": 0.2, "estimate": None}]
+        >>> png = os.path.join(tempfile.mkdtemp(), "minhash_similarity.png")
+        >>> fig = plot_minhash_similarity(errors, scatter, png)
+        >>> fig.axes[0].get_xscale(), fig.axes[0].get_yscale()
+        ('log', 'log')
+        >>> fig.axes[0].texts[0].get_text()
+        '1 zero-error point not drawn (a log axis has no zero)'
+        >>> os.path.exists(png) and os.path.getsize(png) > 0
+        True
+        >>> plt.close(fig)
+    """
+    apply_house_style()
+    errors = _w7_rows(error_rows)
+    scatter = _w7_rows(scatter_rows)
+    fig, axes = plt.subplots(1, 2, figsize=(15.5, 6.2))
+
+    # (a) Error against k, one series per J, theory dashed beside it.
+    ax = axes[0]
+    entries: List[Tuple[Any, str]] = []
+    zero_points = 0
+    first_series: List[_W7Point] = []
+    k_ticks: List[float] = []
+    for index, true_j in enumerate(_w7_distinct(errors, "true_j")):
+        subset = _w7_near(errors, "true_j", true_j)
+        style = _w7_group_style(index)
+        zero_points += sum(
+            1 for row in subset if _w7_number(row, "mean_abs_error") == 0.0
+        )
+        handles: List[Any] = []
+        points = _w7_points(subset, "k", "mean_abs_error", std_key="std_abs_error")
+        if points:
+            handle, _ = _w7_errorbar(ax, points, style, None)
+            handles.append(handle)
+            k_ticks.extend(point[0] for point in points)
+            if not first_series and len(points) >= 2:
+                first_series = points
+        theory = _w7_line(subset, "k", "theoretical_mae", log_x=True, log_y=True)
+        if theory:
+            (line,) = ax.plot(
+                [x for x, _ in theory],
+                [y for _, y in theory],
+                color=style["color"],
+                linestyle=style["theory"],
+                linewidth=1.5,
+                marker="",
+                zorder=2,
+            )
+            handles.append(line)
+            k_ticks.extend(x for x, _ in theory)
+        if handles:
+            entries.append((tuple(handles), f"J = {_format_measure(true_j)}"))
+    if first_series and _draw_reference_shape(
+        ax,
+        _w7_triples(first_series),
+        _log_inverse_sqrt,
+        r"$k^{-1/2}$ slope reference",
+        ":",
+    ):
+        entries.append((ax.lines[-1], r"$k^{-1/2}$ slope reference"))
+    _finish_w6_panel(
+        ax,
+        len(entries),
+        False,
+        (
+            "Hash functions k (signature length, log scale)",
+            "Mean absolute error (Jaccard units, log scale)",
+            r"(a) Error against k (markers $\pm$ 1 std; dashed: theory)",
+        ),
+        "no error rows were produced",
+        log_x=True,
+        log_y=True,
+        x_ticks=k_ticks,
+    )
+    if entries:
+        _w7_legend(ax, entries)
+        if zero_points:
+            noun = "point" if zero_points == 1 else "points"
+            ax.text(
+                0.02,
+                0.03,
+                f"{zero_points} zero-error {noun} not drawn (a log axis has no zero)",
+                transform=ax.transAxes,
+                fontsize=8,
+                color="0.3",
+            )
+
+    # (b) Estimate against truth at the two signature lengths.
+    ax = axes[1]
+    present = _w7_distinct(scatter, "k")
+    chosen = [
+        k for k in present if any(_same_number(k, s) for s in _W7_MINHASH_SCATTER_K)
+    ] or present
+    drawn = 0
+    for index, k_value in enumerate(chosen):
+        pairs = _w7_line(
+            _w7_near(scatter, "k", k_value),
+            "true_j",
+            "estimate",
+            log_x=False,
+            log_y=False,
+        )
+        if not pairs:
+            continue
+        style = _w7_group_style(index)
+        k_text = _format_measure(k_value)
+        ax.scatter(
+            [x for x, _ in pairs],
+            [y for _, y in pairs],
+            marker=style["marker"],
+            color=style["color"],
+            alpha=0.3,
+            s=16,
+            label=f"k = {k_text}: single estimates",
+            zorder=2,
+        )
+        means: List[_W7Point] = []
+        for true_j in sorted({x for x, _ in pairs}):
+            values = [y for x, y in pairs if _same_number(x, true_j)]
+            mean, std = _w7_mean_std(values)
+            means.append((true_j, mean, std, std, False))
+        _w7_errorbar(
+            ax, means, style, rf"k = {k_text}: mean estimate $\pm$ 1 std"
+        )
+        drawn += 1
+    if drawn:
+        ax.plot(
+            [0.0, 1.0],
+            [0.0, 1.0],
+            color=_W7_REFERENCE_COLOUR,
+            linestyle=(0, (1, 2)),
+            linewidth=1.4,
+            label="y = x (exact estimate)",
+            zorder=1,
+        )
+        ax.set_xlim(-0.03, 1.03)
+        ax.set_ylim(-0.03, 1.03)
+    scatter_title = "(b) Estimated against true J"
+    if chosen:
+        scatter_title += " at k = " + " and ".join(_format_measure(k) for k in chosen)
+    _finish_w6_panel(
+        ax,
+        drawn,
+        False,
+        (
+            "True Jaccard similarity J (fraction of shared items)",
+            "MinHash estimate of J (fraction)",
+            scatter_title,
+        ),
+        "no estimates were produced",
+    )
+
+    fig.suptitle(
+        "MinHash: two-sided Monte Carlo error shrinking as $k^{-1/2}$",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
     _save(fig, save_path)
     return fig
