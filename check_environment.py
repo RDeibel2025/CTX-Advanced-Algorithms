@@ -65,6 +65,7 @@ REQUIRED_DIRECTORIES: List[str] = [
     "src/dp",
     "src/dp_advanced",
     "src/randomized",
+    "src/complexity",
     "src/structures",
     "src/utils",
     "tests",
@@ -213,6 +214,25 @@ REQUIRED_FILES: List[str] = [
     "benchmarks/results/bloom_filter_fp_rate.png",
     "benchmarks/results/minhash_similarity_plot.png",
     "benchmarks/results/summary_table.csv",
+    # Week 8 - computational complexity
+    "src/complexity/__init__.py",
+    "src/complexity/reduction_demo.py",
+    "src/complexity/satisfiability_solver.py",
+    "src/complexity/vertex_cover_approx.py",
+    "src/complexity/traveling_salesman_approx.py",
+    "src/complexity/subset_sum_backtracking.py",
+    "src/utils/graph_utils.py",
+    "tests/test_reduction_demo.py",
+    "tests/test_vertex_cover_approx.py",
+    "tests/test_tsp_approx.py",
+    "tests/test_subset_sum_backtracking.py",
+    "tests/test_satisfiability_solver.py",
+    "benchmarks/week8_complexity_benchmark.py",
+    "examples/week8_demo.py",
+    "analysis/week8_report.md",
+    "benchmarks/results/week8/runtime_growth.png",
+    "benchmarks/results/week8/approximation_quality.png",
+    "benchmarks/results/week8/comparison_table.csv",
 ]
 
 OK = "[ OK ]"

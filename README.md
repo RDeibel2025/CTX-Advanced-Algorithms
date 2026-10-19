@@ -14,6 +14,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 5 | Dynamic Programming | [`analysis/week5_report.md`](analysis/week5_report.md) |
 | 6 | Dynamic Programming II | [`analysis/week6_report.md`](analysis/week6_report.md) |
 | 7 | Randomized Algorithms | [`analysis/week7_report.md`](analysis/week7_report.md) |
+| 8 | Computational Complexity | [`analysis/week8_report.md`](analysis/week8_report.md) |
 
 ---
 
@@ -22,7 +23,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains eight things:
+It contains nine things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -56,13 +57,19 @@ It contains eight things:
    Fermat and Miller-Rabin primality tests, a Bloom filter and MinHash
    similarity (Monte Carlo: fixed running time, bounded error), each
    measured against a deterministic or exact baseline.
-7. **A benchmarking framework** that generates eight different shapes of
+7. **A computational complexity laboratory** (Week 8) - a 3-SAT to vertex
+   cover reduction that maps certificates both ways and extends to
+   independent set and clique, exact backtracking solvers for subset sum,
+   SAT and vertex cover, a vertex cover 2-approximation, nearest-neighbor
+   TSP with 2-opt, and greedy and local-search heuristics, each timed next
+   to the polynomial-time verifier for its answers.
+8. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-8. **A performance study each week** built from a real run of that
+9. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -104,6 +111,12 @@ Advanced Algorithms/
 │   │   ├── montecarlo_primality.py   Fermat, Miller-Rabin, trial division
 │   │   ├── bloom_filter.py           Bloom filter, double hashing
 │   │   └── minhash_similarity.py     MinHash Jaccard estimation
+│   ├── complexity/
+│   │   ├── reduction_demo.py         3-SAT to vertex cover, IS, clique; verifiers
+│   │   ├── subset_sum_backtracking.py  Backtracking, greedy, random restart
+│   │   ├── satisfiability_solver.py  Backtracking, DPLL, WalkSAT
+│   │   ├── vertex_cover_approx.py    2-approximation, max-degree greedy
+│   │   └── traveling_salesman_approx.py  Nearest neighbor, 2-opt
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -123,6 +136,7 @@ Advanced Algorithms/
 │       ├── bitmask_utils.py        Subset operations for Held-Karp
 │       ├── random_utils.py         Seeded RNGs, derive_seed, blake2b hashing
 │       ├── probability_analysis.py Summaries, Wilson intervals, theory
+│       ├── graph_utils.py          Edge sets, G(n, p), complements, checks
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Shared fixtures and parametrisation
@@ -154,6 +168,11 @@ Advanced Algorithms/
 │   ├── test_bloom_filter.py        No false negatives; PYTHONHASHSEED-proof
 │   ├── test_minhash_similarity.py  Estimates against exact Jaccard
 │   ├── test_randomized_benchmark.py  Same seed, same CSV; outputs written
+│   ├── test_reduction_demo.py      Reduction anchors, 200 formulas; smoke run
+│   ├── test_subset_sum_backtracking.py  Agreement with the DP; worst case
+│   ├── test_satisfiability_solver.py  Both complete solvers against brute force
+│   ├── test_vertex_cover_approx.py  Ratio exactly 2 on path, star, K3,3
+│   ├── test_tsp_approx.py          4-city and line anchors; 2-opt never worse
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -164,6 +183,7 @@ Advanced Algorithms/
 │   ├── week5_dp_benchmark.py       The Week 5 DP benchmark
 │   ├── week6_dp_advanced_benchmark.py  The Week 6 benchmark
 │   ├── week7_randomized_benchmark.py   The Week 7 benchmark
+│   ├── week8_complexity_benchmark.py   The Week 8 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -173,7 +193,8 @@ Advanced Algorithms/
 │   ├── week4_report.md             Week 4 technical report
 │   ├── week5_report.md             Week 5 technical report
 │   ├── week6_report.md             Week 6 technical report
-│   └── week7_report.md             Week 7 technical report
+│   ├── week7_report.md             Week 7 technical report
+│   └── week8_report.md             Week 8 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -193,6 +214,8 @@ Advanced Algorithms/
 │   ├── build_week6_pdf.py          Builds the Week 6 submission PDF
 │   ├── week7_facts.py              Prints every figure the Week 7 report quotes
 │   ├── build_week7_pdf.py          Builds the Week 7 submission PDF
+│   ├── week8_facts.py              Prints every figure the Week 8 report quotes
+│   ├── build_week8_pdf.py          Builds the Week 8 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -203,7 +226,8 @@ Advanced Algorithms/
     ├── week4_demo.py               Runnable Week 4 demonstration
     ├── week5_demo.py               Runnable Week 5 demonstration
     ├── week6_demo.py               Runnable Week 6 demonstration
-    └── week7_demo.py               Runnable Week 7 demonstration
+    ├── week7_demo.py               Runnable Week 7 demonstration
+    └── week8_demo.py               Runnable Week 8 demonstration
 ```
 
 ---
@@ -303,11 +327,121 @@ under two `PYTHONHASHSEED` values; MinHash estimates against exact Jaccard
 similarity; and the benchmark run twice with the same seed, which must
 produce the same CSV apart from the timing columns.
 
+Week 8 adds five more: the 3-SAT to vertex cover reduction against
+hand-checked anchors (13 nodes, 20 edges and k = 8 for the three-clause
+formula; 30 nodes, 51 edges, k = 19 and a minimum cover of 20 for the
+unsatisfiable eight-clause one) and against brute force on 200 random
+formulas, plus a smoke run of the benchmark; subset-sum backtracking
+against the pseudo-polynomial DP; backtracking and DPLL against brute force
+on 100 random formulas; the vertex cover 2-approximation at ratio exactly 2
+on the path, the star and K3,3; and nearest neighbor on the 4-city and
+points-on-a-line anchors, with 2-opt never making a tour worse.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 8: computational complexity
+
+No new dependencies. Week 8 code lives in its own package,
+[`src/complexity/`](src/complexity/), with small graph helpers in
+[`src/utils/graph_utils.py`](src/utils/graph_utils.py). The theme is the
+gap that defines NP: a polynomial-time verifier checks a proposed solution
+quickly, while every known exact search for one takes exponential time.
+
+**Where the results go.** The repository holds every week's project, and
+the root-level `benchmarks/results/comparison_table.csv` is Week 6's, so
+Week 8's outputs live in
+[`benchmarks/results/week8/`](benchmarks/results/week8/) under the names
+the instructions specify: `runtime_growth.png`, `approximation_quality.png`
+and `comparison_table.csv`.
+
+### The five modules
+
+| Module | Functions |
+|---|---|
+| [`reduction_demo.py`](src/complexity/reduction_demo.py) | `Reduction`, `ReductionResult`, `ThreeSatToVertexCover`, `VertexCoverToIndependentSet`, `IndependentSetToClique`, `reduce_chain`; the verifiers `is_satisfying` and `is_vertex_cover`; `min_vertex_cover_exact` |
+| [`subset_sum_backtracking.py`](src/complexity/subset_sum_backtracking.py) | `subset_sum_backtracking` (with node counts), `subset_sum_greedy`, `subset_sum_random_restart`, `subset_sum_dp`, `worst_case_instance`, `satisfiable_instance` |
+| [`satisfiability_solver.py`](src/complexity/satisfiability_solver.py) | `sat_backtracking`, `sat_dpll`, `walksat`, `random_3sat` |
+| [`vertex_cover_approx.py`](src/complexity/vertex_cover_approx.py) | `vertex_cover_2approx`, `vertex_cover_max_degree_greedy`, `vertex_cover_exact`, `greedy_maximal_matching`, `approximation_ratio` |
+| [`traveling_salesman_approx.py`](src/complexity/traveling_salesman_approx.py) | `tsp_nearest_neighbor`, `tsp_nearest_neighbor_best_start`, `tsp_two_opt`, `tour_cost`, `is_valid_tour`, `euclidean_instance` (Week 6's Held-Karp gives the exact optimum) |
+
+```python
+from src.complexity import (
+    ThreeSatToVertexCover, is_vertex_cover, min_vertex_cover_exact,
+    subset_sum_backtracking, subset_sum_greedy, sat_dpll,
+    vertex_cover_2approx, tsp_nearest_neighbor, tsp_two_opt,
+)
+
+cnf = [[1, 1, 2], [-1, -2, -2], [-1, 2, 2]]            # n = 2 variables, m = 3 clauses
+reduction = ThreeSatToVertexCover()
+result = reduction.transform((cnf, 2))
+(vertices, edges), k = result.target_instance          # 13 nodes, 20 edges, k = 8
+print(reduction.explain(result))                       # the construction, step by step
+cover = reduction.map_solution_forward((cnf, 2), {1: False, 2: True}, result)
+is_vertex_cover(edges, cover), len(cover)              # (True, 8)
+reduction.map_solution_back((cnf, 2), cover, result)   # {1: False, 2: True}
+len(min_vertex_cover_exact(vertices, edges))           # 8
+
+subset_sum_backtracking([3, 34, 4, 12, 5, 2], 9)       # [5, 4]
+subset_sum_greedy([3, 34, 4, 12, 5, 2], 30)            # ([12, 5, 4, 3, 2], 26): misses 30
+sat_dpll(cnf, 2)                                       # {1: False, 2: True}
+
+k33 = [(u, v) for u in range(3) for v in range(3, 6)]
+len(vertex_cover_2approx(range(6), k33))               # 6, against a minimum of 3
+
+xs = [0, 1, -2, 4, -8, 16]
+line = [[abs(a - b) for b in xs] for a in xs]
+cost, tour = tsp_nearest_neighbor(line)                # 62, [0, 1, 2, 3, 4, 5, 0]
+tsp_two_opt(line, tour)[0]                             # 48, the optimum here
+```
+
+### Running the demonstration
+
+```bash
+python examples/week8_demo.py
+```
+
+Prints the full step-by-step 3-SAT to vertex cover construction for the
+three-clause formula and the certificate mapped forward and back, follows
+the chain to independent set and clique, solves the subset-sum anchors with
+backtracking and greedy, solves the formula with all three SAT methods, and
+prints vertex cover sizes (2-approximation, max-degree greedy, exact) on the
+path, the star and K3,3 and the TSP anchors with nearest neighbor, 2-opt and
+the exact optimum. Every claim printed is asserted. It runs in under a
+second.
+
+### Running the benchmark
+
+```bash
+python benchmarks/week8_complexity_benchmark.py
+```
+
+Subset sum (worst case and satisfiable), random 3-SAT at clause ratios 4.26
+and 2.0, vertex cover on random graphs of average degree 4, Euclidean TSP,
+and the reduction itself, with the polynomial-time verifier timed on every
+certificate returned. An exact solver's size sweep stops before any single
+run would pass 30 seconds, and every stop is written to `sweep_limits.csv`.
+The run writes `runtime_growth.png`, `approximation_quality.png`,
+`comparison_table.csv`, `instances.csv` and `sweep_limits.csv` to
+[`benchmarks/results/week8/`](benchmarks/results/week8/).
+
+The master seed defaults to 42; `--seed` changes it, and every instance is
+derived from it. For a smoke run of about twenty seconds, written somewhere
+else so it does not overwrite the committed results:
+
+```bash
+python benchmarks/week8_complexity_benchmark.py --smoke --out /tmp/week8_smoke --seed 42
+```
+
+Every figure quoted in the Week 8 report is recomputed from the CSVs by
+`python tools/week8_facts.py`. As in earlier weeks, the code, tests and
+report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -821,7 +955,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 7 algorithms included; I specified the
+written documents, the Week 4 to Week 8 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a

@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 7.
+Week 8.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -576,4 +576,80 @@ attribution.
 * Broder, A. Z. (1997). *Proceedings of Compression and Complexity of
   Sequences 1997*, 21-29.
 * Kirsch, A., and Mitzenmacher, M. (2006). *ESA 2006*, LNCS 4168, 456-467.
+* Python, pytest, numpy and matplotlib documentation.
+
+---
+
+# Week 8 - Computational Complexity
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 7. I wrote a
+specification from the Blackboard Week 8 instructions, the Week 8 Plan and
+the readings, including the anchor values the tests assert against, and
+directed the tool to implement against it. The specification fixed the
+decisions that decide correctness: Week 8 code in its own package; Week 6's
+Held-Karp reused as the exact TSP baseline rather than rewritten; the
+worst-case subset-sum family (even values, odd target) so the growth curve
+measures a search that cannot stop early; a polynomial-time verifier timed
+next to every search; Week 8's outputs in `benchmarks/results/week8/`
+because the root-level `comparison_table.csv` belongs to Week 6; and the
+report's organization around the gap between checking a solution and
+finding one. The model drafted the code, the tests and the first draft of
+the report; I reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/complexity/` (all five modules and the package init) | AI-drafted, reviewed by me |
+| `src/utils/graph_utils.py` and the Week 8 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/test_reduction_demo.py`, `test_subset_sum_backtracking.py`, `test_satisfiability_solver.py`, `test_vertex_cover_approx.py`, `test_tsp_approx.py` | AI-drafted, reviewed by me |
+| `benchmarks/week8_complexity_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week8_demo.py`, `tools/week8_facts.py`, `tools/build_week8_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week8_report.md`, the README's Week 8 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every timing, node count, ratio and chart this week
+came from running `benchmarks/week8_complexity_benchmark.py` on my machine
+with master seed 42. Exact solvers stop growing their input size before a
+single run would pass 30 seconds, and every such stop is recorded in
+`benchmarks/results/week8/sweep_limits.csv`; nothing is extrapolated. The
+report's figures are printed from the result CSVs by `tools/week8_facts.py`,
+so they can be re-checked against a fresh run in one command.
+
+**The anchor values.** The expected answers the tests assert were worked
+out and cross-checked before any code was written: the Sipser formula's
+13-node, 20-edge graph with k = 8 and its single satisfying assignment, the
+unsatisfiable eight-clause formula's 30-node, 51-edge graph whose minimum
+cover is 20 against k = 19, the subset-sum answers for [3, 34, 4, 12, 5, 2],
+the vertex cover sizes on the path, the star and K3,3, and the two TSP
+anchors, including the points on a line where nearest neighbor costs 62
+against an optimum of 48.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 8 assignment instructions, Week 8 Plan and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 34 (NP-completeness) and Ch. 35 (approximation algorithms,
+  §35.1 the vertex-cover problem).
+* Amakobe, M. (2025). *Advanced Computational Algorithms*, Ch. 8.
+* Cook, S. A. (1971). *Proceedings of the Third Annual ACM Symposium on
+  Theory of Computing*, 151-158.
+* Karp, R. M. (1972). In *Complexity of Computer Computations*, 85-103.
+* Garey, M. R., and Johnson, D. S. (1979). *Computers and Intractability*.
+* Selman, B., Kautz, H., and Cohen, B. (1994). *AAAI-94*, 337-343.
 * Python, pytest, numpy and matplotlib documentation.
