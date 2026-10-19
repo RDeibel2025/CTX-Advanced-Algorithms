@@ -1,0 +1,5 @@
+experiment,method,n,next_n,max_run_s,predicted_next_run_s,runs_kept,reason
+subset_sum_worst_case,backtracking,28,30,4.531,34.38,,growth from n=26 to n=28 predicts 34.4 s for one run at n=30
+sat_ratio_4.26,sat_backtracking,45,50,24.7,82.08,,growth from n=40 to n=45 predicts 82.1 s for one run at n=50
+sat_ratio_2.0,sat_backtracking,45,50,5.168,39.17,,growth from n=40 to n=45 predicts 39.2 s for one run at n=50
+vertex_cover,exact_branching,60,65,12.05,75.39,,growth from n=55 to n=60 predicts 75.4 s for one run at n=65

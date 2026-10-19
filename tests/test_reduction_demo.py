@@ -672,3 +672,108 @@ class TestDeterminismAndCopies:
         assert cnf == [[1], [-1, 2]]           # padding did not touch the input
         cnf[0].append(2)
         assert result.source_instance[0] == [[1], [-1, 2]]
+
+
+# ----------------------------------------------------------------------
+# Benchmark smoke test (spec section 10.6)
+# ----------------------------------------------------------------------
+import csv as _csv  # noqa: E402
+import os as _os  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
+import sys as _sys  # noqa: E402
+
+_REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+_BENCHMARK = _os.path.join(_REPO_ROOT, "benchmarks", "week8_complexity_benchmark.py")
+_EXPECTED_HEADER = [
+    "problem", "method", "kind", "instance_family", "n", "param", "runs", "mean_time_s",
+    "std_time_s", "verify_time_s", "nodes_mean", "solution_value", "optimal_value",
+    "approx_ratio", "success_rate", "seed", "measurement",
+]
+_TIMING = {"mean_time_s", "std_time_s", "verify_time_s"}
+
+
+def _run_smoke(out_dir: str, seed: int = 42) -> None:
+    """Run the benchmark's smoke mode into ``out_dir`` and fail loudly on error."""
+    completed = _subprocess.run(
+        [_sys.executable, _BENCHMARK, "--smoke", "--out", out_dir, "--seed", str(seed)],
+        cwd=_REPO_ROOT, capture_output=True, text=True, timeout=600,
+    )
+    assert completed.returncode == 0, completed.stdout[-2000:] + completed.stderr[-2000:]
+
+
+def _read_rows(path: str) -> tuple:
+    with open(path, newline="") as handle:
+        reader = _csv.reader(handle)
+        header = next(reader)
+        return header, [dict(zip(header, row)) for row in reader]
+
+
+@pytest.fixture(scope="module")
+def smoke_runs(tmp_path_factory):
+    """Two smoke runs with the same master seed, in separate directories."""
+    first = str(tmp_path_factory.mktemp("week8_smoke_a"))
+    second = str(tmp_path_factory.mktemp("week8_smoke_b"))
+    _run_smoke(first)
+    _run_smoke(second)
+    return first, second
+
+
+class TestBenchmarkSmoke:
+    """The benchmark runs end to end and writes what the report reads."""
+
+    @pytest.mark.parametrize("name", ["runtime_growth.png", "approximation_quality.png",
+                                      "comparison_table.csv"])
+    def test_outputs_exist_and_are_non_empty(self, smoke_runs, name):
+        path = _os.path.join(smoke_runs[0], name)
+        assert _os.path.isfile(path)
+        assert _os.path.getsize(path) > 0
+
+    @pytest.mark.parametrize("name", ["runtime_growth.png", "approximation_quality.png"])
+    def test_figures_are_png(self, smoke_runs, name):
+        with open(_os.path.join(smoke_runs[0], name), "rb") as handle:
+            assert handle.read(8) == b"\x89PNG\r\n\x1a\n"
+
+    def test_header_is_exactly_the_specified_columns(self, smoke_runs):
+        header, rows = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        assert header == _EXPECTED_HEADER
+        assert rows
+
+    def test_kind_and_measurement_take_only_allowed_values(self, smoke_runs):
+        _, rows = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        assert {r["kind"] for r in rows} <= {"exact", "approximation", "heuristic"}
+        assert {r["measurement"] for r in rows} <= {"measured", "projected"}
+
+    def test_every_problem_is_present(self, smoke_runs):
+        _, rows = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        assert {r["problem"] for r in rows} == {"subset_sum", "sat", "vertex_cover", "tsp",
+                                                "reduction"}
+
+    def test_verifier_time_recorded_next_to_search_time(self, smoke_runs):
+        _, rows = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        exact_with_certificates = [r for r in rows if r["kind"] == "exact"
+                                   and r["problem"] in {"vertex_cover", "tsp"}]
+        assert exact_with_certificates
+        assert all(r["verify_time_s"] and r["mean_time_s"] for r in exact_with_certificates)
+
+    def test_ratios_respect_the_proven_bound(self, smoke_runs):
+        _, rows = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        for r in rows:
+            if r["problem"] == "vertex_cover" and r["method"] == "two_approx" and r["approx_ratio"]:
+                assert 1.0 <= float(r["approx_ratio"]) <= 2.0
+            if r["approx_ratio"]:
+                assert float(r["approx_ratio"]) >= 1.0 - 1e-9
+
+    def test_anchor_ratios_are_exactly_two(self, smoke_runs):
+        _, rows = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        anchors = {r["instance_family"]: float(r["approx_ratio"]) for r in rows
+                   if r["problem"] == "vertex_cover" and r["method"] == "two_approx"
+                   and r["instance_family"] in {"path", "star", "k33"}}
+        assert anchors == {"path": 2.0, "star": 2.0, "k33": 2.0}
+
+    def test_same_seed_gives_identical_non_timing_columns(self, smoke_runs):
+        _, first = _read_rows(_os.path.join(smoke_runs[0], "comparison_table.csv"))
+        _, second = _read_rows(_os.path.join(smoke_runs[1], "comparison_table.csv"))
+        assert len(first) == len(second)
+        for a, b in zip(first, second):
+            assert {k: v for k, v in a.items() if k not in _TIMING} == \
+                   {k: v for k, v in b.items() if k not in _TIMING}

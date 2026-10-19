@@ -4497,3 +4497,334 @@ def plot_minhash_similarity(
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     _save(fig, save_path)
     return fig
+
+
+# --- Week 8: computational complexity ---
+#
+# Both Week 8 figures are drawn from the benchmark's per-instance records:
+# one dict per (problem, method, instance family, n, param, rep) with numeric
+# ``time_s``, ``verify_time_s`` and ``ratio`` fields (``None`` where a field
+# does not apply). Every series has its own marker and line style as well as
+# its own colour, so no series is identified by colour alone, and every point
+# carries a min-max range over the instances at that size.
+
+__all__ += [
+    "plot_runtime_growth",
+    "plot_approximation_quality",
+]
+
+#: Marker, line style and colour for every Week 8 method, fixed so the two
+#: figures read the same way.
+_W8_STYLE: Dict[str, Dict[str, Any]] = {
+    "backtracking": {"marker": "o", "linestyle": "-", "color": "#c0392b", "label": "backtracking (exact)"},
+    "greedy": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "greedy (heuristic)"},
+    "random_restart": {"marker": "^", "linestyle": "-.", "color": "#7d3c98", "label": "random restart x100 (heuristic)"},
+    "sat_backtracking": {"marker": "o", "linestyle": "-", "color": "#c0392b", "label": "plain backtracking (exact)"},
+    "sat_dpll": {"marker": "D", "linestyle": "--", "color": "#d68910", "label": "DPLL (exact)"},
+    "walksat": {"marker": "v", "linestyle": "-.", "color": "#1e8449", "label": "WalkSAT (heuristic)"},
+    "exact_branching": {"marker": "o", "linestyle": "-", "color": "#c0392b", "label": "exact branching"},
+    "two_approx": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "2-approximation"},
+    "max_degree_greedy": {"marker": "^", "linestyle": "-.", "color": "#7d3c98", "label": "max-degree greedy (heuristic)"},
+    "held_karp": {"marker": "o", "linestyle": "-", "color": "#c0392b", "label": "Held-Karp (exact)"},
+    "nearest_neighbor": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "nearest neighbor (heuristic)"},
+    "nn_two_opt": {"marker": "D", "linestyle": "-.", "color": "#1e8449", "label": "NN + 2-opt (heuristic)"},
+}
+
+_W8_VERIFY_STYLE: Dict[str, Any] = {"marker": "x", "linestyle": ":", "color": "#212121"}
+
+
+def _w8_select(records: Sequence[Dict[str, Any]], **match: Any) -> List[Dict[str, Any]]:
+    """Return the records whose fields equal every ``match`` item."""
+    return [r for r in records if all(r.get(k) == v for k, v in match.items())]
+
+
+def _w8_series(
+    records: Sequence[Dict[str, Any]], field: str
+) -> Tuple[List[float], List[float], List[float], List[float]]:
+    """Group records by ``n`` and return ``(n, mean, low, high)`` lists for ``field``.
+
+    Records whose ``field`` is ``None`` are skipped, and an ``n`` with no
+    usable value is left out, so a series never invents a point.
+    """
+    by_n: Dict[float, List[float]] = {}
+    for r in records:
+        value = r.get(field)
+        if value is None:
+            continue
+        by_n.setdefault(float(r["n"]), []).append(float(value))
+    ns = sorted(by_n)
+    means = [float(np.mean(by_n[n])) for n in ns]
+    lows = [min(by_n[n]) for n in ns]
+    highs = [max(by_n[n]) for n in ns]
+    return ns, means, lows, highs
+
+
+def _w8_plot(
+    ax: Axes,
+    records: Sequence[Dict[str, Any]],
+    field: str,
+    style: Dict[str, Any],
+    label: str,
+    hollow: bool = False,
+) -> bool:
+    """Draw one mean series with min-max error bars; return False if it is empty."""
+    ns, means, lows, highs = _w8_series(records, field)
+    if not ns:
+        return False
+    yerr = [np.subtract(means, lows), np.subtract(highs, means)]
+    ax.errorbar(
+        ns, means, yerr=yerr, marker=style["marker"], linestyle=style["linestyle"],
+        color=style["color"], label=label, capsize=3, markersize=6, linewidth=1.6,
+        markerfacecolor="white" if hollow else style["color"],
+    )
+    return True
+
+
+def _w8_runtime_panel(
+    ax: Axes,
+    records: Sequence[Dict[str, Any]],
+    problem: str,
+    family: str,
+    methods: Sequence[str],
+    verify_records: Sequence[Dict[str, Any]],
+    verify_label: str,
+    title: str,
+    param: Any = None,
+    log_x: bool = False,
+) -> None:
+    """One runtime-growth panel: search times per method and the verifier's time."""
+    for method in methods:
+        match = {"problem": problem, "method": method, "instance_family": family}
+        if param is not None:
+            match["param"] = param
+        _w8_plot(ax, _w8_select(records, **match), "time_s", _W8_STYLE[method],
+                 _W8_STYLE[method]["label"])
+    _w8_plot(ax, verify_records, "verify_time_s", _W8_VERIFY_STYLE, verify_label)
+    ax.set_yscale("log")
+    if log_x:
+        ax.set_xscale("log")
+    ax.set_xlabel("Input size n" + (" (log scale)" if log_x else ""))
+    ax.set_ylabel("Time per instance (s, log scale)")
+    ax.set_title(title)
+    ax.legend(loc="best", fontsize=7.5)
+
+
+def plot_runtime_growth(
+    records: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Draw ``runtime_growth.png``: exact search against heuristics and verifiers.
+
+    Six panels. Four show runtime against input size on a log y axis for
+    subset sum (worst-case family), random 3-SAT at clause ratio 4.26, vertex
+    cover on random graphs and Euclidean TSP, each with the polynomial-time
+    verifier timed on the certificates the solvers returned, drawn as a
+    dotted line. The fifth plots the nodes subset-sum backtracking visits
+    against a 2^n reference anchored at the smallest size, and the sixth
+    compares SAT search nodes at clause ratio 4.26 with ratio 2.0.
+
+    Args:
+        records: Per-instance benchmark records (see the banner comment).
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_runtime_growth([])
+        >>> len(fig.axes)
+        6
+        >>> plt.close(fig)
+    """
+    fig, axes = plt.subplots(2, 3, figsize=(17, 10))
+    (a, b, c), (d, e, f) = axes
+
+    _w8_runtime_panel(
+        a, records, "subset_sum", "worst_case", ("backtracking", "greedy", "random_restart"),
+        _w8_select(records, problem="subset_sum", method="backtracking", instance_family="satisfiable"),
+        "verify: sub-multiset and sum check", "(a) Subset sum, worst case (no solution exists)")
+    _w8_runtime_panel(
+        b, records, "sat", "random_3sat", ("sat_backtracking", "sat_dpll", "walksat"),
+        _w8_select(records, problem="sat", method="sat_dpll", instance_family="random_3sat", param="4.26"),
+        "verify: is_satisfying on returned assignment", "(b) Random 3-SAT, m/n = 4.26", param="4.26")
+    _w8_runtime_panel(
+        c, records, "vertex_cover", "gnp_avg_degree_4", ("exact_branching", "two_approx", "max_degree_greedy"),
+        _w8_select(records, problem="vertex_cover", method="two_approx", instance_family="gnp_avg_degree_4"),
+        "verify: is_vertex_cover on 2-approx cover", "(c) Vertex cover, G(n, p), average degree 4",
+        log_x=True)
+    _w8_runtime_panel(
+        d, records, "tsp", "euclidean", ("held_karp", "nearest_neighbor", "nn_two_opt"),
+        _w8_select(records, problem="tsp", method="nearest_neighbor", instance_family="euclidean"),
+        "verify: permutation and tour-cost check", "(d) Euclidean TSP", log_x=True)
+
+    worst = _w8_select(records, problem="subset_sum", method="backtracking", instance_family="worst_case")
+    if _w8_plot(e, worst, "nodes", _W8_STYLE["backtracking"], "backtracking nodes visited"):
+        ns, means, _, _ = _w8_series(worst, "nodes")
+        ref = [means[0] * 2.0 ** (n - ns[0]) for n in ns]
+        e.plot(ns, ref, linestyle=":", color="#212121", marker="", label="2^n reference (through first point)")
+    e.set_yscale("log")
+    e.set_xlabel("Input size n (number of values)")
+    e.set_ylabel("Search nodes visited (log scale)")
+    e.set_title("(e) Subset sum: nodes against 2^n")
+    e.legend(loc="best", fontsize=7.5)
+
+    for method in ("sat_backtracking", "sat_dpll"):
+        for ratio, hollow in (("4.26", False), ("2.0", True)):
+            style = _W8_STYLE[method]
+            label = f"{style['label'].split(' (')[0]}, m/n = {ratio}"
+            _w8_plot(f, _w8_select(records, problem="sat", method=method, param=ratio), "nodes",
+                     dict(style, linestyle=style["linestyle"] if not hollow else ":"), label, hollow=hollow)
+    f.set_yscale("log")
+    f.set_xlabel("Number of variables n")
+    f.set_ylabel("Search nodes visited (log scale)")
+    f.set_title("(f) SAT: the same n, different instances")
+    f.legend(loc="best", fontsize=7.5)
+
+    fig.suptitle("Finding a solution grows exponentially; checking one stays flat "
+                 "(markers: mean; bars: min-max over instances)", fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, save_path)
+    return fig
+
+
+def _w8_tradeoff(
+    ax: Axes,
+    points: Sequence[Tuple[str, str, float, float]],
+    ylabel: str,
+    title: str,
+) -> None:
+    """Scatter (time, quality) points, one labelled marker per method.
+
+    Labels of points at nearly the same height are stacked downwards, so two
+    methods that tie on quality never print their names on top of each other.
+    """
+    placed: List[float] = []
+    for text, method, seconds, quality in points:
+        style = _W8_STYLE[method]
+        ax.scatter([seconds], [quality], marker=style["marker"], s=90, color=style["color"],
+                   edgecolor="black", linewidth=0.6, zorder=3)
+        same_height = sum(1 for q in placed if abs(q - quality) < 0.02)
+        placed.append(quality)
+        ax.annotate(text, (seconds, quality), textcoords="offset points",
+                    xytext=(6, 6 - 13 * same_height), fontsize=8)
+    ax.set_xscale("log")
+    ax.set_xlabel("Mean time per instance (s, log scale)")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+
+
+def _w8_point(
+    records: Sequence[Dict[str, Any]], field: str, **match: Any
+) -> Optional[Tuple[float, float]]:
+    """Mean ``time_s`` and mean ``field`` over the matching records, or ``None``."""
+    chosen = [r for r in _w8_select(records, **match) if r.get(field) is not None]
+    if not chosen:
+        return None
+    return (float(np.mean([r["time_s"] for r in chosen])),
+            float(np.mean([float(r[field]) for r in chosen])))
+
+
+def plot_approximation_quality(
+    records: Sequence[Dict[str, Any]],
+    tradeoff_n: Dict[str, int],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Draw ``approximation_quality.png``: ratios against size, and trade-offs.
+
+    Panel (a) is the vertex cover ratio to the exact optimum for the
+    2-approximation and the max-degree greedy heuristic, with the proven
+    y = 2 bound drawn and the K3,3 and star anchors marked. Panel (b) is the
+    TSP ratio to the Held-Karp optimum for nearest neighbor and NN + 2-opt,
+    the line anchor where nearest neighbor is 1.29x optimal, and, for sizes
+    with no known optimum, nearest neighbor's cost relative to NN + 2-opt.
+    Panels (c) and (d) are trade-off plots, one marker per method: time
+    against approximation ratio for vertex cover and TSP, and time against
+    the fraction of instances solved exactly for subset sum and SAT.
+
+    Args:
+        records: Per-instance benchmark records (see the banner comment).
+        tradeoff_n: The size used for each trade-off point, keyed by
+            ``"vertex_cover"``, ``"tsp"``, ``"subset_sum"`` and ``"sat"``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_approximation_quality([], {})
+        >>> len(fig.axes)
+        4
+        >>> plt.close(fig)
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(15, 11))
+    (a, b), (c, d) = axes
+
+    family = "gnp_avg_degree_4"
+    for method in ("two_approx", "max_degree_greedy"):
+        _w8_plot(a, _w8_select(records, problem="vertex_cover", method=method, instance_family=family),
+                 "ratio", _W8_STYLE[method], _W8_STYLE[method]["label"])
+    for anchor, marker in (("k33", "*"), ("star", "P")):
+        hit = _w8_select(records, problem="vertex_cover", method="two_approx", instance_family=anchor)
+        if hit:
+            a.scatter([hit[0]["n"]], [hit[0]["ratio"]], marker=marker, s=160, color="#2471a3",
+                      edgecolor="black", zorder=4, label=f"2-approx on {'K3,3' if anchor == 'k33' else 'star K1,5'}")
+    a.axhline(2.0, color="#212121", linestyle="--", linewidth=1.2, label="proven bound: ratio <= 2")
+    a.axhline(1.0, color="#7f8c8d", linestyle=":", linewidth=1.0, label="optimal")
+    a.set_xlabel("Number of vertices n")
+    a.set_ylabel("Cover size / minimum cover size")
+    a.set_title("(a) Vertex cover: ratio to the exact optimum")
+    a.legend(loc="best", fontsize=8)
+
+    for method in ("nearest_neighbor", "nn_two_opt"):
+        _w8_plot(b, _w8_select(records, problem="tsp", method=method, instance_family="euclidean"),
+                 "ratio", _W8_STYLE[method], _W8_STYLE[method]["label"] + " / optimum")
+    _w8_plot(b, _w8_select(records, problem="tsp", method="nearest_neighbor", instance_family="euclidean"),
+             "nn_over_two_opt", dict(_W8_STYLE["nearest_neighbor"], linestyle=":"),
+             "nearest neighbor / NN + 2-opt (no optimum known)", hollow=True)
+    line = _w8_select(records, problem="tsp", method="nearest_neighbor", instance_family="line_anchor")
+    if line:
+        b.scatter([line[0]["n"]], [line[0]["ratio"]], marker="*", s=180, color="#2471a3",
+                  edgecolor="black", zorder=4, label="nearest neighbor, line anchor (62 / 48)")
+    b.axhline(1.0, color="#7f8c8d", linestyle=":", linewidth=1.0, label="optimal")
+    b.set_xscale("log")
+    b.set_xlabel("Number of cities n (log scale)")
+    b.set_ylabel("Tour cost ratio")
+    b.set_title("(b) TSP: no constant-factor guarantee")
+    b.legend(loc="best", fontsize=8)
+
+    points = []
+    for problem, label, methods in (
+        ("vertex_cover", "VC", ("exact_branching", "two_approx", "max_degree_greedy")),
+        ("tsp", "TSP", ("held_karp", "nearest_neighbor", "nn_two_opt")),
+    ):
+        n = tradeoff_n.get(problem)
+        fam = family if problem == "vertex_cover" else "euclidean"
+        for method in methods:
+            pt = _w8_point(records, "ratio", problem=problem, method=method, instance_family=fam, n=n)
+            if pt:
+                short = _W8_STYLE[method]["label"].split(" (")[0]
+                points.append((f"{label} n={n}: {short}", method, pt[0], pt[1]))
+    _w8_tradeoff(c, points, "Approximation ratio (1 = optimal)",
+                 "(c) Trade-off: time against ratio")
+
+    points = []
+    n = tradeoff_n.get("subset_sum")
+    for method in ("backtracking", "greedy", "random_restart"):
+        pt = _w8_point(records, "success", problem="subset_sum", method=method,
+                       instance_family="satisfiable", n=n)
+        if pt:
+            points.append((f"subset sum n={n}: {_W8_STYLE[method]['label'].split(' (')[0]}", method, pt[0], pt[1]))
+    n = tradeoff_n.get("sat")
+    for method in ("sat_backtracking", "sat_dpll", "walksat"):
+        pt = _w8_point(records, "success", problem="sat", method=method, param="4.26", n=n)
+        if pt:
+            points.append((f"3-SAT n={n}: {_W8_STYLE[method]['label'].split(' (')[0]}", method, pt[0], pt[1]))
+    _w8_tradeoff(d, points, "Fraction of instances answered exactly",
+                 "(d) Trade-off: time against exact answers")
+    d.set_ylim(-0.05, 1.12)
+
+    fig.suptitle("Approximation and heuristics: cheaper certificates, weaker guarantees "
+                 "(markers: mean; bars: min-max over instances)", fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, save_path)
+    return fig
