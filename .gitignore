@@ -26,6 +26,8 @@ Thumbs.db
 # Exception: benchmark results are graded evidence
 !benchmarks/results/
 !benchmarks/results/*.csv
+!benchmarks/results/week8/
+!benchmarks/results/week8/*.csv
 
 # Working material, not part of the submitted project
 BUILD_SPEC.md
@@ -50,3 +52,6 @@ WEEK6_BUILD_SPEC.md
 
 # Week 7 build specification - working document, not part of the submission
 WEEK7_BUILD_SPEC.md
+
+# Week 8 build specification - working document, not part of the submission
+WEEK8_BUILD_SPEC.md
