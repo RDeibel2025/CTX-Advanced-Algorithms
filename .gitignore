@@ -28,6 +28,8 @@ Thumbs.db
 !benchmarks/results/*.csv
 !benchmarks/results/week8/
 !benchmarks/results/week8/*.csv
+!benchmarks/results/week9/
+!benchmarks/results/week9/*.csv
 
 # Working material, not part of the submitted project
 BUILD_SPEC.md
@@ -55,3 +57,6 @@ WEEK7_BUILD_SPEC.md
 
 # Week 8 build specification - working document, not part of the submission
 WEEK8_BUILD_SPEC.md
+
+# Week 9 build specification - working document, not part of the submission
+WEEK9_BUILD_SPEC.md
