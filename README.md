@@ -15,6 +15,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 6 | Dynamic Programming II | [`analysis/week6_report.md`](analysis/week6_report.md) |
 | 7 | Randomized Algorithms | [`analysis/week7_report.md`](analysis/week7_report.md) |
 | 8 | Computational Complexity | [`analysis/week8_report.md`](analysis/week8_report.md) |
+| 9 | Approximation Algorithms | [`analysis/week9_report.md`](analysis/week9_report.md) |
 
 ---
 
@@ -23,7 +24,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains nine things:
+It contains ten things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -63,13 +64,19 @@ It contains nine things:
    SAT and vertex cover, a vertex cover 2-approximation, nearest-neighbor
    TSP with 2-opt, and greedy and local-search heuristics, each timed next
    to the polynomial-time verifier for its answers.
-8. **A benchmarking framework** that generates eight different shapes of
+8. **Approximation algorithms** (Week 9) - vertex cover by matching and by
+   LP rounding, set cover by greedy and by deterministic and randomized LP
+   rounding, greedy facility location, MST-doubling metric TSP and
+   randomized and local-search Max-Cut, each measured against the exact
+   optimum where it can be computed and against the polynomial-time bound
+   its guarantee is proved with.
+9. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-9. **A performance study each week** built from a real run of that
+10. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -117,6 +124,12 @@ Advanced Algorithms/
 │   │   ├── satisfiability_solver.py  Backtracking, DPLL, WalkSAT
 │   │   ├── vertex_cover_approx.py    2-approximation, max-degree greedy
 │   │   └── traveling_salesman_approx.py  Nearest neighbor, 2-opt
+│   ├── approximation/
+│   │   ├── vertex_cover_2approx.py   Matching 2-approx, LP rounding
+│   │   ├── set_cover_lpround.py      Greedy, deterministic and randomized rounding
+│   │   ├── facility_location_greedy.py  Greedy against the MILP optimum
+│   │   ├── tsp_metric_approx.py      MST doubling; Christofides (networkx)
+│   │   └── maxcut_randomized.py      Random cut, local search, brute force
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -137,6 +150,7 @@ Advanced Algorithms/
 │       ├── random_utils.py         Seeded RNGs, derive_seed, blake2b hashing
 │       ├── probability_analysis.py Summaries, Wilson intervals, theory
 │       ├── graph_utils.py          Edge sets, G(n, p), complements, checks
+│       ├── lp_solver.py            SciPy HiGHS LP and MILP wrappers
 │       └── testing_helpers.py      Shared predicates and test fixtures
 ├── tests/
 │   ├── conftest.py                 Shared fixtures and parametrisation
@@ -173,6 +187,7 @@ Advanced Algorithms/
 │   ├── test_satisfiability_solver.py  Both complete solvers against brute force
 │   ├── test_vertex_cover_approx.py  Ratio exactly 2 on path, star, K3,3
 │   ├── test_tsp_approx.py          4-city and line anchors; 2-opt never worse
+│   ├── week9/                      Week 9's five test files (names shared with Weeks 6 and 8)
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -184,6 +199,7 @@ Advanced Algorithms/
 │   ├── week6_dp_advanced_benchmark.py  The Week 6 benchmark
 │   ├── week7_randomized_benchmark.py   The Week 7 benchmark
 │   ├── week8_complexity_benchmark.py   The Week 8 benchmark
+│   ├── week9_approx_benchmark.py   The Week 9 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -194,7 +210,8 @@ Advanced Algorithms/
 │   ├── week5_report.md             Week 5 technical report
 │   ├── week6_report.md             Week 6 technical report
 │   ├── week7_report.md             Week 7 technical report
-│   └── week8_report.md             Week 8 technical report
+│   ├── week8_report.md             Week 8 technical report
+│   └── week9_report.md             Week 9 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -216,6 +233,8 @@ Advanced Algorithms/
 │   ├── build_week7_pdf.py          Builds the Week 7 submission PDF
 │   ├── week8_facts.py              Prints every figure the Week 8 report quotes
 │   ├── build_week8_pdf.py          Builds the Week 8 submission PDF
+│   ├── week9_facts.py              Prints every figure the Week 9 report quotes
+│   ├── build_week9_pdf.py          Builds the Week 9 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -227,7 +246,8 @@ Advanced Algorithms/
     ├── week5_demo.py               Runnable Week 5 demonstration
     ├── week6_demo.py               Runnable Week 6 demonstration
     ├── week7_demo.py               Runnable Week 7 demonstration
-    └── week8_demo.py               Runnable Week 8 demonstration
+    ├── week8_demo.py               Runnable Week 8 demonstration
+    └── week9_demo.py               Runnable Week 9 demonstration
 ```
 
 ---
@@ -337,11 +357,125 @@ on 100 random formulas; the vertex cover 2-approximation at ratio exactly 2
 on the path, the star and K3,3; and nearest neighbor on the 4-city and
 points-on-a-line anchors, with 2-opt never making a tour worse.
 
+Week 9's five test files live in `tests/week9/`, because two of the
+required names (`test_vertex_cover_approx.py` and
+`test_benchmark_comparison.py`) already belong to Weeks 8 and 6; `pytest
+tests/` collects both copies. They check vertex cover on the triangle (LP
+value 1.5) and the star, the set-cover instance where greedy picks three
+sets against an optimum of two, MST doubling on the unit square and the
+points on a line (48, the optimum), exact Max-Cut on K4, the 5-cycle and
+K3,3, the facility-location anchor with optimum 19, and a smoke run of the
+benchmark.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 9: approximation algorithms
+
+No new dependencies: SciPy (whose HiGHS solver handles every LP and MILP,
+through [`src/utils/lp_solver.py`](src/utils/lp_solver.py)) and networkx
+are already in `requirements.txt`. Week 9 code lives in its own package,
+[`src/approximation/`](src/approximation/). Every approximation is
+measured against the exact optimum where one can be computed, and at every
+size against the polynomial-time lower bound its guarantee is proved with:
+the maximal matching or LP relaxation (vertex cover), the LP relaxation
+(set cover), the minimum spanning tree (metric TSP) and |E| (Max-Cut).
+
+**Where the tests and results go.** The repository holds every week's
+project. Two required test names (`test_vertex_cover_approx.py`,
+`test_benchmark_comparison.py`) and the table name `comparison_table.csv`
+already belong to Weeks 6 and 8, so Week 9's tests live in
+[`tests/week9/`](tests/week9/) and its outputs in
+[`benchmarks/results/week9/`](benchmarks/results/week9/), under the names
+the instructions specify.
+
+### The five modules
+
+| Module | Functions |
+|---|---|
+| [`vertex_cover_2approx.py`](src/approximation/vertex_cover_2approx.py) | `vertex_cover_2approx`, `matching_lower_bound`, `vertex_cover_lp`, `vertex_cover_lp_rounding`, `vertex_cover_exact` (Week 8), `approximation_ratio` |
+| [`set_cover_lpround.py`](src/approximation/set_cover_lpround.py) | `set_cover_ip`, `set_cover_lp`, `set_cover_exact`, `set_cover_greedy`, `set_cover_deterministic_rounding`, `set_cover_randomized_rounding`, `frequency`, `random_instance` |
+| [`facility_location_greedy.py`](src/approximation/facility_location_greedy.py) | `facility_location_greedy`, `facility_location_exact` (MILP), `total_cost`, `random_instance` |
+| [`tsp_metric_approx.py`](src/approximation/tsp_metric_approx.py) | `mst_weight_and_edges`, `tsp_mst_doubling` (our 2-approximation), `tsp_christofides_networkx` (a labelled networkx library comparison), `is_metric` |
+| [`maxcut_randomized.py`](src/approximation/maxcut_randomized.py) | `cut_value`, `maxcut_random`, `maxcut_local_search`, `maxcut_exact` |
+
+```python
+from src.approximation import (
+    vertex_cover_2approx, vertex_cover_lp_rounding, set_cover_greedy,
+    set_cover_exact, set_cover_lp, mst_weight_and_edges, tsp_mst_doubling,
+    maxcut_exact, facility_location_greedy,
+)
+
+triangle = [(0, 1), (0, 2), (1, 2)]
+vertex_cover_2approx(range(3), triangle)        # {0, 1}
+vertex_cover_lp_rounding(range(3), triangle)    # ({0, 1, 2}, 1.5): LP value 1.5
+
+universe = set(range(1, 15))
+subsets = [{1, 3, 5, 7, 9, 11, 13}, {2, 4, 6, 8, 10, 12, 14}, {1, 2},
+           {3, 4, 5, 6}, {7, 8, 9, 10, 11, 12, 13, 14}]
+set_cover_greedy(universe, subsets)             # ([4, 3, 2], 3.0)
+set_cover_exact(universe, subsets)              # ([0, 1], 2.0)
+set_cover_lp(universe, subsets)[0]              # 2.0
+
+xs = [0, 1, -2, 4, -8, 16]
+line = [[abs(a - b) for b in xs] for a in xs]
+mst_weight_and_edges(line)[0]                   # 24, a lower bound on the tour
+tsp_mst_doubling(line)                          # (48, [0, 1, 3, 5, 2, 4, 0])
+
+k33 = [(u, v) for u in range(3) for v in range(3, 6)]
+maxcut_exact(range(6), k33)[0]                  # 9, every edge
+
+facility_location_greedy([4, 4, 4], [[1, 5, 6], [2, 4, 6], [6, 1, 5],
+                                     [6, 2, 4], [5, 6, 1]])   # ({0, 1}, 19.0)
+```
+
+### Running the demonstration
+
+```bash
+python examples/week9_demo.py
+```
+
+Prints and asserts every anchor: vertex cover on the triangle and the star
+(2-approximation, LP rounding, LP value, exact), the set-cover instance
+where greedy picks three sets against two (the integer program, the LP
+solution, greedy, both roundings, exact), the facility-location instance,
+MST doubling on the unit square and the points on a line, and Max-Cut on
+K4, the 5-cycle and K3,3. It runs in under a second.
+
+### Running the tests and the benchmark
+
+```bash
+pytest tests/week9 -q
+```
+
+```bash
+python benchmarks/week9_approx_benchmark.py
+```
+
+Vertex cover, set cover (with 200 randomized-rounding runs per instance for
+mean, spread and fix-up rate), facility location, metric TSP and Max-Cut
+(200 random cuts and 20 local-search starts per graph). The full run takes
+under a minute and a half and writes `approx_ratios.png`,
+`cost_vs_optimal.png`, `randomized_maxcut_results.png`,
+`comparison_table.csv` and `instances.csv` to
+[`benchmarks/results/week9/`](benchmarks/results/week9/). The master seed
+defaults to 42 and `--seed` changes it. For a smoke run of about ten
+seconds, written somewhere else so it does not overwrite the committed
+results:
+
+```bash
+python benchmarks/week9_approx_benchmark.py --smoke --out /tmp/week9_smoke --seed 42
+```
+
+Every figure quoted in the Week 9 report is recomputed from the CSVs by
+`python tools/week9_facts.py`. As in earlier weeks, the code, tests and
+report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -955,7 +1089,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 8 algorithms included; I specified the
+written documents, the Week 4 to Week 9 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a

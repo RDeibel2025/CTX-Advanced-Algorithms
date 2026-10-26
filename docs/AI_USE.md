@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 8.
+Week 9.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -653,3 +653,74 @@ attribution.
 * Garey, M. R., and Johnson, D. S. (1979). *Computers and Intractability*.
 * Selman, B., Kautz, H., and Cohen, B. (1994). *AAAI-94*, 337-343.
 * Python, pytest, numpy and matplotlib documentation.
+
+---
+
+# Week 9 - Approximation Algorithms
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 8. I wrote a
+specification from the Blackboard Week 9 instructions and readings,
+including the anchor values the tests assert against, and directed the tool
+to implement against it. The specification fixed the decisions that decide
+correctness: Week 9 code in its own package; Week 8's exact vertex cover,
+Euclidean instances and nearest neighbor and Week 6's Held-Karp reused
+rather than rewritten; SciPy's HiGHS solver for every LP and MILP; Week 9's
+tests and outputs in `tests/week9/` and `benchmarks/results/week9/` because
+two required test names and the table name belong to Weeks 6 and 8;
+Christofides taken from networkx and labelled as a library comparison; and
+the report's organization around the polynomial-time lower bound each
+guarantee is proved against. The model drafted the code, the tests and the
+first draft of the report; I reviewed them and decided what the results
+support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/approximation/` (all five modules and the package init) | AI-drafted, reviewed by me |
+| `src/utils/lp_solver.py` and the Week 9 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/week9/` (five test files) | AI-drafted, reviewed by me |
+| `benchmarks/week9_approx_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week9_demo.py`, `tools/week9_facts.py`, `tools/build_week9_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week9_report.md`, the README's Week 9 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every cost, ratio, time and chart this week came from
+running `benchmarks/week9_approx_benchmark.py` on my machine with master
+seed 42. The report's figures are printed from the result CSVs by
+`tools/week9_facts.py`, so they can be re-checked against a fresh run in one
+command.
+
+**The anchor values.** The expected answers the tests assert were worked
+out and cross-checked before any code was written: the triangle's LP value
+of 1.5 and the star's of 1.0, the set-cover instance on which greedy picks
+three sets against an optimum of two, the facility-location instance with
+optimum 19, the MST-doubling tours on the unit square and on the points on
+a line (48, where Week 8's nearest neighbor gave 62), and the Max-Cut
+optima of K4, the 5-cycle and K3,3.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 9 assignment instructions and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 35 (Approximation Algorithms).
+* Amakobe, M. (2025). *Advanced Computational Algorithms*, Ch. 9.
+* Christofides, N. (1976). Report 388, Carnegie-Mellon University.
+* Chvatal, V. (1979). *Mathematics of Operations Research*, 4(3), 233-235.
+* Vazirani, V. V. (2001). *Approximation Algorithms*. Springer.
+* SciPy (HiGHS), networkx, Python, pytest, numpy and matplotlib documentation.
