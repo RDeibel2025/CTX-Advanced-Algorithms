@@ -4828,3 +4828,305 @@ def plot_approximation_quality(
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     _save(fig, save_path)
     return fig
+
+
+# --- Week 9: approximation ---
+#
+# The three Week 9 figures are drawn from the benchmark's per-instance
+# records: one dict per (problem, method, n, rep) with numeric ``cost``,
+# ``optimal``, ``lower_bound``, ``ratio_to_opt``, ``ratio_to_lb`` and
+# ``time_s`` fields (``None`` where a field does not apply). Ratios to the
+# exact optimum are drawn with solid markers and ratios to the polynomial-time
+# lower bound with hollow markers, so the two never share a symbol; every
+# method also has its own marker and line style, never colour alone.
+__all__ += [
+    "plot_approx_ratios",
+    "plot_cost_vs_optimal",
+    "plot_randomized_results",
+]
+
+_W9_STYLE: Dict[str, Dict[str, Any]] = {
+    "two_approx": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "2-approx (matching)"},
+    "lp_rounding": {"marker": "D", "linestyle": "-.", "color": "#d68910", "label": "LP rounding"},
+    "greedy": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "greedy (Chvatal)"},
+    "deterministic_rounding": {"marker": "D", "linestyle": "-.", "color": "#d68910", "label": "deterministic rounding (1/f)"},
+    "randomized_rounding": {"marker": "v", "linestyle": ":", "color": "#1e8449", "label": "randomized rounding (mean of 200)"},
+    "facility_greedy": {"marker": "s", "linestyle": "--", "color": "#7d3c98", "label": "greedy (no proven ratio)"},
+    "mst_doubling": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "MST doubling (ours)"},
+    "christofides_networkx": {"marker": "D", "linestyle": "-.", "color": "#d68910", "label": "Christofides (networkx library)"},
+    "nearest_neighbor": {"marker": "^", "linestyle": ":", "color": "#7d3c98", "label": "nearest neighbor (Week 8, no bound)"},
+    "random_cut": {"marker": "v", "linestyle": "--", "color": "#1e8449", "label": "random cut (mean of 200)"},
+    "local_search": {"marker": "s", "linestyle": "-.", "color": "#2471a3", "label": "local search (best of 20)"},
+    "exact": {"marker": "o", "linestyle": "-", "color": "#c0392b", "label": "exact"},
+}
+
+_W9_PANELS: Tuple[Tuple[str, str, Tuple[str, ...], Optional[Dict[str, float]]], ...] = (
+    ("vertex_cover", "(a) Vertex cover", ("two_approx", "lp_rounding"), {"bound 2": 2.0}),
+    ("set_cover", "(b) Set cover", ("greedy", "deterministic_rounding", "randomized_rounding"), None),
+    ("facility_location", "(c) Facility location", ("facility_greedy",), None),
+    ("metric_tsp", "(d) Metric TSP (Euclidean)", ("mst_doubling", "christofides_networkx", "nearest_neighbor"),
+     {"bound 2 (MST doubling)": 2.0, "bound 1.5 (Christofides)": 1.5}),
+    ("maxcut", "(e) Max-Cut (maximization)", ("random_cut", "local_search"), {"bound 1/2": 0.5}),
+)
+
+
+def _w9_series(records: Sequence[Dict[str, Any]], field: str) -> Tuple[List[float], List[float], List[float], List[float]]:
+    """Group by ``n``; return (n, mean, min, max) of ``field``, skipping missing values."""
+    by_n: Dict[float, List[float]] = {}
+    for r in records:
+        value = r.get(field)
+        if value is None:
+            continue
+        by_n.setdefault(float(r["n"]), []).append(float(value))
+    ns = sorted(by_n)
+    return (ns, [float(np.mean(by_n[n])) for n in ns], [min(by_n[n]) for n in ns],
+            [max(by_n[n]) for n in ns])
+
+
+def _w9_draw(ax: Axes, records: Sequence[Dict[str, Any]], field: str, style: Dict[str, Any],
+             label: str, hollow: bool) -> None:
+    """One mean series with min-max error bars; hollow markers for lower-bound ratios."""
+    ns, means, lows, highs = _w9_series(records, field)
+    if not ns:
+        return
+    ax.errorbar(ns, means, yerr=[np.subtract(means, lows), np.subtract(highs, means)],
+                marker=style["marker"], linestyle=style["linestyle"] if not hollow else ":",
+                color=style["color"], markerfacecolor="white" if hollow else style["color"],
+                capsize=3, markersize=6, linewidth=1.4, label=label)
+
+
+def plot_approx_ratios(records: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``approx_ratios.png``: ratio to OPT and ratio to the lower bound against n.
+
+    Panels (a)-(e) cover vertex cover, set cover, facility location, metric
+    TSP and Max-Cut. Solid markers are the ratio to the exact optimum (small
+    n only); hollow markers are the ratio to the polynomial-time lower bound
+    (for Max-Cut, the upper bound |E|), available at every n, which is a
+    certified bound on the true ratio. Proven bounds are dashed lines. Panel
+    (f) shows how close each lower bound is to the optimum where both exist.
+
+    Args:
+        records: Per-instance benchmark records.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_approx_ratios([])
+        >>> len(fig.axes)
+        6
+        >>> plt.close(fig)
+    """
+    fig, axes = plt.subplots(2, 3, figsize=(17, 10))
+    flat = list(axes.flat)
+    for ax, (problem, title, methods, bounds) in zip(flat, _W9_PANELS):
+        for method in methods:
+            mine = [r for r in records if r["problem"] == problem and r["method"] == method]
+            style = _W9_STYLE[method]
+            _w9_draw(ax, mine, "ratio_to_opt", style, style["label"] + " / OPT", hollow=False)
+            _w9_draw(ax, mine, "ratio_to_lb", style, style["label"] + " / lower bound", hollow=True)
+        if problem == "set_cover":
+            fs = [r["proven_bound"] for r in records if r["problem"] == problem
+                  and r["method"] == "deterministic_rounding" and r.get("proven_bound") is not None]
+            if fs:
+                ax.axhline(float(np.mean(fs)), color="#212121", linestyle="--", linewidth=1.1,
+                           label=f"mean f = {np.mean(fs):.1f} (deterministic bound)")
+        for text, value in (bounds or {}).items():
+            ax.axhline(value, color="#212121", linestyle="--", linewidth=1.1, label=text)
+        ax.axhline(1.0, color="#7f8c8d", linestyle="-", linewidth=0.8)
+        ax.set_xscale("log")
+        ax.set_xlabel("Instance size n (log scale)")
+        ax.set_ylabel("Cut / OPT or cut / |E|" if problem == "maxcut" else "Cost / OPT or cost / lower bound")
+        ax.set_title(title)
+        ax.legend(loc="best", fontsize=7)
+
+    ax = flat[5]
+    for problem, method, label, marker in (
+        ("vertex_cover", "exact", "vertex cover: LP / OPT", "o"),
+        ("set_cover", "exact", "set cover: LP / OPT", "s"),
+        ("metric_tsp", "exact", "TSP: MST / OPT", "D"),
+        ("maxcut", "exact", "Max-Cut: OPT / |E|", "v"),
+    ):
+        mine = [dict(r, tight=(r["lower_bound"] / r["optimal"]) if problem != "maxcut" else
+                     (r["optimal"] / r["lower_bound"]))
+                for r in records if r["problem"] == problem and r["method"] == method
+                and r.get("lower_bound") and r.get("optimal")]
+        _w9_draw(ax, mine, "tight", {"marker": marker, "linestyle": "-", "color": "#34495e"}, label, hollow=False)
+    ax.axhline(1.0, color="#7f8c8d", linestyle="-", linewidth=0.8)
+    ax.set_xscale("log")
+    ax.set_xlabel("Instance size n (log scale)")
+    ax.set_ylabel("Lower bound / OPT (1 = exact)")
+    ax.set_title("(f) How tight each polynomial-time bound is")
+    ax.legend(loc="best", fontsize=7)
+
+    fig.suptitle("Approximation ratios: solid = cost / OPT, hollow = cost / polynomial-time bound "
+                 "(markers: mean; bars: min-max over instances)", fontsize=12.5)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, save_path)
+    return fig
+
+
+def plot_cost_vs_optimal(records: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``cost_vs_optimal.png``: cost against OPT, and runtime against n.
+
+    Panel (a) scatters each approximation's cost against the exact optimum
+    for every minimization instance that has one, on log-log axes with the
+    line y = x; points above the line are the price of approximating. Panel
+    (b) plots mean runtime against n for the exact solvers (solid lines) and
+    the approximations (dashed), one marker shape per method.
+
+    Args:
+        records: Per-instance benchmark records.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_cost_vs_optimal([])
+        >>> len(fig.axes)
+        2
+        >>> plt.close(fig)
+    """
+    fig, (a, b) = plt.subplots(1, 2, figsize=(16, 7))
+    # Panel (a) mixes four problems, so each (problem, method) pair gets its own
+    # marker shape and the problem decides the colour.
+    scatter_marker = {
+        ("vertex_cover", "two_approx"): "o", ("vertex_cover", "lp_rounding"): "P",
+        ("set_cover", "greedy"): "s", ("set_cover", "deterministic_rounding"): "X",
+        ("set_cover", "randomized_rounding"): "v", ("facility_location", "facility_greedy"): "D",
+        ("metric_tsp", "mst_doubling"): "^", ("metric_tsp", "christofides_networkx"): "<",
+        ("metric_tsp", "nearest_neighbor"): ">",
+    }
+    problem_colour = {"vertex_cover": "#2471a3", "set_cover": "#d68910",
+                      "facility_location": "#7d3c98", "metric_tsp": "#1e8449"}
+    seen = set()
+    lo, hi = math.inf, 0.0
+    for r in records:
+        if r["problem"] == "maxcut" or r["method"] == "exact" or r.get("optimal") is None:
+            continue
+        style = _W9_STYLE[r["method"]]
+        key = (r["problem"], r["method"])
+        label = None if key in seen else f"{r['problem'].replace('_', ' ')}: {style['label']}"
+        seen.add(key)
+        a.scatter([r["optimal"]], [r["cost"]], marker=scatter_marker.get(key, style["marker"]), s=40,
+                  color=problem_colour.get(r["problem"], style["color"]), edgecolor="black",
+                  linewidth=0.4, alpha=0.85, label=label)
+        lo, hi = min(lo, r["optimal"]), max(hi, r["cost"])
+    if hi > 0:
+        a.plot([lo * 0.9, hi * 1.1], [lo * 0.9, hi * 1.1], color="#212121", linestyle="--",
+               linewidth=1.0, label="y = x (optimal)")
+    a.set_xscale("log")
+    a.set_yscale("log")
+    a.set_xlabel("Exact optimum OPT (cost units, log scale)")
+    a.set_ylabel("Algorithm cost (same units, log scale)")
+    a.set_title("(a) Cost against the exact optimum (minimization problems)")
+    a.legend(loc="upper left", fontsize=7)
+
+    problems = ("vertex_cover", "set_cover", "facility_location", "metric_tsp", "maxcut")
+    shapes = {"vertex_cover": "o", "set_cover": "s", "facility_location": "D", "metric_tsp": "^",
+              "maxcut": "v"}
+    colours = {"vertex_cover": "#2471a3", "set_cover": "#d68910", "facility_location": "#7d3c98",
+               "metric_tsp": "#1e8449", "maxcut": "#c0392b"}
+    approx_of = {"vertex_cover": "two_approx", "set_cover": "greedy",
+                 "facility_location": "facility_greedy", "metric_tsp": "mst_doubling",
+                 "maxcut": "local_search"}
+    for problem in problems:
+        for method, dashed in (("exact", False), (approx_of[problem], True)):
+            mine = [r for r in records if r["problem"] == problem and r["method"] == method]
+            ns, means, lows, highs = _w9_series(mine, "time_s")
+            if not ns:
+                continue
+            b.errorbar(ns, means, yerr=[np.subtract(means, lows), np.subtract(highs, means)],
+                       marker=shapes[problem], linestyle="--" if dashed else "-",
+                       color=colours[problem], markerfacecolor="white" if dashed else colours[problem],
+                       capsize=2, markersize=6, linewidth=1.4,
+                       label=f"{problem.replace('_', ' ')}: "
+                             f"{'exact' if not dashed else _W9_STYLE[method]['label']}")
+    b.set_xscale("log")
+    b.set_yscale("log")
+    b.set_xlabel("Instance size n (log scale)")
+    b.set_ylabel("Mean time per instance (s, log scale)")
+    b.set_title("(b) Runtime: exact (solid, filled) against approximate (dashed, hollow)")
+    b.legend(loc="best", fontsize=7)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_randomized_results(
+    maxcut_samples: Sequence[Dict[str, Any]],
+    setcover_samples: Sequence[Dict[str, Any]],
+    save_path: Optional[str] = None,
+) -> Figure:
+    """Draw ``randomized_maxcut_results.png``: what randomization guarantees.
+
+    Panels (a)-(c) are histograms of the random-cut value over 200 seeded
+    runs on three graphs, with |E|/2 (the expected value), the best
+    local-search cut and, where known, the exact optimum marked. Panel (d)
+    shows the spread of randomized set-cover rounding: box plots of cost / LP
+    over 200 runs per instance, one box per instance size, with deterministic
+    rounding and greedy marked.
+
+    Args:
+        maxcut_samples: Up to three dicts with ``n``, ``edges``, ``cuts``
+            (the 200 values), ``local`` and ``optimal`` (or ``None``).
+        setcover_samples: Dicts with ``n``, ``ratios`` (cost / LP per run),
+            ``deterministic`` and ``greedy`` (cost / LP).
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_randomized_results([], [])
+        >>> len(fig.axes)
+        4
+        >>> plt.close(fig)
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    for ax, sample, letter in zip(list(axes.flat)[:3], list(maxcut_samples)[:3], "abc"):
+        runs = len(sample["cuts"])
+        ax.hist(sample["cuts"], bins=20, color="#aed6f1", edgecolor="#1b4f72", hatch="//",
+                label=f"random cut, {runs} seeded runs")
+        ax.axvline(sample["edges"] / 2, color="#212121", linestyle="--", linewidth=1.4,
+                   label=f"|E|/2 = {sample['edges'] / 2:g} (expected value)")
+        if sample.get("optimal") is not None:
+            ax.axvline(sample["optimal"], color="#c0392b", linestyle="-", linewidth=2.4,
+                       label=f"exact OPT = {sample['optimal']}")
+        # Drawn after OPT so the dash-dot line stays visible when the two coincide.
+        ax.axvline(sample["local"], color="#1e8449", linestyle="-.", linewidth=1.6,
+                   label=f"local search best = {sample['local']}")
+        ax.set_xlabel("Cut value (edges cut)")
+        ax.set_ylabel(f"Runs out of {runs}")
+        ax.set_title(f"({letter}) Max-Cut, G(n = {sample['n']}, 0.3), |E| = {sample['edges']}")
+        ax.legend(loc="upper left", fontsize=7.5)
+    for ax in list(axes.flat)[len(list(maxcut_samples)[:3]):3]:
+        ax.set_axis_off()
+
+    d = axes.flat[3]
+    if setcover_samples:
+        positions = list(range(1, len(setcover_samples) + 1))
+        d.boxplot([s["ratios"] for s in setcover_samples], positions=positions, widths=0.5,
+                  patch_artist=True, boxprops={"facecolor": "#d5f5e3", "hatch": ".."},
+                  medianprops={"color": "#1e8449"})
+        d.scatter(positions, [s["deterministic"] for s in setcover_samples], marker="D", s=60,
+                  color="#d68910", edgecolor="black", zorder=3, label="deterministic rounding")
+        d.scatter(positions, [s["greedy"] for s in setcover_samples], marker="s", s=60,
+                  color="#2471a3", edgecolor="black", zorder=3, label="greedy")
+        d.set_xticks(positions)
+        d.set_xticklabels([f"n = {s['n']}" for s in setcover_samples])
+        d.plot([], [], color="#1e8449",
+               label=f"randomized rounding, {len(setcover_samples[0]['ratios'])} runs: "
+                     "box = quartiles, whiskers 1.5 IQR")
+    d.axhline(1.0, color="#7f8c8d", linestyle="-", linewidth=0.8)
+    d.set_xlabel("Set cover instance (n elements, first instance of each size)")
+    d.set_ylabel("Cost / LP value")
+    d.set_title("(d) Set cover: spread of randomized rounding over repeated runs")
+    d.legend(loc="upper left", fontsize=7.5)
+    fig.suptitle("Randomized guarantees hold in expectation; the spread is part of the result",
+                 fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, save_path)
+    return fig
