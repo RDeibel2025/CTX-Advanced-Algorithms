@@ -53,6 +53,6 @@ segmentation,pr,grid,1024,,scaled_int,3,52836.56367,,0.00542071,0.000142153,,,,,
 segmentation,ek,grid,1024,,scaled_int,3,52836.56367,,0.0876828,7.12997e-05,,,,,True,True,6322437966500040216
 segmentation,pr,grid,4096,,scaled_int,3,210215.1583,,0.0281937,0.0115547,,,,,True,True,4616217265891162292
 segmentation,ek,grid,4096,,scaled_int,3,210215.1583,,1.33368,0.0047809,,,,,True,True,4616217265891162292
-terminal_sensitivity,pr,sparse_no_hubs,10000,40000,uniform,3,330,,0.0290936,0.0219979,,8117,6675.3333,,True,True,6334344772833010072
-terminal_sensitivity,ek,sparse_no_hubs,10000,40000,uniform,3,330,,0.0927237,0.0480144,32,,,,True,True,6334344772833010072
-terminal_sensitivity,mcf,sparse_no_hubs,10000,40000,uniform,3,330,23115.66667,0.495062,0.168111,54.333333,,,,True,,6334344772833010072
+terminal_sensitivity,pr,sparse_one_hub,10000,40000,uniform,3,330,,0.0290936,0.0219979,,8117,6675.3333,,True,True,6334344772833010072
+terminal_sensitivity,ek,sparse_one_hub,10000,40000,uniform,3,330,,0.0927237,0.0480144,32,,,,True,True,6334344772833010072
+terminal_sensitivity,mcf,sparse_one_hub,10000,40000,uniform,3,330,23115.66667,0.495062,0.168111,54.333333,,,,True,,6334344772833010072

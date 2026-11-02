@@ -7,7 +7,7 @@ Run from the repository root with the project virtualenv active::
     python benchmarks/week10_flow_benchmark.py --smoke         # seconds, tiny sizes
     python benchmarks/week10_flow_benchmark.py --seed 7 --out /tmp/w10
 
-Five experiments on seeded random networks:
+Six experiments on seeded random networks:
 
 1. **Scaling** - Edmonds-Karp (EK), FIFO push-relabel (PR) and min-cost
    max-flow (MCF) on sparse graphs from n = 1,000 to 50,000.
@@ -23,10 +23,12 @@ Five experiments on seeded random networks:
    the max flow is limited by the few edges around them, which shows how much
    of the gap between the solvers comes from that choice.
 
-Every result is validated, and EK and PR must give the same value on every
-instance. Min-cost flow gets ``validators.validate_flow``; EK and PR get its
-four flow checks without the cost check, since a maximum flow on a costed
-graph need not be a cheapest one.
+Every flow result is validated, and EK and PR must give the same value on
+every timed instance. Min-cost flow gets ``validators.validate_flow``; EK and
+PR get its four flow checks without the cost check, since a maximum flow on a
+costed graph need not be a cheapest one. The applications keep their networks
+internal, so matching is checked against networkx and for disjoint input
+edges, and segmentation by identical masks and cuts from both solvers.
 
 **The 20-second rule.** A run that passes the cap is aborted by a timer and
 never reported as data. That solver is then skipped at larger sizes of the
@@ -439,9 +441,9 @@ def terminal_study(cfg: Config, master: int, records: List[dict], caps: List[dic
     for rep in range(cfg.reps):
         seed = derive_seed(master, "terminal_sensitivity", n, rep)
         net = random_network(n, 4, seed, cost_range=COST_RANGE, terminal_fraction=0.0)
-        solve_instance(records, caps, active, "terminal_sensitivity", "sparse_no_hubs", n, "uniform",
+        solve_instance(records, caps, active, "terminal_sensitivity", "sparse_one_hub", n, "uniform",
                        rep, seed, net, cfg, ("pr", "ek", "mcf"))
-    print(f"    n={n:<7} {summary_line(records, 'terminal_sensitivity', n, 'sparse_no_hubs')}", flush=True)
+    print(f"    n={n:<7} {summary_line(records, 'terminal_sensitivity', n, 'sparse_one_hub')}", flush=True)
 
 
 def application_figures(master: int, out: str) -> None:

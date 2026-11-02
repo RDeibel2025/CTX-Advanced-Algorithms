@@ -143,10 +143,10 @@ def main() -> int:
         print(f"    rep 0 flow {flow:,.0f}; excess that returned to s {back:,.0f} ({back / start:.1%} of the start)")
 
     # ------------------------------------------------------------------
-    header("5c. Control: source and sink without hub edges")
+    header("5c. Control: one hub edge per terminal")
     tc = inst[inst.experiment == "terminal_sensitivity"]
     hub = sc[sc.n == tc.n.iloc[0]]
-    for label, frame in (("no hub edges", tc), ("5% hub edges", hub)):
+    for label, frame in (("one hub edge", tc), ("5% hub edges", hub)):
         parts = [f"  {label:<13} n={int(frame.n.iloc[0])} flow {frame.max_flow.mean():,.1f}"]
         times = {}
         for solver in ("ek", "pr", "mcf"):

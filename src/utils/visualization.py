@@ -5223,13 +5223,12 @@ def plot_runtime_scaling(records: Sequence[Dict[str, Any]],
         slope = _w10_slope(ns, means)
         label = style["label"] + (f" (fitted slope {slope:.2f})" if slope is not None else "")
         _w10_line(ax, _w10_select(records, solver=solver), "time_s", style, label)
-    marked = False
     for cap in caps or []:
         if cap["solver"] in _W10_STYLE:
-            ax.scatter([cap["n"]], [cap["cap_s"]], marker="x", s=90, zorder=4,
-                       color=_W10_STYLE[cap["solver"]]["color"],
-                       label=None if marked else "a run passed the cap at this size")
-            marked = True
+            style = _W10_STYLE[cap["solver"]]
+            ax.scatter([cap["n"]], [cap["cap_s"]], s=90, zorder=4, color=style["color"],
+                       marker={"ek": "x", "mcf": "+"}.get(cap["solver"], "*"),
+                       label=f"{style['label']}: a run passed the cap")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("Nodes n (log scale)")
