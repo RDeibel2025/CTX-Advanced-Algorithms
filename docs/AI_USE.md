@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 9.
+Week 10.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -724,3 +724,73 @@ attribution.
 * Chvatal, V. (1979). *Mathematics of Operations Research*, 4(3), 233-235.
 * Vazirani, V. V. (2001). *Approximation Algorithms*. Springer.
 * SciPy (HiGHS), networkx, Python, pytest, numpy and matplotlib documentation.
+
+---
+
+# Week 10 - Network Flows, Matching, and Large-Scale Graph Optimization
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 9. I wrote a
+specification from the Blackboard Week 10 instructions and readings,
+including the anchor values the tests assert against, and directed the tool
+to implement against it. The specification fixed the decisions that decide
+correctness: the required `FlowNetworkSolver/` tree placed in
+`src/flow_network_solver/` so it sits with every other week's project; an
+array-based residual network so push-relabel could reach 50,000 nodes in
+pure Python; networkx allowed only as a cross-check in tests and for
+drawing, never as a solver; and the report's organization around one
+residual graph read in different ways. The model drafted the code, the
+tests and the first draft of the report; I reviewed them and decided what
+the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/flow_network_solver/` (core, applications, visualization, utils, CLI and sample inputs) | AI-drafted, reviewed by me |
+| The Week 10 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/week10/` (seven test files) | AI-drafted, reviewed by me |
+| `benchmarks/week10_flow_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week10_demo.py`, `tools/week10_facts.py`, `tools/build_week10_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week10_report.md`, the README's Week 10 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every time, count, memory figure and chart this week
+came from running `benchmarks/week10_flow_benchmark.py` on my machine with
+master seed 42. A run that passed the 20-second cap was aborted and not
+reported, and every such cap is recorded in
+`benchmarks/results/week10/size_caps.csv`. The report's figures are printed
+from the result CSVs by `tools/week10_facts.py`, so they can be re-checked
+against a fresh run in one command.
+
+**The anchor values.** The expected answers the tests assert were computed
+and cross-checked with networkx before any code was written: the CLRS
+network's max flow of 23 and its min cut, the min-cost instance with flow 6
+and cost 24, the matching of size 3, the schedule with three jobs assigned,
+and the segmentation mask and cut value on the small test image.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 10 assignment instructions and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 24 (Maximum Flow).
+* Amakobe, M. (2025). *Advanced Computational Algorithms*, Ch. 10.
+* Edmonds, J., and Karp, R. M. (1972). *Journal of the ACM*, 19(2), 248-264.
+* Goldberg, A. V., and Tarjan, R. E. (1988). *Journal of the ACM*, 35(4),
+  921-940.
+* Boykov, Y., and Kolmogorov, V. (2004). *IEEE TPAMI*, 26(9), 1124-1137.
+* networkx, Python, pytest, numpy and matplotlib documentation.

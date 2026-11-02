@@ -16,6 +16,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 7 | Randomized Algorithms | [`analysis/week7_report.md`](analysis/week7_report.md) |
 | 8 | Computational Complexity | [`analysis/week8_report.md`](analysis/week8_report.md) |
 | 9 | Approximation Algorithms | [`analysis/week9_report.md`](analysis/week9_report.md) |
+| 10 | Network Flows | [`analysis/week10_report.md`](analysis/week10_report.md) |
 
 ---
 
@@ -24,7 +25,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains ten things:
+It contains eleven things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -70,13 +71,17 @@ It contains ten things:
    randomized and local-search Max-Cut, each measured against the exact
    optimum where it can be computed and against the polynomial-time bound
    its guarantee is proved with.
-9. **A benchmarking framework** that generates eight different shapes of
+9. **A flow network solver** (Week 10) - an array-based residual network
+   with Edmonds-Karp, FIFO push-relabel and min-cost max-flow, applied to
+   bipartite matching, image segmentation and scheduling, with plots,
+   animations and a command-line interface.
+10. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-10. **A performance study each week** built from a real run of that
+11. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -130,6 +135,13 @@ Advanced Algorithms/
 │   │   ├── facility_location_greedy.py  Greedy against the MILP optimum
 │   │   ├── tsp_metric_approx.py      MST doubling; Christofides (networkx)
 │   │   └── maxcut_randomized.py      Random cut, local search, brute force
+│   ├── flow_network_solver/        The instructions' FlowNetworkSolver/ project
+│   │   ├── main.py                   Command-line interface
+│   │   ├── core/                     network, edmonds_karp, push_relabel, min_cost_flow
+│   │   ├── applications/             matching, image_seg, scheduling
+│   │   ├── visualization/            plot_network, animate_flow
+│   │   ├── utils/                    generators, validators
+│   │   └── examples/                 Two sample input graphs
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -188,6 +200,7 @@ Advanced Algorithms/
 │   ├── test_vertex_cover_approx.py  Ratio exactly 2 on path, star, K3,3
 │   ├── test_tsp_approx.py          4-city and line anchors; 2-opt never worse
 │   ├── week9/                      Week 9's five test files (names shared with Weeks 6 and 8)
+│   ├── week10/                     Week 10's seven test files
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -200,6 +213,7 @@ Advanced Algorithms/
 │   ├── week7_randomized_benchmark.py   The Week 7 benchmark
 │   ├── week8_complexity_benchmark.py   The Week 8 benchmark
 │   ├── week9_approx_benchmark.py   The Week 9 benchmark
+│   ├── week10_flow_benchmark.py    The Week 10 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -211,7 +225,8 @@ Advanced Algorithms/
 │   ├── week6_report.md             Week 6 technical report
 │   ├── week7_report.md             Week 7 technical report
 │   ├── week8_report.md             Week 8 technical report
-│   └── week9_report.md             Week 9 technical report
+│   ├── week9_report.md             Week 9 technical report
+│   └── week10_report.md            Week 10 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -235,6 +250,8 @@ Advanced Algorithms/
 │   ├── build_week8_pdf.py          Builds the Week 8 submission PDF
 │   ├── week9_facts.py              Prints every figure the Week 9 report quotes
 │   ├── build_week9_pdf.py          Builds the Week 9 submission PDF
+│   ├── week10_facts.py             Prints every figure the Week 10 report quotes
+│   ├── build_week10_pdf.py         Builds the Week 10 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -247,7 +264,8 @@ Advanced Algorithms/
     ├── week6_demo.py               Runnable Week 6 demonstration
     ├── week7_demo.py               Runnable Week 7 demonstration
     ├── week8_demo.py               Runnable Week 8 demonstration
-    └── week9_demo.py               Runnable Week 9 demonstration
+    ├── week9_demo.py               Runnable Week 9 demonstration
+    └── week10_demo.py              Runnable Week 10 demonstration
 ```
 
 ---
@@ -367,11 +385,148 @@ points on a line (48, the optimum), exact Max-Cut on K4, the 5-cycle and
 K3,3, the facility-location anchor with optimum 19, and a smoke run of the
 benchmark.
 
+Week 10's seven test files live in `tests/week10/`. They check all three
+solvers on the CLRS network (max flow 23, min cut {0, 1, 2, 4}), the
+min-cost instance with flow 6 and cost 24, agreement with networkx on 50
+random networks and 20 random cost networks, validators that catch a
+hand-broken flow, the matching, scheduling and segmentation anchors, and
+smoke runs of the benchmark and the command line.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 10: network flows, matching and large-scale graph optimization
+
+No new dependencies. `src/flow_network_solver/` is the instructions'
+`FlowNetworkSolver/` project; the repository holds every week's project, so
+it sits under `src/` like Weeks 1-9. The report is
+[`analysis/week10_report.md`](analysis/week10_report.md), which is the
+instructions' `ch9_report.md` under this repository's weekly naming.
+Week 10's tests are in [`tests/week10/`](tests/week10/) and its outputs in
+[`benchmarks/results/week10/`](benchmarks/results/week10/).
+
+Every solver and application works on one structure, the residual graph,
+stored as flat arrays: edge `i` and its reverse `i ^ 1` are a pair. networkx
+is used only as a cross-check in tests and for drawing, never as a solver.
+
+### What is in the package
+
+| Module | Contents |
+|---|---|
+| [`core/network.py`](src/flow_network_solver/core/network.py) | `Network`, `FlowResult`, `min_cut`, `cut_edges`, `cut_value` |
+| [`core/edmonds_karp.py`](src/flow_network_solver/core/edmonds_karp.py) | `edmonds_karp` (BFS shortest augmenting paths) |
+| [`core/push_relabel.py`](src/flow_network_solver/core/push_relabel.py) | `push_relabel` (FIFO, gap heuristic, global relabel, convergence profile) |
+| [`core/min_cost_flow.py`](src/flow_network_solver/core/min_cost_flow.py) | `min_cost_max_flow` (successive shortest paths with Johnson potentials) |
+| [`applications/`](src/flow_network_solver/applications/) | `bipartite_matching`, `draw_matching`, `segment`, `save_segmentation`, `schedule` |
+| [`visualization/`](src/flow_network_solver/visualization/) | `plot_network`, `save_network_figure`, `animate_edmonds_karp`, `animate_push_relabel` |
+| [`utils/`](src/flow_network_solver/utils/) | seeded generators and the flow validators |
+
+```python
+from src.flow_network_solver import (
+    Network, edmonds_karp, push_relabel, min_cost_max_flow, min_cut,
+    bipartite_matching, schedule, segment,
+)
+
+edges = [(0, 1, 16), (0, 2, 13), (2, 1, 4), (1, 3, 12), (3, 2, 9),
+         (2, 4, 14), (4, 3, 7), (3, 5, 20), (4, 5, 4)]
+net = Network.from_edges(6, edges)
+edmonds_karp(net, 0, 5).value                   # 23, in 3 augmenting paths
+min_cut(net, 0)                                 # {0, 1, 2, 4}
+net.reset()                                     # restore capacities for another solver
+push_relabel(net, 0, 5).value                   # 23
+
+costs = Network.from_edges(4, [(0, 1, 4, 2), (0, 2, 2, 2), (1, 2, 2, 1),
+                               (1, 3, 3, 3), (2, 3, 5, 1)])
+result = min_cost_max_flow(costs, 0, 3)
+result.value, result.cost                       # (6, 24)
+
+bipartite_matching(["a", "b", "c", "d"], [1, 2, 3, 4],
+                   [("a", 1), ("a", 2), ("b", 1), ("c", 2), ("c", 3), ("d", 3)])
+# [('a', 1), ('c', 2), ('d', 3)]
+
+schedule(["J1", "J2", "J3", "J4"], ["M1", "M2"],
+         {"J1": ["M1"], "J2": ["M1", "M2"], "J3": ["M1"], "J4": ["M2"]},
+         {"M1": 2, "M2": 1})
+# ({'J1': 'M1', 'J2': 'M1', 'J4': 'M2'}, ['J3'])
+
+segment([[200, 210, 40, 30], [190, 205, 35, 20], [195, 60, 25, 15]])
+# ([[1, 1, 0, 0], [1, 1, 0, 0], [1, 0, 0, 0]], 500.002)
+```
+
+### The command line
+
+Run from the repository root. Graph input files are plain text: an `n m s t`
+header, then `u v cap [cost]` lines. With no `--input`, each mode uses a
+built-in example.
+
+```bash
+python -m src.flow_network_solver.main --ek --input src/flow_network_solver/examples/clrs_network.txt
+```
+
+```bash
+python -m src.flow_network_solver.main --pr --input src/flow_network_solver/examples/clrs_network.txt --plot --out /tmp/flow
+```
+
+```bash
+python -m src.flow_network_solver.main --mcf --input src/flow_network_solver/examples/min_cost_example.txt
+```
+
+```bash
+python -m src.flow_network_solver.main --match
+```
+
+```bash
+python -m src.flow_network_solver.main --segment
+```
+
+```bash
+python -m src.flow_network_solver.main --schedule
+```
+
+### Running the demonstration, tests and benchmark
+
+```bash
+python examples/week10_demo.py
+```
+
+Runs every anchor (the CLRS network with all three solvers and its min cut,
+the min-cost instance, matching, scheduling and segmentation), asserting
+each result.
+
+```bash
+pytest tests/week10 -q
+```
+
+```bash
+python benchmarks/week10_flow_benchmark.py
+```
+
+Runtime scaling on sparse graphs to 50,000 nodes, sparse against dense,
+capacity distributions, peak memory, and the applications. Each flow is
+validated, and Edmonds-Karp and push-relabel must agree on every timed instance.
+A run that passes 20 seconds is aborted and that solver is skipped at larger
+sizes; every such cap is written to `size_caps.csv`. A control at n = 10,000
+repeats the comparison with one hub edge at the source and one at the sink. The run
+writes `flow_benchmark.csv`, `instances.csv`, `size_caps.csv`,
+`pr_convergence.csv`, five benchmark figures, `network.png`, `matching.png`, `segmentation.png`,
+`ek_animation.gif` and `pr_animation.gif` to
+[`benchmarks/results/week10/`](benchmarks/results/week10/). The master seed
+defaults to 42 and `--seed` changes it. For a smoke run of a few seconds,
+written somewhere else so it does not overwrite the committed results:
+
+```bash
+python benchmarks/week10_flow_benchmark.py --smoke --out /tmp/week10_smoke --seed 42
+```
+
+Every figure quoted in the Week 10 report is recomputed from the CSVs by
+`python tools/week10_facts.py`. As in earlier weeks, the code, tests and
+report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -1089,7 +1244,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 9 algorithms included; I specified the
+written documents, the Week 4 to Week 10 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a
