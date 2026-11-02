@@ -5130,3 +5130,284 @@ def plot_randomized_results(
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     _save(fig, save_path)
     return fig
+
+
+# --- Week 10: network flows ---
+#
+# The five Week 10 benchmark figures are drawn from the benchmark's
+# per-instance records: one dict per (experiment, solver, graph_type, n,
+# cap_dist, rep) with numeric ``time_s``, ``augmentations``, ``pushes``,
+# ``relabels`` and ``peak_mem_kb`` fields (``None`` where a field does not
+# apply). Every solver has its own marker and line style as well as its own
+# colour, so no series is identified by colour alone.
+__all__ += [
+    "plot_runtime_scaling",
+    "plot_sparse_vs_dense",
+    "plot_augmentations",
+    "plot_pr_convergence",
+    "plot_memory_use",
+]
+
+_W10_STYLE: Dict[str, Dict[str, Any]] = {
+    "ek": {"marker": "s", "linestyle": "--", "color": "#2471a3", "label": "Edmonds-Karp"},
+    "pr": {"marker": "o", "linestyle": "-", "color": "#c0392b", "label": "push-relabel (FIFO)"},
+    "mcf": {"marker": "D", "linestyle": "-.", "color": "#1e8449", "label": "min-cost max-flow"},
+}
+
+
+def _w10_series(
+    records: Sequence[Dict[str, Any]], field: str
+) -> Tuple[List[float], List[float], List[float], List[float]]:
+    """Group by ``n``; return (n, mean, min, max) of ``field``, skipping missing values."""
+    by_n: Dict[float, List[float]] = {}
+    for r in records:
+        value = r.get(field)
+        if value is None:
+            continue
+        by_n.setdefault(float(r["n"]), []).append(float(value))
+    ns = sorted(by_n)
+    return (ns, [float(np.mean(by_n[n])) for n in ns], [min(by_n[n]) for n in ns],
+            [max(by_n[n]) for n in ns])
+
+
+def _w10_select(records: Sequence[Dict[str, Any]], **match: Any) -> List[Dict[str, Any]]:
+    """Return the records whose fields equal every ``match`` item."""
+    return [r for r in records if all(r.get(k) == v for k, v in match.items())]
+
+
+def _w10_line(ax: Axes, records: Sequence[Dict[str, Any]], field: str, style: Dict[str, Any],
+              label: str, hollow: bool = False) -> Tuple[List[float], List[float]]:
+    """Draw one mean series with min-max bars and return its (n, mean) lists."""
+    ns, means, lows, highs = _w10_series(records, field)
+    if ns:
+        ax.errorbar(ns, means, yerr=[np.subtract(means, lows), np.subtract(highs, means)],
+                    marker=style["marker"], linestyle=style["linestyle"], color=style["color"],
+                    markerfacecolor="white" if hollow else style["color"], capsize=3,
+                    markersize=6, linewidth=1.6, label=label)
+    return ns, means
+
+
+def _w10_slope(ns: Sequence[float], means: Sequence[float]) -> Optional[float]:
+    """Least-squares slope of log(mean) on log(n), or ``None`` below three points."""
+    if len(ns) < 3:
+        return None
+    return float(np.polyfit(np.log(ns), np.log(means), 1)[0])
+
+
+def plot_runtime_scaling(records: Sequence[Dict[str, Any]],
+                         caps: Optional[Sequence[Dict[str, Any]]] = None,
+                         save_path: Optional[str] = None) -> Figure:
+    """Draw ``runtime_scaling.png``: log-log runtime against n on sparse graphs.
+
+    Each solver's legend entry carries its fitted log-log slope. A size at
+    which one run passed the cap is marked with an x at the cap and that
+    solver has no larger points.
+
+    Args:
+        records: Per-instance records of the ``scaling`` experiment.
+        caps: Dicts with ``solver``, ``n`` and ``cap_s`` for every size cap.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_runtime_scaling([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for solver, style in _W10_STYLE.items():
+        ns, means, _, _ = _w10_series(_w10_select(records, solver=solver), "time_s")
+        slope = _w10_slope(ns, means)
+        label = style["label"] + (f" (fitted slope {slope:.2f})" if slope is not None else "")
+        _w10_line(ax, _w10_select(records, solver=solver), "time_s", style, label)
+    marked = False
+    for cap in caps or []:
+        if cap["solver"] in _W10_STYLE:
+            ax.scatter([cap["n"]], [cap["cap_s"]], marker="x", s=90, zorder=4,
+                       color=_W10_STYLE[cap["solver"]]["color"],
+                       label=None if marked else "a run passed the cap at this size")
+            marked = True
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Nodes n (log scale)")
+    ax.set_ylabel("Time per run (s, log scale)")
+    ax.set_title("Runtime scaling on sparse graphs (average degree 4; bars: min-max over instances)")
+    if records:
+        ax.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_sparse_vs_dense(records: Sequence[Dict[str, Any]],
+                         save_path: Optional[str] = None) -> Figure:
+    """Draw ``sparse_vs_dense.png``: each solver on sparse and on dense graphs.
+
+    Sparse is solid with filled markers, dense is dotted with hollow markers.
+
+    Args:
+        records: Per-instance records of the ``sparse_vs_dense`` experiment.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_sparse_vs_dense([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for solver, style in _W10_STYLE.items():
+        _w10_line(ax, _w10_select(records, solver=solver, graph_type="sparse"), "time_s",
+                  dict(style, linestyle="-"), style["label"] + ", sparse (degree 4)")
+        _w10_line(ax, _w10_select(records, solver=solver, graph_type="dense"), "time_s",
+                  dict(style, linestyle=":"), style["label"] + ", dense (degree n/4)", hollow=True)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Nodes n (log scale)")
+    ax.set_ylabel("Time per run (s, log scale)")
+    ax.set_title("Sparse against dense graphs (bars: min-max over instances)")
+    if records:
+        ax.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_augmentations(scaling: Sequence[Dict[str, Any]], distributions: Sequence[Dict[str, Any]],
+                       save_path: Optional[str] = None) -> Figure:
+    """Draw ``augmentations.png``: augmenting paths against n, and capacity distributions.
+
+    Panel (a) plots Edmonds-Karp's augmenting paths and min-cost flow's
+    augmentations against n. Panel (b) compares Edmonds-Karp augmentations and
+    push-relabel operations for uniform, exponential and unit capacities.
+
+    Args:
+        scaling: Per-instance records of the ``scaling`` experiment.
+        distributions: Per-instance records of the ``capacity_dist`` experiment.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_augmentations([], [])
+        >>> len(fig.axes)
+        2
+        >>> plt.close(fig)
+    """
+    fig, (a, b) = plt.subplots(1, 2, figsize=(15, 6.5))
+    for solver in ("ek", "mcf"):
+        style = _W10_STYLE[solver]
+        _w10_line(a, _w10_select(scaling, solver=solver), "augmentations", style,
+                  style["label"] + " augmentations")
+    a.set_xscale("log")
+    a.set_yscale("log")
+    a.set_xlabel("Nodes n (log scale)")
+    a.set_ylabel("Augmenting paths per run (log scale)")
+    a.set_title("(a) Augmenting paths against n (sparse)")
+    if scaling:
+        a.legend(loc="best", fontsize=9)
+
+    names = ["uniform", "exponential", "unit"]
+    positions = np.arange(len(names))
+    ek = [np.mean([r["augmentations"] for r in _w10_select(distributions, solver="ek", cap_dist=c)]
+                  or [np.nan]) for c in names]
+    pr = [np.mean([r["pushes"] + r["relabels"] for r in _w10_select(distributions, solver="pr", cap_dist=c)]
+                  or [np.nan]) for c in names]
+    b.set_xticks(positions)
+    b.set_xticklabels(names)
+    b.set_xlabel("Capacity distribution")
+    b.set_ylabel("Count per run (log scale)")
+    b.set_title("(b) Capacity distributions at fixed n (sparse)")
+    if distributions:
+        b.bar(positions - 0.2, ek, 0.4, color="#aed6f1", edgecolor="#1b4f72", hatch="//",
+              label="Edmonds-Karp augmenting paths")
+        b.bar(positions + 0.2, pr, 0.4, color="#f5b7b1", edgecolor="#7b241c", hatch="..",
+              label="push-relabel pushes + relabels")
+        b.set_yscale("log")
+        b.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_pr_convergence(profiles: Sequence[Dict[str, Any]],
+                        save_path: Optional[str] = None) -> Figure:
+    """Draw ``pr_convergence.png``: active nodes and total excess against operations.
+
+    Args:
+        profiles: Dicts with ``n`` and ``convergence``, a list of
+            ``(operations, active_nodes, total_excess)`` samples.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_pr_convergence([])
+        >>> len(fig.axes)
+        2
+        >>> plt.close(fig)
+    """
+    fig, (a, b) = plt.subplots(1, 2, figsize=(15, 6.5))
+    shapes = [("o", "-", "#c0392b"), ("s", "--", "#2471a3"), ("D", "-.", "#1e8449")]
+    for profile, (marker, linestyle, colour) in zip(profiles, shapes):
+        samples = [c for c in profile["convergence"] if c[0] > 0]
+        every = max(1, len(samples) // 12)
+        for ax, index in ((a, 1), (b, 2)):
+            xs = [c[0] for c in samples if c[index] > 0]
+            ys = [c[index] for c in samples if c[index] > 0]
+            ax.plot(xs, ys, color=colour, linestyle=linestyle, marker=marker, markevery=every,
+                    markersize=5, linewidth=1.5, label=f"n = {profile['n']:,}")
+    for ax, ylabel, title in (
+        (a, "Active nodes (log scale)", "(a) Nodes holding excess"),
+        (b, "Total excess on active nodes (flow units, log scale)", "(b) Excess draining"),
+    ):
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel("Pushes + relabels so far (log scale)")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        if profiles:
+            ax.legend(loc="best", fontsize=9)
+    fig.suptitle("Push-relabel convergence profile (sparse graphs)", fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, save_path)
+    return fig
+
+
+def plot_memory_use(records: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``memory_use.png``: peak tracemalloc memory against n per solver.
+
+    Args:
+        records: Per-instance records of the ``memory`` experiment.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_memory_use([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for solver, style in _W10_STYLE.items():
+        _w10_line(ax, _w10_select(records, solver=solver), "peak_mem_kb", style, style["label"])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Nodes n (log scale)")
+    ax.set_ylabel("Peak memory during the solver (KiB, log scale)")
+    ax.set_title("Peak solver memory on sparse graphs (tracemalloc; the shared network is excluded)")
+    if records:
+        ax.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig

@@ -1,0 +1,5 @@
+experiment,solver,graph_type,n,cap_s,reason
+scaling,mcf,sparse,10000,20,a run passed 20 s and was aborted
+scaling,ek,sparse,20000,20,a run passed 20 s and was aborted
+sparse_vs_dense,mcf,dense,1000,20,a run passed 20 s and was aborted
+memory,mcf,sparse,10000,30,a run passed 30 s and was aborted
