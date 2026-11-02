@@ -18,7 +18,7 @@ A flow respects each edge's capacity and conserves flow at every node except the
 
 Optimality is read from the same structure. A flow is maximum exactly when the residual graph has no s-t path, and then the nodes reachable from s form a cut whose capacity equals the flow (CLRS Ch. 24; Amakobe, 2025, Ch. 10). A maximum flow has minimum cost exactly when the residual graph has no negative-cost cycle.
 
-Edmonds-Karp reads the shortest s-t path by BFS, in O(VE²) time (Edmonds & Karp, 1972). Push-relabel reads only a node's height and excess and never a whole path: it pushes excess downhill and raises a stuck node, in O(V³) for the FIFO variant (Goldberg & Tarjan, 1988). Its gap heuristic lifts nodes that can no longer reach t, and its periodic global relabel resets heights by BFS on the residual graph. Min-cost flow reads the graph with costs, taking the cheapest path each round, and its Johnson potentials keep reduced costs non-negative so Dijkstra applies.
+Edmonds-Karp reads the shortest s-t path by BFS, in O(VE²) time (Edmonds & Karp, 1972). Apart from the heuristics below, push-relabel reads only a node's height and excess and never a whole path: it pushes excess downhill and raises a stuck node, in O(V³) for the FIFO variant (Goldberg & Tarjan, 1988). Its gap heuristic lifts nodes that can no longer reach t, and its periodic global relabel resets heights by BFS on the residual graph. Min-cost flow reads the graph with costs, taking the cheapest path each round, and its Johnson potentials keep reduced costs non-negative so Dijkstra applies.
 
 ## 3. Methodology
 
@@ -56,13 +56,13 @@ Push-relabel needed only 5.53 operations per node and 3.0 global relabels at n =
 
 **Matching** reads saturated left-to-right edges. Sizes equalled networkx's maximum matching on every instance; at 1,000 per side the mean size was 992.7, in 0.2157 s with Edmonds-Karp and 0.0116 s with push-relabel.
 
+![matching](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/week10/matching.png)
+
 **Segmentation** reads which pixels are still reachable from s, which is the min cut (Boykov & Kolmogorov, 2004). Capacities are scaled by 1,000 and rounded to integers. At 64x64, Edmonds-Karp took 1.3337 s and push-relabel 0.0282 s, with identical masks.
 
 ![segmentation](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/week10/segmentation.png)
 
 **Scheduling** reads which job-machine edges carry flow. The test instance assigns 3 of 4 jobs and leaves one unassigned, with no machine over capacity.
-
-![matching](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/week10/matching.png)
 
 ## 6. Results and Discussion
 
@@ -104,6 +104,6 @@ One residual graph supported three solvers and three applications, and each read
 Claude (Claude Code) drafted the code, tests and this report's first draft from a
 specification I wrote from the instructions and required reading, including the
 cross-checked values the tests assert. Every measurement comes from running the benchmark on
-my machine, and every result in this report is printed from the CSVs by
+my machine, and every benchmark result in this report is printed from the CSVs by
 [`tools/week10_facts.py`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/tools/week10_facts.py).
 Full disclosure: [`docs/AI_USE.md`](https://github.com/RDeibel2025/CTX-Advanced-Algorithms/blob/main/docs/AI_USE.md).
