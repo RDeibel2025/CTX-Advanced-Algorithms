@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 10.
+Week 11.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -794,3 +794,82 @@ attribution.
   921-940.
 * Boykov, Y., and Kolmogorov, V. (2004). *IEEE TPAMI*, 26(9), 1124-1137.
 * networkx, Python, pytest, numpy and matplotlib documentation.
+
+---
+
+# Week 11 - Fast Pattern Matching, Indexing, and Advanced Text Processing
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 10. I wrote a
+specification from the Blackboard Week 11 instructions and readings,
+including the anchor values the tests assert against, and directed the tool
+to implement against it. The specification fixed the decisions that decide
+correctness: the required `StringSearchEngine/` tree placed in
+`src/string_search_engine/` so it sits with every other week's project; one
+convention shared by every method (0-based, overlapping, sorted positions);
+the exact rolling-hash definition the Rabin-Karp anchors depend on; a numpy
+prefix-doubling suffix array so the index reaches 5 MB, which a pure-Python sort cannot; the
+suffix tree built from the suffix array and LCP (Option A) rather than by
+Ukkonen's algorithm; synthetic, seeded benchmark texts rather than
+downloaded data; and the report's organization around what each method
+stores before it searches. The model drafted the code, the tests and the
+first draft of the report; I reviewed them and decided what the results
+support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/string_search_engine/` (core, applications, visualization, utils and the example files) | AI-drafted, reviewed by me |
+| The Week 11 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/week11/` (seven test files) | AI-drafted, reviewed by me |
+| `benchmarks/week11_benchmark_search.py` | AI-drafted, reviewed by me |
+| `examples/week11_demo.py`, `tools/week11_facts.py`, `tools/build_week11_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week11_report.md`, the README's Week 11 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every time, count, memory figure and chart this week
+came from running `benchmarks/week11_benchmark_search.py` on my machine with
+master seed 42. Every benchmark text is synthetic and generated from a seed;
+none of it is real genomic or English data. Every size cap is recorded in
+`benchmarks/results/week11/size_caps.csv`. The report's benchmark figures
+are printed from the result CSVs by `tools/week11_facts.py`.
+
+**The anchor values.** The expected answers the tests assert were computed
+by brute force before any code was written: the LPS arrays and match
+positions, the Rabin-Karp spurious-hit counts at small moduli, the suffix
+arrays, LCP arrays and node counts for banana, mississippi and abracadabra,
+the plagiarism scores, the FASTA search results and the autocomplete
+rankings.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 11 assignment instructions and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 32 (String Matching).
+* Amakobe, M. (2025). *Advanced Algorithms: Concepts, Complexity, and
+  Applied Projects*, Ch. 11.
+* Knuth, D. E., Morris, J. H., and Pratt, V. R. (1977). *SIAM Journal on
+  Computing*, 6(2), 323-350.
+* Karp, R. M., and Rabin, M. O. (1987). *IBM Journal of Research and
+  Development*, 31(2), 249-260.
+* Manber, U., and Myers, G. (1993). *SIAM Journal on Computing*, 22(5),
+  935-948.
+* Kasai, T., Lee, G., Arimura, H., Arikawa, S., and Park, K. (2001). CPM
+  2001, LNCS 2089, 181-192.
+* Gusfield, D. (1997). *Algorithms on Strings, Trees, and Sequences*.
+* numpy, Python, pytest and matplotlib documentation.

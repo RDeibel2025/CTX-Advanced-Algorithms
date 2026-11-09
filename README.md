@@ -17,6 +17,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 8 | Computational Complexity | [`analysis/week8_report.md`](analysis/week8_report.md) |
 | 9 | Approximation Algorithms | [`analysis/week9_report.md`](analysis/week9_report.md) |
 | 10 | Network Flows | [`analysis/week10_report.md`](analysis/week10_report.md) |
+| 11 | String Algorithms | [`analysis/week11_report.md`](analysis/week11_report.md) |
 
 ---
 
@@ -25,7 +26,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains eleven things:
+It contains twelve things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -75,13 +76,16 @@ It contains eleven things:
    with Edmonds-Karp, FIFO push-relabel and min-cost max-flow, applied to
    bipartite matching, image segmentation and scheduling, with plots,
    animations and a command-line interface.
-10. **A benchmarking framework** that generates eight different shapes of
+10. **A string search engine** (Week 11) - KMP, Rabin-Karp, a suffix array
+    with LCP and a suffix tree behind one search API, applied to plagiarism
+    detection, DNA search over a synthetic genome and autocomplete.
+11. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-11. **A performance study each week** built from a real run of that
+12. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -142,6 +146,12 @@ Advanced Algorithms/
 │   │   ├── visualization/            plot_network, animate_flow
 │   │   ├── utils/                    generators, validators
 │   │   └── examples/                 Two sample input graphs
+│   ├── string_search_engine/       The instructions' StringSearchEngine/ project
+│   │   ├── core/                     kmp, rabin_karp, suffix_array, suffix_tree, search_engine
+│   │   ├── applications/             plagiarism, dna_search, autocomplete
+│   │   ├── visualization/            plot_suffix_array, draw_suffix_tree
+│   │   ├── utils/                    text_loader, rolling_hash, generators
+│   │   └── examples/                 Synthetic genome and two short documents
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -201,6 +211,7 @@ Advanced Algorithms/
 │   ├── test_tsp_approx.py          4-city and line anchors; 2-opt never worse
 │   ├── week9/                      Week 9's five test files (names shared with Weeks 6 and 8)
 │   ├── week10/                     Week 10's seven test files
+│   ├── week11/                     Week 11's seven test files
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -214,6 +225,7 @@ Advanced Algorithms/
 │   ├── week8_complexity_benchmark.py   The Week 8 benchmark
 │   ├── week9_approx_benchmark.py   The Week 9 benchmark
 │   ├── week10_flow_benchmark.py    The Week 10 benchmark
+│   ├── week11_benchmark_search.py  The Week 11 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -226,7 +238,8 @@ Advanced Algorithms/
 │   ├── week7_report.md             Week 7 technical report
 │   ├── week8_report.md             Week 8 technical report
 │   ├── week9_report.md             Week 9 technical report
-│   └── week10_report.md            Week 10 technical report
+│   ├── week10_report.md            Week 10 technical report
+│   └── week11_report.md            Week 11 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -252,6 +265,8 @@ Advanced Algorithms/
 │   ├── build_week9_pdf.py          Builds the Week 9 submission PDF
 │   ├── week10_facts.py             Prints every figure the Week 10 report quotes
 │   ├── build_week10_pdf.py         Builds the Week 10 submission PDF
+│   ├── week11_facts.py             Prints every figure the Week 11 report quotes
+│   ├── build_week11_pdf.py         Builds the Week 11 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -265,7 +280,8 @@ Advanced Algorithms/
     ├── week7_demo.py               Runnable Week 7 demonstration
     ├── week8_demo.py               Runnable Week 8 demonstration
     ├── week9_demo.py               Runnable Week 9 demonstration
-    └── week10_demo.py              Runnable Week 10 demonstration
+    ├── week10_demo.py              Runnable Week 10 demonstration
+    └── week11_demo.py              Runnable Week 11 demonstration
 ```
 
 ---
@@ -392,11 +408,134 @@ random networks and 20 random cost networks, validators that catch a
 hand-broken flow, the matching, scheduling and segmentation anchors, and
 smoke runs of the benchmark and the command line.
 
+Week 11's seven test files live in `tests/week11/`. They check the KMP
+failure arrays and matches, the Rabin-Karp spurious-hit counts at small
+moduli, the suffix arrays, LCP arrays and suffix-tree node counts for
+banana, mississippi and abracadabra, 300 random searches on which all four
+methods agree with a naive scan, the plagiarism, FASTA and autocomplete
+anchors, and a smoke run of the benchmark.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 11: fast pattern matching, indexing and text processing
+
+No new dependencies. `src/string_search_engine/` is the instructions'
+`StringSearchEngine/` project; the repository holds every week's project,
+so it sits under `src/` like Weeks 1-10. The report is
+[`analysis/week11_report.md`](analysis/week11_report.md), which is the
+instructions' `chapter10_report.md` under this repository's weekly naming
+(this is Chapter 11 in the course text). The benchmark is the instructions'
+`benchmark_search.py`, prefixed with the week. Week 11's tests are in
+[`tests/week11/`](tests/week11/) and its outputs in
+[`benchmarks/results/week11/`](benchmarks/results/week11/).
+
+The four search methods differ in what they store before they search:
+KMP stores a failure table for the pattern, Rabin-Karp only the pattern's
+hash (it computes one hash per window of the text as it scans), the suffix
+array the sorted order of the text's suffixes, and the suffix tree their
+shared prefixes as nodes. The suffix
+tree is **Option A**: a compressed suffix trie built in linear time from
+the suffix array and LCP array, not Ukkonen's algorithm. Every method
+returns the same thing: all occurrences, overlapping, as sorted 0-based
+positions.
+
+### What is in the package
+
+| Module | Contents |
+|---|---|
+| [`core/kmp.py`](src/string_search_engine/core/kmp.py) | `compute_lps`, `kmp_search` (with a fallback trace and comparison counts), `naive_search` |
+| [`core/rabin_karp.py`](src/string_search_engine/core/rabin_karp.py) | `rabin_karp_search` (with hash-hit and spurious-hit counts), `rabin_karp_multi` |
+| [`core/suffix_array.py`](src/string_search_engine/core/suffix_array.py) | `build_suffix_array` (numpy prefix doubling), `build_lcp` (Kasai), `SuffixArray` |
+| [`core/suffix_tree.py`](src/string_search_engine/core/suffix_tree.py) | `SuffixTree` (Option A), with a DOT export |
+| [`core/search_engine.py`](src/string_search_engine/core/search_engine.py) | `StringSearchEngine`: `find`, `find_all`, `stats`, `recommend` |
+| [`applications/`](src/string_search_engine/applications/) | `compare_documents` and `highlight` (plagiarism), `load_fasta` and `GenomeIndex` (DNA), `Autocomplete` |
+| [`visualization/`](src/string_search_engine/visualization/) | `plot_suffix_array`, `draw_suffix_tree`, `write_dot` |
+| [`utils/`](src/string_search_engine/utils/) | `RollingHash`, `load_text`, and seeded generators for DNA, English-like and periodic text |
+
+The [`examples/`](src/string_search_engine/examples/) folder holds a
+**synthetic** genome (three generated sequences of 2,000 bases, not real
+data) and two short documents for the plagiarism demo.
+
+```python
+from src.string_search_engine import (
+    StringSearchEngine, SuffixArray, SuffixTree, compare_documents,
+    load_fasta, GenomeIndex, Autocomplete,
+)
+
+engine = StringSearchEngine("abracadabra")
+engine.find("abra", method="kmp").positions     # [0, 7]; also "rk", "sa", "tree"
+engine.find_all("abra")                         # all four methods, checked to agree
+
+sa = SuffixArray("banana")
+sa.sa, sa.lcp                                   # ([5, 3, 1, 0, 4, 2], [0, 1, 3, 0, 0, 2])
+SuffixTree("mississippi").longest_repeated_substring()   # 'issi'
+
+d1 = "the cat sat on the mat and the dog sat on the log"
+d2 = "the dog sat on the mat and the cat sat on the log"
+round(compare_documents(d1, d2, k=3).score, 4)  # 0.8182
+
+genome = GenomeIndex(load_fasta(">seq1 sample\nACGTACGTGACG\n>seq2\nTTGACGA\nGACG\n"))
+genome.find_gene("GACG")                        # {'seq1': [8], 'seq2': [2, 7]}
+
+words = Autocomplete.from_frequencies({"car": 5, "card": 3, "care": 7,
+                                       "careful": 2, "cat": 4, "dog": 6})
+words.complete("car", 3)                        # [('care', 7.0), ('car', 5.0), ('card', 3.0)]
+```
+
+### Running the demonstration, tests and benchmark
+
+```bash
+python examples/week11_demo.py
+```
+
+Runs every anchor and prints the KMP fallback trace, a Rabin-Karp
+spurious-hit example, the engine's agreement check and recommendation on
+1 MB of synthetic DNA, the plagiarism score with highlighted regions, a
+search of the synthetic genome, and autocomplete before and after recorded
+queries.
+
+```bash
+pytest tests/week11 -q
+```
+
+```bash
+pytest --doctest-modules src/string_search_engine
+```
+
+```bash
+python benchmarks/week11_benchmark_search.py
+```
+
+Query latency and index build time on synthetic DNA and English-like text
+from 10 KB to 5 MB, the break-even point between scanning and indexing,
+Rabin-Karp collisions by modulus and base, the worst case for each scan,
+peak memory while preprocessing, and LCP statistics. Every query is checked
+against KMP. The suffix tree is built only while one build stays under 20
+seconds, and every cap is written to `size_caps.csv`. The run writes
+`search_benchmark.csv`, `size_caps.csv`, `runtime_comparison.png`,
+`collision_analysis.png`, `sa_lcp_stats.png`,
+`heatmap_dataset_sizes.png`, `memory_use.png`,
+`suffix_array_mississippi.png`, `suffix_tree_banana.png` and
+`suffix_tree_banana.dot` to
+[`benchmarks/results/week11/`](benchmarks/results/week11/). The master
+seed defaults to 42 and `--seed` changes it. For a smoke run of a few
+seconds, written somewhere else so it does not overwrite the committed
+results:
+
+```bash
+python benchmarks/week11_benchmark_search.py --smoke --out /tmp/week11_smoke --seed 42
+```
+
+Every benchmark figure quoted in the Week 11 report is recomputed from the
+CSVs by `python tools/week11_facts.py`. As in earlier weeks, the code,
+tests and report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -1244,7 +1383,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 10 algorithms included; I specified the
+written documents, the Week 4 to Week 11 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a
