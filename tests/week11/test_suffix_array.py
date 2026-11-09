@@ -25,6 +25,7 @@ from src.string_search_engine.core.suffix_array import (
     build_lcp,
     build_suffix_array,
 )
+from src.string_search_engine.core.suffix_tree import SuffixTree
 from src.utils.random_utils import derive_seed, make_rng
 
 MASTER_SEED = 1109
@@ -161,6 +162,10 @@ def test_random_distinct_and_lrs_match_brute_force():
         assert index.stats()["lrs_length"] == len(lrs)
         if lrs:
             assert len(brute_find(s, lrs)) >= 2, s
+        # Spec 9.5: the suffix tree must agree with brute force on the same strings.
+        tree = SuffixTree(s)
+        assert tree.count_distinct_substrings() == brute_distinct(s), s
+        assert len(tree.longest_repeated_substring()) == brute_lrs_length(s), s
 
 
 def test_random_find_matches_scan():
