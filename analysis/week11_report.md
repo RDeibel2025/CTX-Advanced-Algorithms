@@ -30,7 +30,7 @@ A suffix array stores the sorted order of every suffix of the text and answers a
 
 **Seeds.** The master seed is 42, and every random text and pattern set comes from `derive_seed(42, experiment, ..., n, rep)`.
 
-**Caps.** The suffix tree is built only while one build stays under 20 s. It built 5 MB of English-like text in 18.569 s, but the 5 MB DNA build passed 20 s, so that point is missing. The optional 100 MB dataset was not run. At the measured rates the two 100 MB suffix array builds alone would take about 299 s and 368 s, well over the 5-minute budget, and the suffix tree would need about 37.1 GB.
+**Caps.** The suffix tree is built only while one build stays under 20 s. It built 5 MB of English-like text in 18.569 s, but the 5 MB DNA build passed 20 s, so that point is missing. The optional 100 MB dataset was not run. At the measured rates the two 100 MB suffix array builds alone would take about 299 s and 368 s, together well over the benchmark's 5-minute budget, and the suffix tree would need about 37.1 GB.
 
 ## 5. Benchmark Results
 
@@ -42,7 +42,7 @@ A suffix array stores the sorted order of every suffix of the text and answers a
 
 ![heatmap](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/week11/heatmap_dataset_sizes.png)
 
-**Memory.** KMP's and Rabin-Karp's preprocessing stayed under 1 KiB at every size. The suffix array used 144.0 bytes per character and the suffix tree 371.3, which is 2.58 times as much. In exchange the tree answered 2.29 times faster than the array at 1 MB of DNA.
+**Memory.** KMP's and Rabin-Karp's preprocessing stayed under 1 KiB at every size. The suffix array peaked at 144.0 bytes per character and the suffix tree 371.3, which is 2.58 times as much. In exchange the tree answered 2.29 times faster than the array at 1 MB of DNA.
 
 ![memory](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/week11/memory_use.png)
 
