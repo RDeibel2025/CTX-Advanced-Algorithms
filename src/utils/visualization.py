@@ -5410,3 +5410,329 @@ def plot_memory_use(records: Sequence[Dict[str, Any]], save_path: Optional[str] 
     fig.tight_layout()
     _save(fig, save_path)
     return fig
+
+
+# --- Week 11: string algorithms ---
+#
+# The Week 11 benchmark hands these five functions plain dicts it measured.
+# Every method has its own marker and line style as well as its own colour,
+# capped heatmap cells are hatched and labelled, and every heatmap cell and
+# collision bar carries its number, so nothing is read from colour alone.
+__all__ += [
+    "plot_runtime_comparison",
+    "plot_collision_analysis",
+    "plot_sa_lcp_stats",
+    "plot_heatmap_dataset_sizes",
+    "plot_index_memory",
+]
+
+_W11_STYLE: Dict[str, Dict[str, Any]] = {
+    "kmp": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "KMP"},
+    "rk": {"marker": "s", "linestyle": "--", "color": "#d68910", "label": "Rabin-Karp"},
+    "sa": {"marker": "D", "linestyle": "-.", "color": "#1e8449", "label": "suffix array"},
+    "st": {"marker": "^", "linestyle": ":", "color": "#c0392b", "label": "suffix tree"},
+}
+_W11_DATASET_STYLE: Dict[str, Dict[str, Any]] = {
+    "dna": {"linestyle": "-", "label": "DNA (synthetic)"},
+    "english": {"linestyle": "--", "label": "English-like (synthetic)"},
+    "periodic": {"linestyle": ":", "label": "periodic, period 7"},
+}
+
+
+def plot_runtime_comparison(points: Sequence[Dict[str, Any]], breakeven: Dict[str, Dict[str, float]],
+                            max_queries: int = 200, save_path: Optional[str] = None) -> Figure:
+    """Draw ``runtime_comparison.png``: query latency against n, and break-even curves.
+
+    The left panel is mean query latency against text length on log-log
+    axes, one line per method, solid for DNA and dotted for English-like
+    text. The right panel is cumulative time for q = 1 to ``max_queries``
+    queries on one text: KMP pays its whole cost per query, while the
+    indexes pay a build once and a smaller cost per query. Each crossover
+    with KMP is marked and labelled.
+
+    Args:
+        points: Dicts with ``method``, ``dataset``, ``n`` and
+            ``mean_query_s``.
+        breakeven: Method -> ``{"preprocess_s", "mean_query_s"}`` measured on
+            the break-even text.
+        max_queries: The largest query count drawn.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_runtime_comparison([], {})
+        >>> len(fig.axes)
+        2
+        >>> plt.close(fig)
+    """
+    fig, (a, b) = plt.subplots(1, 2, figsize=(16, 6.5))
+    for method, style in _W11_STYLE.items():
+        for dataset, hollow in (("dna", False), ("english", True)):
+            mine = sorted((p for p in points if p["method"] == method and p["dataset"] == dataset),
+                          key=lambda p: p["n"])
+            if not mine:
+                continue
+            a.plot([p["n"] for p in mine], [p["mean_query_s"] for p in mine], marker=style["marker"],
+                   linestyle=style["linestyle"] if not hollow else ":", color=style["color"],
+                   markerfacecolor="white" if hollow else style["color"], markersize=7, linewidth=1.6,
+                   label=f"{style['label']}, {_W11_DATASET_STYLE[dataset]['label']}")
+    a.set_xscale("log")
+    a.set_yscale("log")
+    a.set_xlabel("Text length n (characters, log scale)")
+    a.set_ylabel("Mean query time (s, log scale)")
+    a.set_title("(a) Query latency, pattern length 16")
+    if points:
+        a.legend(loc="best", fontsize=7.5)
+
+    qs = np.arange(1, max_queries + 1)
+    kmp = breakeven.get("kmp")
+    for method, measured in breakeven.items():
+        style = _W11_STYLE[method]
+        total = measured.get("preprocess_s", 0.0) + qs * measured["mean_query_s"]
+        b.plot(qs, total, color=style["color"], linestyle=style["linestyle"], marker=style["marker"],
+               markevery=20, linewidth=1.8, label=f"{style['label']} (build + q queries)")
+        if kmp and method != "kmp":
+            gain = kmp["mean_query_s"] - measured["mean_query_s"]
+            if gain > 0:
+                cross = math.ceil(measured.get("preprocess_s", 0.0) / gain)
+                if cross <= max_queries:
+                    y = measured.get("preprocess_s", 0.0) + cross * measured["mean_query_s"]
+                    b.scatter([cross], [y], s=80, color=style["color"], edgecolor="black", zorder=4)
+                    b.annotate(f"{style['label']} pays off after {cross} queries", (cross, y),
+                               textcoords="offset points", xytext=(8, -14), fontsize=8.5)
+                else:
+                    b.text(0.02, 0.95 - 0.06 * list(breakeven).index(method),
+                           f"{style['label']}: break-even at {cross} queries (beyond the plot)",
+                           transform=b.transAxes, fontsize=8.5)
+    b.set_xlabel("Number of queries q")
+    b.set_ylabel("Cumulative time (s)")
+    b.set_title("(b) Break-even on 1 MB of DNA (measured means)")
+    if breakeven:
+        b.legend(loc="lower right", fontsize=8)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_collision_analysis(moduli: Sequence[Dict[str, Any]], bases: Sequence[Dict[str, Any]],
+                            save_path: Optional[str] = None) -> Figure:
+    """Draw ``collision_analysis.png``: Rabin-Karp spurious hits by modulus and base.
+
+    The left panel compares measured spurious hits per pattern with the
+    expected ``(n - m + 1) / q`` on log-log axes; a measured value of zero,
+    which a log axis cannot show, is drawn as a downward triangle at the
+    bottom of the panel and labelled "0". The right panel is a bar per base
+    at a fixed modulus, each labelled with its value.
+
+    Args:
+        moduli: Dicts with ``modulus``, ``spurious`` and ``expected``.
+        bases: Dicts with ``label``, ``spurious`` and ``expected``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_collision_analysis([], [])
+        >>> len(fig.axes)
+        2
+        >>> plt.close(fig)
+    """
+    fig, (a, b) = plt.subplots(1, 2, figsize=(16, 6.5))
+    if moduli:
+        qs = [r["modulus"] for r in moduli]
+        a.plot(qs, [r["expected"] for r in moduli], color="#212121", linestyle="--", marker="",
+               linewidth=1.4, label="expected (n - m + 1) / q")
+        positive = [r for r in moduli if r["spurious"] > 0]
+        a.plot([r["modulus"] for r in positive], [r["spurious"] for r in positive], color="#d68910",
+               marker="s", linestyle="-", markersize=8, label="measured, mean per pattern")
+        floor = min([r["expected"] for r in moduli if r["expected"] > 0] + [r["spurious"] for r in positive]) / 10
+        zeros = [r for r in moduli if r["spurious"] == 0]
+        if zeros:
+            a.scatter([r["modulus"] for r in zeros], [floor] * len(zeros), marker="v", s=80,
+                      color="#d68910", edgecolor="black", zorder=4, label="measured 0 (drawn at the floor)")
+            for r in zeros:
+                a.annotate("0", (r["modulus"], floor), textcoords="offset points", xytext=(0, 8),
+                           ha="center", fontsize=9)
+        a.set_xscale("log")
+        a.set_yscale("log")
+        a.legend(loc="best", fontsize=9)
+    a.set_xlabel("Modulus q (log scale)")
+    a.set_ylabel("Spurious hits per pattern (log scale)")
+    a.set_title("(a) Spurious hits against the modulus (base 256)")
+
+    if bases:
+        positions = np.arange(len(bases))
+        values = [r["spurious"] for r in bases]
+        bars = b.bar(positions, values, color="#fad7a0", edgecolor="#7e5109", hatch="//")
+        for bar, value in zip(bars, values):
+            b.annotate(f"{value:,.1f}", (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                       textcoords="offset points", xytext=(0, 4), ha="center", fontsize=9)
+        b.axhline(bases[0]["expected"], color="#212121", linestyle="--", linewidth=1.2,
+                  label=f"expected (n - m + 1) / q = {bases[0]['expected']:.1f}")
+        b.set_xticks(positions)
+        b.set_xticklabels([r["label"] for r in bases], fontsize=9)
+        b.set_yscale("symlog", linthresh=1)
+        b.legend(loc="upper left", fontsize=9)
+    b.set_xlabel("Base (modulus fixed)")
+    b.set_ylabel("Spurious hits per pattern (symmetric log scale)")
+    b.set_title("(b) Spurious hits by base")
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_sa_lcp_stats(histograms: Dict[str, Sequence[int]], means: Sequence[Dict[str, Any]],
+                      save_path: Optional[str] = None) -> Figure:
+    """Draw ``sa_lcp_stats.png``: the LCP distribution and mean LCP against n.
+
+    Args:
+        histograms: Dataset -> the LCP array of one text (step lines of the
+            count of each LCP value; LCP values above 60 are pooled at 60).
+        means: Dicts with ``dataset``, ``n`` and ``mean_lcp``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_sa_lcp_stats({}, [])
+        >>> len(fig.axes)
+        2
+        >>> plt.close(fig)
+    """
+    fig, (a, b) = plt.subplots(1, 2, figsize=(16, 6.5))
+    markers = {"dna": "o", "english": "s", "periodic": "D"}
+    colours = {"dna": "#2471a3", "english": "#d68910", "periodic": "#7d3c98"}
+    for dataset, lcp in histograms.items():
+        clipped = np.minimum(np.asarray(lcp, dtype=np.int64), 60)
+        counts = np.bincount(clipped, minlength=61)
+        style = _W11_DATASET_STYLE[dataset]
+        a.step(np.arange(61), np.where(counts > 0, counts, np.nan), where="mid", color=colours[dataset],
+               linestyle=style["linestyle"], linewidth=1.6, label=style["label"])
+    a.set_yscale("log")
+    a.set_xlabel("LCP value (characters; 60 pools everything above)")
+    a.set_ylabel("Adjacent suffix pairs (log scale)")
+    a.set_title("(a) LCP distribution at 100 KB")
+    if histograms:
+        a.legend(loc="best", fontsize=9)
+    for dataset in ("dna", "english", "periodic"):
+        mine = sorted((r for r in means if r["dataset"] == dataset), key=lambda r: r["n"])
+        if mine:
+            style = _W11_DATASET_STYLE[dataset]
+            b.plot([r["n"] for r in mine], [r["mean_lcp"] for r in mine], marker=markers[dataset],
+                   linestyle=style["linestyle"], color=colours[dataset], markersize=7, linewidth=1.6,
+                   label=style["label"])
+    b.set_xscale("log")
+    b.set_yscale("log")
+    b.set_xlabel("Text length n (characters, log scale)")
+    b.set_ylabel("Mean LCP (characters, log scale)")
+    b.set_title("(b) Mean LCP against n")
+    if means:
+        b.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_heatmap_dataset_sizes(cells: Dict[Tuple[str, str, int], float], capped: Sequence[Tuple[str, str, int]],
+                               save_path: Optional[str] = None) -> Figure:
+    """Draw ``heatmap_dataset_sizes.png``: mean query latency per method and (dataset, size).
+
+    Rows are methods and columns are (dataset, n). The colour scale is
+    logarithmic, every cell is annotated with its latency in milliseconds,
+    and a capped cell is hatched and labelled "cap".
+
+    Args:
+        cells: (method, dataset, n) -> mean query time in milliseconds.
+        capped: (method, dataset, n) points that were not run because of a cap.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_heatmap_dataset_sizes({}, [])
+        >>> len(fig.axes) >= 1
+        True
+        >>> plt.close(fig)
+    """
+    from matplotlib.colors import LogNorm
+    from matplotlib.patches import Rectangle
+
+    methods = [m for m in _W11_STYLE if any(k[0] == m for k in list(cells) + list(capped))]
+    columns = sorted({(k[1], k[2]) for k in list(cells) + list(capped)}, key=lambda c: (c[0], c[1]))
+    fig, ax = plt.subplots(figsize=(max(8, 1.5 * len(columns) + 3), 1.2 * len(methods) + 2.5))
+    if methods and columns:
+        grid = np.full((len(methods), len(columns)), np.nan)
+        for i, method in enumerate(methods):
+            for j, (dataset, n) in enumerate(columns):
+                if (method, dataset, n) in cells:
+                    grid[i, j] = cells[(method, dataset, n)]
+        values = grid[np.isfinite(grid)]
+        norm = LogNorm(vmin=max(values.min(), 1e-6), vmax=values.max()) if values.size else None
+        image = ax.imshow(np.ma.masked_invalid(grid), cmap="viridis", norm=norm, aspect="auto")
+        fig.colorbar(image, ax=ax, label="Mean query time (ms, log scale)")
+        for i, method in enumerate(methods):
+            for j, (dataset, n) in enumerate(columns):
+                if (method, dataset, n) in cells:
+                    value = cells[(method, dataset, n)]
+                    shade = norm(value) if norm else 0.5
+                    ax.text(j, i, f"{value:.3g}", ha="center", va="center", fontsize=9,
+                            color="white" if shade < 0.55 else "black")
+                elif (method, dataset, n) in capped:
+                    ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor="#f2f3f4", hatch="xx",
+                                           edgecolor="#7f8c8d", linewidth=0))
+                    ax.text(j, i, "cap", ha="center", va="center", fontsize=10, fontweight="bold")
+        ax.set_xticks(range(len(columns)))
+        ax.set_xticklabels([f"{d}\n{n / 1e6:g} MB" if n >= 1e6 else f"{d}\n{n / 1e3:g} KB"
+                            for d, n in columns], fontsize=9)
+        ax.set_yticks(range(len(methods)))
+        ax.set_yticklabels([_W11_STYLE[m]["label"] for m in methods])
+    ax.set_xlabel("Dataset and text size")
+    ax.set_ylabel("Method")
+    ax.set_title("Mean query latency (ms) by method, dataset and size; hatched = not run (cap)")
+    ax.grid(False)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_index_memory(rows: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``memory_use.png``: peak memory while building each method's index.
+
+    Args:
+        rows: Dicts with ``method``, ``n`` and ``peak_mem_kb``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_index_memory([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for method, style in _W11_STYLE.items():
+        mine = sorted((r for r in rows if r["method"] == method), key=lambda r: r["n"])
+        if mine:
+            ax.plot([r["n"] for r in mine], [r["peak_mem_kb"] for r in mine], marker=style["marker"],
+                    linestyle=style["linestyle"], color=style["color"], markersize=7, linewidth=1.6,
+                    label={"kmp": "KMP (LPS array of the pattern)",
+                           "rk": "Rabin-Karp (pattern hash and power)",
+                           "sa": "suffix array + LCP of the text",
+                           "st": "suffix tree of the text"}[method])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Text length n (characters, log scale)")
+    ax.set_ylabel("Peak memory while preprocessing (KiB, log scale)")
+    ax.set_title("What each method stores before it searches (DNA; tracemalloc peak)")
+    if rows:
+        ax.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
