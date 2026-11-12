@@ -466,21 +466,30 @@ library module. The report is
 are in [`tests/week12/`](tests/week12/) and its outputs in
 [`benchmarks/results/week12/`](benchmarks/results/week12/).
 
-Every module makes the same round trip: move the problem to where it is
-easy, do the easy thing, move back, and measure what the round trip cost.
+The transform, filter, compression and factorization modules make the
+same round trip: move the problem to where it is easy, do the easy thing,
+move back, and measure what the round trip cost.
 Convolution is an FFT, a pointwise multiply and an inverse FFT; filtering
 zeroes FFT bins; compression quantizes 8x8 DCT blocks; solving Ax = b
 factors PA = LU and does two triangular solves; QR factors A into Q and R.
 No library FFT or linear-algebra routine is used as an implementation:
 `np.fft`, `scipy.fft`, `scipy.signal`, `scipy.ndimage` and the numpy and
 scipy solvers appear only in the tests as cross-checks and in the
-benchmark as rows labelled "library reference".
+benchmark as rows labelled "library reference". Plain numpy array
+arithmetic is used throughout, including `@` for the 8x8 DCT products.
 
 Conventions: the forward FFT uses `exp(-2 pi i kn/N)` and the inverse
 divides by N, as `np.fft` does. The radix-2 FFTs need a power-of-two
 length; `fft(x, n=...)` zero-pads. The DCT is the orthonormal DCT-II as an
 8x8 matrix C, applied as `C @ B @ C.T`. Quantization tables are scaled the
-IJG (libjpeg) way.
+IJG (libjpeg) way, and `round(D / Q)` snaps D / Q to 9 decimals first so an
+exact tie rounds the same way (half to even) on every platform. Two places
+go slightly beyond radix-2: the spectral-analysis functions (`psd`,
+`welch_psd`, `spectrogram`, `peak_frequencies`) handle lengths that are not
+a power of two, such as the 1,000-sample test signal and the 32,000-sample
+WAV, with one Cooley-Tukey decimation step by the largest power-of-two
+factor over direct DFTs of the odd part; and `fft2` falls back to the direct
+DFT along an axis whose length is not a power of two.
 
 ### What is in the package
 
@@ -506,7 +515,7 @@ from src.fft_analyzer.signal.analysis import peak_frequencies
 from src.fft_analyzer.image.compression import quant_table
 
 fft([1, 2, 3, 4])                          # [10, -2+2j, -2, -2-2j]
-linear_convolve([1, 2, 3], [0, 1, 0.5])    # [0, 1, 2.5, 4, 1.5]
+linear_convolve([1, 2, 3], [0, 1, 0.5])    # [0, 1, 2.5, 4, 1.5], up to rounding
 solve([[2, 1, 1], [4, -6, 0], [-2, 7, 2]], [5, -2, 9])   # [1, 1, 2]
 determinant([[2, 1, 1], [4, -6, 0], [-2, 7, 2]])         # -16.0
 
@@ -556,14 +565,19 @@ FFT runtime from N = 2^6 to 2^20 (the O(N^2) DFT to 2^12), FFT round-trip
 error against eps·log2 N, classical, blocked and Strassen multiplication
 from n = 32 to 1,024 (the classical loop is capped above n = 256),
 conditioning, solve error and QR orthogonality loss on Hilbert matrices
-n = 2 to 12, compression at seven qualities, and filter energy. Every FFT
-and multiply result is checked against numpy. The full run takes under
-half a minute and writes `benchmark.csv`, `fft_runtime.png`,
+n = 2 to 12, compression at seven qualities, and the energy a filter leaves
+at the removed tone (full record and interior). Every FFT and multiply
+result is checked against numpy. The full run takes under half a minute
+and writes `benchmark.csv`, `fft_runtime.png`,
 `fft_roundtrip_error.png`, `matrix_runtime.png`, `stability.png`,
 `compression_tradeoff.png`, `spectrogram.png`, `fft2_heatmap.png`,
 `image_filters.png`, `fft_stages.gif`, `filtering.gif` and
 `audio_filtered.wav` to
-[`benchmarks/results/week12/`](benchmarks/results/week12/). The master
+[`benchmarks/results/week12/`](benchmarks/results/week12/). PNGs are
+saved as 256-colour palette images at the highest resolution that stays
+under 100 KB; `image_filters.png`, six panels of seeded pixel noise, is
+the one figure that cannot and is about 220 KB at 90 dpi. The committed
+results were produced with the versions `requirements.txt` pins. The master
 seed defaults to 42 and `--seed` changes it. For a smoke run of a few
 seconds, written somewhere else so it does not overwrite the committed
 results:

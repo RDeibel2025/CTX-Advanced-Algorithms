@@ -915,9 +915,10 @@ report; I reviewed them and decided what the results support.
 
 ## What was *not* AI-generated
 
-**The measurements.** Every time, error, condition number and chart this
-week came from running `benchmarks/week12_benchmark.py` on my machine with
-master seed 42. The audio, image and time series are synthetic and
+**The measurements.** Every benchmark time, error, condition number and
+chart this week came from running `benchmarks/week12_benchmark.py` on my
+machine with master seed 42; the application results and the demo charts
+come from the three `examples/week12_*_demo.py` scripts. The audio, image and time series are synthetic and
 generated from seeds; none of them is real recorded, photographic or market
 data. The report's benchmark figures are printed from the result CSV by
 `tools/week12_facts.py`.

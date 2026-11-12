@@ -26,6 +26,7 @@ Author:
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 
@@ -98,10 +99,32 @@ def run_demo() -> None:
         print("    demo ran clean")
 
 
-#: Week 12 embeds several figures, most with one or two panels, so a smaller cap
-#: than Week 9's keeps them readable without a page each. This override
-#: applies to the Week 12 PDF only; md_to_pdf itself is unchanged.
-FIGURE_STYLE = "<style>img { max-height: 3.4in; }</style>"
+#: Week 12's line charts are 10 x 6.5 in figures; a 4.6 in height cap lets them
+#: fill the text width (about 0.7 of their size), so legends and ticks stay
+#: legible on paper. This override applies to the Week 12 PDF only;
+#: md_to_pdf itself is unchanged.
+FIGURE_STYLE = "<style>img { max-height: 4.6in; }</style>"
+
+#: Spans that should not break across lines in the PDF: "n = 10", "N = 2^20",
+#: and a number followed by its unit. Only the staged copy is changed; the
+#: report itself keeps ordinary spaces.
+_NBSP = "\u00a0"
+_KEEP_TOGETHER = [
+    (re.compile(r"\b([nN]) = (?=\d)"), "\\1" + _NBSP + "=" + _NBSP),
+    (re.compile(r"(\d) (?=(?:Hz|kHz|dB|ms|s|GB)\b)"), "\\1" + _NBSP),
+]
+
+
+def keep_together(body: str) -> str:
+    """Return ``body`` with non-breaking spaces in the spans above.
+
+    Examples:
+        >>> keep_together("n = 10 and 109.4 Hz") == "n\u00a0=\u00a010 and 109.4\u00a0Hz"
+        True
+    """
+    for pattern, replacement in _KEEP_TOGETHER:
+        body = pattern.sub(replacement, body)
+    return body
 
 
 def add_banner(body: str) -> str:
@@ -124,7 +147,7 @@ def main() -> int:
     os.makedirs(OUT_DIR, exist_ok=True)
     staged = os.path.join(OUT_DIR, ".week12_staged.md")
     with open(staged, "w", encoding="utf-8") as handle:
-        handle.write(add_banner(body))
+        handle.write(add_banner(keep_together(body)))
     try:
         result = subprocess.run(
             [sys.executable, os.path.join(REPO_ROOT, "tools", "md_to_pdf.py"),
