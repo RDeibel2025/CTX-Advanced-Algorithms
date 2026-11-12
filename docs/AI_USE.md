@@ -3,7 +3,7 @@
 **Robert Deibel** · CSC 5300 Advanced Algorithms · Concordia University Texas
 
 Covers every assignment in this repository, in order: Week 1 through
-Week 11.
+Week 12.
 
 Concordia University Texas's policy requires that any use of AI be
 acknowledged, that text copied directly from an AI tool be treated and
@@ -873,3 +873,80 @@ attribution.
   2001, LNCS 2089, 181-192.
 * Gusfield, D. (1997). *Algorithms on Strings, Trees, and Sequences*.
 * numpy, Python, pytest and matplotlib documentation.
+
+---
+
+# Week 12 - Fast Transforms, Stable Computation, Signal Processing, and Image Compression
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally. No other AI tool was used.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 11. I wrote a
+specification from the Blackboard Week 12 instructions and readings,
+including the anchor values the tests assert against, and directed the tool
+to implement against it. The specification fixed the decisions that decide
+correctness: the required `FFTAnalyzer/fft_analyzer/` tree placed in
+`src/fft_analyzer/` so it sits with every other week's project; every
+transform, decomposition, filter and the DCT written by hand, with numpy's
+and scipy's FFT and linear-algebra routines allowed only as test
+cross-checks and labelled library references in the benchmark; the FFT sign
+and scaling conventions, the orthonormal DCT and the JPEG quantization
+scaling the anchors depend on; synthetic, seeded audio, images and time
+series rather than downloaded data; and the report's organization around
+moving each problem to where it is easy and measuring what the round trip
+costs. The model drafted the code, the tests and the first draft of the
+report; I reviewed them and decided what the results support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/fft_analyzer/` (core, signal, image, applications, visualization and the example files) | AI-drafted, reviewed by me |
+| The Week 12 figures appended to `src/utils/visualization.py` | AI-drafted, reviewed by me |
+| `tests/week12/` (seven test files) | AI-drafted, reviewed by me |
+| `benchmarks/week12_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week12_signal_demo.py`, `week12_audio_demo.py`, `week12_image_demo.py`, `tools/week12_facts.py`, `tools/build_week12_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week12_report.md`, the README's Week 12 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every time, error, condition number and chart this
+week came from running `benchmarks/week12_benchmark.py` on my machine with
+master seed 42. The audio, image and time series are synthetic and
+generated from seeds; none of them is real recorded, photographic or market
+data. The report's benchmark figures are printed from the result CSV by
+`tools/week12_facts.py`.
+
+**The anchor values.** The expected answers the tests assert were computed
+with numpy and scipy as an independent reference before any code was
+written: the small FFT and convolution results, the LU factors and
+determinant of the worked example, the pivoting failure on the 1e-20
+matrix, the Hilbert condition numbers and orthogonality losses, the
+cancellation cases, the window values, the two-tone filter results, the DCT
+and quantization tables, and the period of the synthetic series.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 12 assignment instructions and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 28 (Matrix Operations) and Ch. 30 (Polynomials and the FFT).
+* Amakobe, M. (2025). *Advanced Algorithms: Concepts, Complexity, and
+  Applied Projects*, Ch. 12.
+* Cooley, J. W., and Tukey, J. W. (1965). *Mathematics of Computation*,
+  19(90), 297-301.
+* Strassen, V. (1969). *Numerische Mathematik*, 13(4), 354-356.
+* Golub, G. H., and Van Loan, C. F. (2013). *Matrix Computations* (4th ed.).
+* Wallace, G. K. (1992). *IEEE Transactions on Consumer Electronics*, 38(1),
+  xviii-xxxiv.
+* numpy, scipy, Python, pytest, pillow and matplotlib documentation.

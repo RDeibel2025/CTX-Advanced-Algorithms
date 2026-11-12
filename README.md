@@ -18,6 +18,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 9 | Approximation Algorithms | [`analysis/week9_report.md`](analysis/week9_report.md) |
 | 10 | Network Flows | [`analysis/week10_report.md`](analysis/week10_report.md) |
 | 11 | String Algorithms | [`analysis/week11_report.md`](analysis/week11_report.md) |
+| 12 | Fast Transforms | [`analysis/week12_report.md`](analysis/week12_report.md) |
 
 ---
 
@@ -26,7 +27,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains twelve things:
+It contains thirteen things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -79,13 +80,18 @@ It contains twelve things:
 10. **A string search engine** (Week 11) - KMP, Rabin-Karp, a suffix array
     with LCP and a suffix tree behind one search API, applied to plagiarism
     detection, DNA search over a synthetic genome and autocomplete.
-11. **A benchmarking framework** that generates eight different shapes of
+11. **An FFT analyzer** (Week 12) - hand-written recursive and iterative
+    FFTs, convolution, matrix multiplication (classical, blocked, Strassen),
+    LU and QR factorizations with stability measurements, signal filters and
+    spectral analysis, FFT image filters and DCT compression, applied to
+    synthetic audio, images and a time series.
+12. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-12. **A performance study each week** built from a real run of that
+13. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -152,6 +158,13 @@ Advanced Algorithms/
 │   │   ├── visualization/            plot_suffix_array, draw_suffix_tree
 │   │   ├── utils/                    text_loader, rolling_hash, generators
 │   │   └── examples/                 Synthetic genome and two short documents
+│   ├── fft_analyzer/               The instructions' FFTAnalyzer/fft_analyzer/ project
+│   │   ├── core/                     fft, matrix, numerical
+│   │   ├── signal/                   generators, filters, analysis (import as src.fft_analyzer.signal)
+│   │   ├── image/                    filters, compression
+│   │   ├── applications/             audio_processor, image_processor, data_analyzer
+│   │   ├── visualization/            plots, animations
+│   │   └── examples/                 Synthetic WAV and test scene
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -212,6 +225,7 @@ Advanced Algorithms/
 │   ├── week9/                      Week 9's five test files (names shared with Weeks 6 and 8)
 │   ├── week10/                     Week 10's seven test files
 │   ├── week11/                     Week 11's seven test files
+│   ├── week12/                     Week 12's seven test files
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -226,6 +240,7 @@ Advanced Algorithms/
 │   ├── week9_approx_benchmark.py   The Week 9 benchmark
 │   ├── week10_flow_benchmark.py    The Week 10 benchmark
 │   ├── week11_benchmark_search.py  The Week 11 benchmark
+│   ├── week12_benchmark.py         The Week 12 benchmark
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -239,7 +254,8 @@ Advanced Algorithms/
 │   ├── week8_report.md             Week 8 technical report
 │   ├── week9_report.md             Week 9 technical report
 │   ├── week10_report.md            Week 10 technical report
-│   └── week11_report.md            Week 11 technical report
+│   ├── week11_report.md            Week 11 technical report
+│   └── week12_report.md            Week 12 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -267,6 +283,8 @@ Advanced Algorithms/
 │   ├── build_week10_pdf.py         Builds the Week 10 submission PDF
 │   ├── week11_facts.py             Prints every figure the Week 11 report quotes
 │   ├── build_week11_pdf.py         Builds the Week 11 submission PDF
+│   ├── week12_facts.py             Prints every figure the Week 12 report quotes
+│   ├── build_week12_pdf.py         Builds the Week 12 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -281,7 +299,10 @@ Advanced Algorithms/
     ├── week8_demo.py               Runnable Week 8 demonstration
     ├── week9_demo.py               Runnable Week 9 demonstration
     ├── week10_demo.py              Runnable Week 10 demonstration
-    └── week11_demo.py              Runnable Week 11 demonstration
+    ├── week11_demo.py              Runnable Week 11 demonstration
+    ├── week12_signal_demo.py       Week 12 signal demonstration
+    ├── week12_audio_demo.py        Week 12 audio demonstration
+    └── week12_image_demo.py        Week 12 image demonstration
 ```
 
 ---
@@ -415,11 +436,146 @@ banana, mississippi and abracadabra, 300 random searches on which all four
 methods agree with a naive scan, the plagiarism, FASTA and autocomplete
 anchors, and a smoke run of the benchmark.
 
+Week 12's seven test files live in `tests/week12/`. They check both FFTs
+against numpy on random vectors up to 2^20 points, the convolution and LU
+anchors, the pivoting failure on a matrix with a 1e-20 pivot, Hilbert
+condition numbers and orthogonality losses, the cancellation cases, the
+filters on a two-tone signal, the FFT image filters against scipy, the DCT
+and quantization tables, the three applications, and a smoke run of the
+benchmark. numpy and scipy appear in these tests only as the independent
+reference.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 12: fast transforms, numerical stability, and signal and image processing
+
+No new dependencies. `src/fft_analyzer/` is the instructions'
+`FFTAnalyzer/fft_analyzer/` project; the repository holds every week's
+project, so it sits under `src/` like Weeks 1-11. Its sub-package keeps
+the instructions' name `signal` although the standard library has a module
+of that name, so it is always imported absolutely as
+`src.fft_analyzer.signal`, and `import signal` still gives the standard
+library module. The report is
+[`analysis/week12_report.md`](analysis/week12_report.md). Week 12's tests
+are in [`tests/week12/`](tests/week12/) and its outputs in
+[`benchmarks/results/week12/`](benchmarks/results/week12/).
+
+Every module makes the same round trip: move the problem to where it is
+easy, do the easy thing, move back, and measure what the round trip cost.
+Convolution is an FFT, a pointwise multiply and an inverse FFT; filtering
+zeroes FFT bins; compression quantizes 8x8 DCT blocks; solving Ax = b
+factors PA = LU and does two triangular solves; QR factors A into Q and R.
+No library FFT or linear-algebra routine is used as an implementation:
+`np.fft`, `scipy.fft`, `scipy.signal`, `scipy.ndimage` and the numpy and
+scipy solvers appear only in the tests as cross-checks and in the
+benchmark as rows labelled "library reference".
+
+Conventions: the forward FFT uses `exp(-2 pi i kn/N)` and the inverse
+divides by N, as `np.fft` does. The radix-2 FFTs need a power-of-two
+length; `fft(x, n=...)` zero-pads. The DCT is the orthonormal DCT-II as an
+8x8 matrix C, applied as `C @ B @ C.T`. Quantization tables are scaled the
+IJG (libjpeg) way.
+
+### What is in the package
+
+| Module | Contents |
+|---|---|
+| [`core/fft.py`](src/fft_analyzer/core/fft.py) | `dft` (O(N^2)), `fft_recursive`, `fft_iterative`, `fft`, `ifft`, `circular_convolve`, `linear_convolve`, `fft2`, `ifft2`, `rfft_freqs` |
+| [`core/matrix.py`](src/fft_analyzer/core/matrix.py) | `matmul_classical`, `matmul_blocked`, `strassen`, `lu_decompose`, `lu_solve`, `solve`, `determinant`, `qr_gram_schmidt` (classical and modified), `qr_householder`, `power_method` |
+| [`core/numerical.py`](src/fft_analyzer/core/numerical.py) | `abs_error`, `rel_error`, `norm`, `cond_estimate`, `cond2_power`, `hilbert`, `is_ill_conditioned`, `machine_epsilon`, `kahan_sum`, `cancellation_examples` |
+| [`signal/`](src/fft_analyzer/signal/) | generators (`sine`, `multi_tone`, `chirp`, `white_noise`, `pink_noise`), windows and `fft_filter`, and `psd`, `welch_psd`, `spectrogram`, `peak_frequencies`, `autocorrelation` |
+| [`image/`](src/fft_analyzer/image/) | `fft_convolve2d`, `gaussian_blur`, `sobel`, `laplacian`, `fft_denoise`, `to_grayscale`; `dct_matrix`, `dct2_block`, `idct2_block`, `quant_table`, `compress`, `psnr` |
+| [`applications/`](src/fft_analyzer/applications/) | audio (`load_wav`, `save_wav`, `make_example_wav`, `process`), image (`run_pipeline`), time series (`make_series`, `detrend`, `dominant_period`, `autocorr_peaks`) |
+| [`visualization/`](src/fft_analyzer/visualization/) | spectrum, spectrogram, 2-D FFT heatmap, image grid, compression trade-off and condition-number plots; the FFT-stages and filtering GIFs |
+
+The [`examples/`](src/fft_analyzer/examples/) folder holds two
+**synthetic** files: `tone_noise.wav` (440 Hz and 3,000 Hz tones plus
+seeded white noise, 16 kHz, 2 s) and `test_scene.png` (a 256 x 256
+gradient with a disc, a checkerboard and noise). Neither is real data.
+
+```python
+from src.fft_analyzer import fft, linear_convolve, solve, determinant
+from src.fft_analyzer.signal.generators import sine
+from src.fft_analyzer.signal.analysis import peak_frequencies
+from src.fft_analyzer.image.compression import quant_table
+
+fft([1, 2, 3, 4])                          # [10, -2+2j, -2, -2-2j]
+linear_convolve([1, 2, 3], [0, 1, 0.5])    # [0, 1, 2.5, 4, 1.5]
+solve([[2, 1, 1], [4, -6, 0], [-2, 7, 2]], [5, -2, 9])   # [1, 1, 2]
+determinant([[2, 1, 1], [4, -6, 0], [-2, 7, 2]])         # -16.0
+
+x = sine(50, 1000, 1.0) + 0.5 * sine(120, 1000, 1.0)
+peak_frequencies(x, 1000, k=2)             # [50.0, 120.0]
+quant_table(50)[0]                         # [16, 11, 10, 16, 24, 40, 51, 61]
+```
+
+### Running the demonstrations, tests and benchmark
+
+```bash
+python examples/week12_signal_demo.py
+```
+
+Prints the FFT, filter, window, pink-noise, chirp and application anchors
+and saves a spectrum and a spectrogram.
+
+```bash
+python examples/week12_audio_demo.py
+```
+
+Low-passes `tone_noise.wav` at 1,000 Hz, saves
+`benchmarks/results/week12/audio_filtered.wav`, and prints the peaks
+before (440 Hz and 3,000 Hz) and after (440 Hz only).
+
+```bash
+python examples/week12_image_demo.py
+```
+
+Runs the image pipeline (blur, Sobel, denoise, compression at quality 10,
+50 and 90) on `test_scene.png` and prints the PSNR table. Each demo runs
+in a few seconds.
+
+```bash
+pytest tests/week12 -q
+```
+
+```bash
+pytest --doctest-modules src/fft_analyzer
+```
+
+```bash
+python benchmarks/week12_benchmark.py
+```
+
+FFT runtime from N = 2^6 to 2^20 (the O(N^2) DFT to 2^12), FFT round-trip
+error against eps·log2 N, classical, blocked and Strassen multiplication
+from n = 32 to 1,024 (the classical loop is capped above n = 256),
+conditioning, solve error and QR orthogonality loss on Hilbert matrices
+n = 2 to 12, compression at seven qualities, and filter energy. Every FFT
+and multiply result is checked against numpy. The full run takes under
+half a minute and writes `benchmark.csv`, `fft_runtime.png`,
+`fft_roundtrip_error.png`, `matrix_runtime.png`, `stability.png`,
+`compression_tradeoff.png`, `spectrogram.png`, `fft2_heatmap.png`,
+`image_filters.png`, `fft_stages.gif`, `filtering.gif` and
+`audio_filtered.wav` to
+[`benchmarks/results/week12/`](benchmarks/results/week12/). The master
+seed defaults to 42 and `--seed` changes it. For a smoke run of a few
+seconds, written somewhere else so it does not overwrite the committed
+results:
+
+```bash
+python benchmarks/week12_benchmark.py --smoke --out /tmp/week12_smoke --seed 42
+```
+
+Every benchmark figure quoted in the Week 12 report is recomputed from the
+CSV by `python tools/week12_facts.py`. As in earlier weeks, the code,
+tests and report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -1383,7 +1539,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 11 algorithms included; I specified the
+written documents, the Week 4 to Week 12 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a
