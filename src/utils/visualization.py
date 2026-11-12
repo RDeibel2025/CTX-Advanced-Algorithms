@@ -5774,8 +5774,10 @@ _W12_STYLE: Dict[str, Dict[str, Any]] = {
     "numpy_cond_2": {"marker": "+", "linestyle": ":", "color": "#212121", "label": "numpy, 2-norm (reference)"},
 }
 
-#: Font sizes (points, before the PDF scales the figure down).
+#: Font sizes (points, before the PDF scales the figure down). The three-panel
+#: stability figure prints at about 0.6 of its size, so it gets larger ones.
 _W12_FONT = {"title": 14, "label": 13, "tick": 12, "legend": 11.5}
+_W12_FONT_WIDE = {"title": 16, "label": 14.5, "tick": 13.5, "legend": 12.5}
 
 
 def save_png_under_limit(fig: Figure, save_path: Optional[str], limit_bytes: int = 100_000,
@@ -5828,12 +5830,13 @@ def save_png_under_limit(fig: Figure, save_path: Optional[str], limit_bytes: int
     return used
 
 
-def _w12_fonts(ax: Axes) -> None:
-    """Apply the Week 12 tick and axis-label sizes to one axes."""
-    ax.tick_params(labelsize=_W12_FONT["tick"])
-    ax.xaxis.label.set_size(_W12_FONT["label"])
-    ax.yaxis.label.set_size(_W12_FONT["label"])
-    ax.title.set_size(_W12_FONT["title"])
+def _w12_fonts(ax: Axes, sizes: Optional[Dict[str, float]] = None) -> None:
+    """Apply the Week 12 tick, axis-label and title sizes to one axes."""
+    sizes = sizes or _W12_FONT
+    ax.tick_params(labelsize=sizes["tick"])
+    ax.xaxis.label.set_size(sizes["label"])
+    ax.yaxis.label.set_size(sizes["label"])
+    ax.title.set_size(sizes["title"])
 
 
 def _w12_line(ax: Axes, rows: Sequence[Dict[str, Any]], method: str, field: str,
@@ -5929,12 +5932,14 @@ def plot_fft_roundtrip_error(rows: Sequence[Dict[str, Any]], save_path: Optional
     if ns:
         eps = float(np.finfo(float).eps)
         ax.plot(ns, [eps * math.log2(n) for n in ns], color="#212121", linestyle="--", linewidth=1.4,
-                label="eps * log2 N (reference)")
+                label="eps\u00b7log2 N (reference)")
         ax.legend(loc="lower right", fontsize=_W12_FONT["legend"])
         ticks = [m * 10.0 ** e for e in range(-18, -12) for m in (1, 2, 5)]
         ax.yaxis.set_major_locator(FixedLocator(ticks))
         ax.yaxis.set_minor_locator(NullLocator())
         ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0e}"))
+        low, high = ax.get_ylim()
+        ax.set_ylim(min(low, 2e-16), high)  # so the lowest points sit above a labelled tick
     ax.set_xlabel("Transform length N (log base 2)")
     ax.set_ylabel("max|ifft(fft(x)) - x| / max|x| (log scale)")
     ax.set_title("What the FFT round trip costs in accuracy")
@@ -5975,21 +5980,14 @@ def plot_matrix_runtime(rows: Sequence[Dict[str, Any]], caps: Sequence[Dict[str,
             [r["n"] for r in mine], [r["mean_time_s"] for r in mine], tail=3)
         label = _W12_STYLE[method]["label"] + (f" (slope {slope:.2f})" if slope is not None else "")
         _w12_line(ax, rows, method, "mean_time_s", label)
-    capped: Dict[str, List[int]] = {}
-    for cap in caps:
-        capped.setdefault(cap["method"], []).append(int(cap["n"]))
-    for method, sizes in capped.items():
-        # x in data coordinates, y as a fraction of the axes: the mark is not a time.
-        ax.scatter(sizes, [0.96] * len(sizes), marker="x", s=110, linewidths=2.2,
-                   color=_W12_STYLE[method]["color"], transform=ax.get_xaxis_transform(), clip_on=False,
-                   zorder=4, label=f"{_W12_STYLE[method]['label']}: not run at n = "
-                                   f"{', '.join(str(s) for s in sorted(sizes))} (configured cap)")
     ax.set_xscale("log", base=2)
     ax.set_yscale("log")
-    if rows:
-        # Two decades of headroom keep the cap marks and the legend clear of the data.
-        low, high = ax.get_ylim()
-        ax.set_ylim(low, high * 100.0)
+    for cap in caps:
+        # Text just above the x axis (x in data units, y as a fraction of the
+        # axes), not a marker at some time: a capped size has no time.
+        short = _W12_STYLE[cap["method"]]["label"].split(" ")[0]
+        ax.text(cap["n"], 0.03, f"{short}:\nnot run\n(cap)", transform=ax.get_xaxis_transform(),
+                ha="center", va="bottom", fontsize=_W12_FONT["legend"], color=_W12_STYLE[cap["method"]]["color"])
     ax.set_xlabel("Matrix size n (n x n, log base 2)")
     ax.set_ylabel("Mean time per multiply (s, log scale)")
     ax.set_title("Matrix multiplication: slopes over the three largest sizes")
@@ -6025,7 +6023,7 @@ def plot_stability(cond_rows: Sequence[Dict[str, Any]], solve_rows: Sequence[Dic
         3
         >>> plt.close(fig)
     """
-    fig, (a, b, c) = plt.subplots(1, 3, figsize=(15, 5.6))
+    fig, (a, b, c) = plt.subplots(1, 3, figsize=(12.5, 5.0))
     for method in ("cond_estimate_1", "numpy_cond_1", "cond2_power", "numpy_cond_2"):
         _w12_line(a, cond_rows, method, "cond")
     a.set_yscale("log")
@@ -6038,25 +6036,23 @@ def plot_stability(cond_rows: Sequence[Dict[str, Any]], solve_rows: Sequence[Dic
     if pivot:
         eps = float(np.finfo(float).eps)
         b.plot([r["n"] for r in pivot], [r["cond"] * eps for r in pivot], color="#212121", linestyle="--",
-               linewidth=1.4, label="cond(H) * eps (reference)")
+               linewidth=1.4, label="cond(H)\u00b7eps (reference)")
     b.set_yscale("log")
     b.set_xlabel("Hilbert matrix size n")
-    b.set_ylabel("Relative error of solve, max norm (log scale)")
-    b.set_title("(b) Solve error and cond(H) * eps")
+    b.set_ylabel("max|x - 1| for H x = H\u00b71 (log scale)")
+    b.set_title("(b) Solve error and cond(H)\u00b7eps")
     for method in ("cgs", "mgs", "householder"):
         _w12_line(c, orth_rows, method, "orth_loss")
     c.set_yscale("log")
     c.set_xlabel("Hilbert matrix size n")
-    c.set_ylabel("||Q^T Q - I||_F (log scale)")
+    c.set_ylabel(r"$\|Q^{T}Q - I\|_F$ (log scale)")
     c.set_title("(c) Orthogonality loss of Q")
-    # Panel (c)'s curves fill its top left, so its legend sits low on the right,
-    # in the empty band between Householder and the Gram-Schmidt curves.
-    places = {a: {"loc": "upper left"}, b: {"loc": "upper left"},
-              c: {"loc": "lower right", "bbox_to_anchor": (1.0, 0.1)}}
+    # Each legend sits under its panel, where it cannot cover a point.
     for ax, rows in ((a, cond_rows), (b, solve_rows), (c, orth_rows)):
-        _w12_fonts(ax)
+        ax.set_xticks(range(2, 13, 2))
+        _w12_fonts(ax, _W12_FONT_WIDE)
         if rows:
-            ax.legend(fontsize=_W12_FONT["legend"], **places[ax])
+            ax.legend(fontsize=_W12_FONT_WIDE["legend"], loc="upper center", bbox_to_anchor=(0.5, -0.17))
     fig.tight_layout()
     save_png_under_limit(fig, save_path)
     return fig

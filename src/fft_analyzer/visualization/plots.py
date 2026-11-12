@@ -514,15 +514,15 @@ def plot_image_grid(
         vmin, vmax = (0.0, 255.0) if in_range else (low, high if high > low else low + 1.0)
         shown = ax.imshow(gray, cmap="gray", vmin=vmin, vmax=vmax, interpolation="nearest")
         ax.grid(False)
-        ax.set_title(str(titles[index]), fontsize=13)
-        ax.tick_params(labelsize=10)
+        ax.set_title(str(titles[index]), fontsize=15)
+        ax.tick_params(labelsize=12.5)
         if c == 0:
-            ax.set_ylabel("row (pixels)", fontsize=11)
+            ax.set_ylabel("row (pixels)", fontsize=13.5)
         if index + cols >= count:
-            ax.set_xlabel("column (pixels)", fontsize=11)
+            ax.set_xlabel("column (pixels)", fontsize=13.5)
         bar = fig.colorbar(shown, ax=ax, shrink=0.85, pad=0.02)
-        bar.ax.tick_params(labelsize=10)
-        bar.set_label("gray level (0-255)" if in_range else "value (own range)", fontsize=11)
+        bar.ax.tick_params(labelsize=12.5)
+        bar.set_label("gray level (0-255)" if in_range else "value (own range)", fontsize=13)
     _save_figure(fig, save_path)
     return fig
 
@@ -687,6 +687,6 @@ def plot_compression_tradeoff(
         ax.set_ylim(low - 0.1 * rise, high + 0.08 * rise)
     ax.set_xlabel("Non-zero quantized coefficients (fraction of all)")
     ax.set_ylabel("PSNR (dB)")
-    ax.set_title("Compression trade-off: quality vs. coefficients kept")
+    ax.set_title("Compression trade-off: PSNR vs. coefficients kept (labels: JPEG quality)")
     _save_figure(fig, save_path)
     return fig
