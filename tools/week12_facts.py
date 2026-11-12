@@ -76,8 +76,10 @@ def main() -> int:
     for method, g in r.groupby("method"):
         g = g.sort_values("n")
         ratio = g.max_rel_error / (EPS * np.log2(g.n))
+        lo, hi = int(np.log2(g.n.iloc[int(np.argmin(ratio))])), int(np.log2(g.n.iloc[int(np.argmax(ratio))]))
         print(f"  {method:<16} error {g.max_rel_error.min():.2e} to {g.max_rel_error.max():.2e}; at 2^20 "
-              f"{g.max_rel_error.iloc[-1]:.2e}; error / (eps log2 N) {ratio.min():.2f} to {ratio.max():.2f}")
+              f"{g.max_rel_error.iloc[-1]:.2e}; error / (eps log2 N) {ratio.min():.3f} (N=2^{lo}) to "
+              f"{ratio.max():.3f} (N=2^{hi})")
     print(f"  eps = {EPS:.3e}; eps * log2(2^20) = {EPS * 20:.3e}")
 
     # ------------------------------------------------------------------
@@ -103,7 +105,8 @@ def main() -> int:
         if len(g) >= 3:
             tail = g.tail(3)
             print(f"  {method}: largest n {int(g.n.max())} at {g.mean_time_s.iloc[-1]:.4f} s; slope over three largest "
-                  f"{slope(tail.n, tail.mean_time_s):.3f}; max rel error {g.max_rel_error.max():.1e}"
+                  f"(n {int(tail.n.min())}..{int(tail.n.max())}) {slope(tail.n, tail.mean_time_s):.3f}; "
+                  f"slope over all sizes {slope(g.n, g.mean_time_s):.3f}; max rel error {g.max_rel_error.max():.1e}"
                   if g.max_rel_error.notna().any() else
                   f"  {method}: largest n {int(g.n.max())} at {g.mean_time_s.iloc[-1]:.5f} s; slope {slope(tail.n, tail.mean_time_s):.3f}")
     pm = ok.pivot_table(index="n", columns="method", values="mean_time_s")
@@ -116,6 +119,9 @@ def main() -> int:
         if pd.notna(row.get("blocked")):
             bits.append(f"blocked/numpy {row['blocked'] / row['numpy_reference']:,.0f}x")
         print(f"  n={n}: " + "; ".join(bits))
+    pe = ok.pivot_table(index="n", columns="method", values="max_rel_error")
+    print("  strassen error / blocked error: " + ", ".join(
+        f"n={n} {r['strassen'] / r['blocked']:.2f}" for n, r in pe.iterrows()))
     caps = m[m.capped == True]  # noqa: E712
     print("  capped: " + (", ".join(f"{r.method} n={int(r.n)}" for r in caps.itertuples()) or "none"))
 
@@ -131,7 +137,11 @@ def main() -> int:
     cond2 = c["numpy_cond_2"]
     for n, row in s.iterrows():
         print(f"  n={n:<3} solve error pivot {row['lu_pivot']:.2e} no pivot {row['lu_no_pivot']:.2e} "
-              f"cond*eps {cond2.loc[n] * EPS:.2e} error/(cond*eps) {row['lu_pivot'] / (cond2.loc[n] * EPS):.2f}")
+              f"cond*eps {cond2.loc[n] * EPS:.2e} error/(cond*eps) {row['lu_pivot'] / (cond2.loc[n] * EPS):.3g}")
+    smaller = [int(n) for n, r in s.iterrows() if r["lu_no_pivot"] < r["lu_pivot"]]
+    equal = [int(n) for n, r in s.iterrows() if r["lu_no_pivot"] == r["lu_pivot"]]
+    larger = [int(n) for n, r in s.iterrows() if r["lu_no_pivot"] > r["lu_pivot"]]
+    print(f"  no pivot vs pivot: smaller at {smaller}, equal at {equal}, larger at {larger}")
     # Not in the CSV: the unit-test example of a tiny pivot, computed here by the package itself.
     sys.path.insert(0, REPO_ROOT)
     from src.fft_analyzer.core.matrix import solve
@@ -141,7 +151,7 @@ def main() -> int:
     o = t[t.experiment == "stability_orth"].pivot_table(index="n", columns="method", values="orth_loss")
     for n, row in o.iterrows():
         print(f"  n={n:<3} orth loss CGS {row['cgs']:.2e} MGS {row['mgs']:.2e} Householder {row['householder']:.2e}"
-              f" | MGS/(cond*eps) {row['mgs'] / (cond2.loc[n] * EPS):.2f}")
+              f" | MGS/(cond*eps) {row['mgs'] / (cond2.loc[n] * EPS):.3g}")
 
     # ------------------------------------------------------------------
     header("5. Compression (synthetic 256 x 256 scene)")
@@ -157,12 +167,18 @@ def main() -> int:
     # ------------------------------------------------------------------
     header("6. Filters (two-tone signal, cutoff 80 Hz)")
     for r in t[t.experiment == "filters"].itertuples():
-        print(f"  {r.method:<14} energy left {r.energy_left:.3e}")
+        print(f"  {r.method:<24} n {int(r.n)}  energy left |Y(f)|^2/|X(f)|^2 {r.energy_left:.3e}")
 
     # ------------------------------------------------------------------
     header("7. Methodology facts")
     print(f"  rows {len(t)}; experiments {sorted(t.experiment.unique())}; capped rows {int((t.capped == True).sum())}")  # noqa: E712
-    print(f"  distinct seeds {t.seed.dropna().nunique()}")
+    seeds = t.seed.astype(object).replace("", np.nan).dropna()
+    print(f"  distinct seeds in the CSV {seeds.nunique()} (rows with a seed: {len(seeds)})")
+    print(f"  seeds by experiment: " + ", ".join(f"{e} {g.seed.astype(object).replace('', np.nan).dropna().nunique()}"
+                                                for e, g in t.groupby("experiment")))
+    import platform
+    print(f"  python {platform.python_version()}, numpy {np.__version__}, pandas {pd.__version__}, "
+          f"{platform.system()} {platform.mac_ver()[0]} {platform.machine()}")
     return 0
 
 

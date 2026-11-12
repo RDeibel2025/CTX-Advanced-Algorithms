@@ -346,22 +346,27 @@ def compression_study(cfg: Config, rows: List[dict], scene: np.ndarray) -> List[
 
 def filter_study(rows: List[dict]) -> None:
     print("\n=== EXPERIMENT 6 - Filters ===", flush=True)
-    fs, duration = 1000, 1.0
-    low_tone, high_tone = sine(50, fs, duration), 0.5 * sine(120, fs, duration)
-    x = low_tone + high_tone
+    fs, duration, guard = 1000, 1.0, 50
+    x = sine(50, fs, duration) + 0.5 * sine(120, fs, duration)
 
-    def energy_at(signal_values: np.ndarray, reference_tone: np.ndarray) -> float:
-        """Energy of ``signal_values`` projected on one tone, over that tone's energy."""
-        unit = reference_tone / np.linalg.norm(reference_tone)
-        return float(np.dot(signal_values, unit) ** 2 / np.dot(reference_tone, reference_tone))
+    def tone_energy(values: np.ndarray, freq: int) -> float:
+        """``|Y(freq)|^2`` at one bin, by the DFT definition; ``freq`` is an exact bin."""
+        n = values.shape[0]
+        k = freq * n // fs
+        return float(abs(np.dot(values, np.exp(-2j * np.pi * k * np.arange(n) / n))) ** 2)
 
-    for method, kind, tone in (("lowpass_80hz", "low", high_tone), ("highpass_80hz", "high", low_tone)):
+    # Energy left is |Y(f)|^2 / |X(f)|^2 at the removed tone's bin, over the full
+    # 1,000-sample record and over its interior (50 samples dropped at each end).
+    for method, kind, removed in (("lowpass_80hz", "low", 120), ("highpass_80hz", "high", 50)):
         started = time.perf_counter()
         y = fft_filter(x, fs, kind, 80)
         elapsed = time.perf_counter() - started
-        left = energy_at(y, tone)
-        rows.append(row("filters", method, len(x), runs=1, mean_time_s=elapsed, energy_left=left))
-        print(f"    {method:<14} energy left in the removed tone: {left:.3e}", flush=True)
+        full = tone_energy(y, removed) / tone_energy(x, removed)
+        inner = tone_energy(y[guard:-guard], removed) / tone_energy(x[guard:-guard], removed)
+        rows.append(row("filters", method, len(x), runs=1, mean_time_s=elapsed, energy_left=full))
+        rows.append(row("filters", method + "_interior", len(x) - 2 * guard, energy_left=inner))
+        print(f"    {method:<14} energy left at {removed} Hz: full record {full:.3e}, interior {inner:.3e}",
+              flush=True)
 
 
 # ----------------------------------------------------------------------
