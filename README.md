@@ -484,14 +484,16 @@ length; `fft(x, n=...)` zero-pads. The DCT is the orthonormal DCT-II as an
 8x8 matrix C, applied as `C @ B @ C.T`. Quantization tables are scaled the
 IJG (libjpeg) way, and `round(D / Q)` snaps D / Q to 9 decimals first so an
 exact tie rounds the same way (half to even) on every platform. Four places
-handle lengths that are not a power of two. `circular_convolve` and
+transform at the exact length when it is not a power of two. `circular_convolve` and
 `dominant_period` (the 364-sample series) use the direct DFT, so the bins
 stay at the exact length. The spectral-analysis functions (`psd`,
 `welch_psd`, `spectrogram`, `peak_frequencies`), used on the 1,000-sample
 test signal and the 32,000-sample WAV, take one Cooley-Tukey decimation
 step by the largest power-of-two factor over direct DFTs of the odd part.
 `fft2` falls back to the direct DFT along an axis whose length is not a
-power of two.
+power of two. `process` in the audio application also evaluates single DFT
+bins directly, while `fft_filter`, `linear_convolve` and `autocorrelation`
+zero-pad to the next power of two.
 
 ### What is in the package
 
@@ -577,8 +579,8 @@ and writes `benchmark.csv`, `fft_runtime.png`,
 `audio_filtered.wav` to
 [`benchmarks/results/week12/`](benchmarks/results/week12/). PNGs are
 saved as 256-colour palette images at the highest resolution that stays
-under 100 KB; `image_filters.png`, six panels of seeded pixel noise, is
-the one figure that cannot and is about 220 KB at 90 dpi. The committed
+under 100 KB; `image_filters.png`, six image panels whose seeded pixel noise
+does not compress, is the one figure that cannot and is about 220 KB at 90 dpi. The committed
 results were produced with the versions `requirements.txt` pins. The master
 seed defaults to 42 and `--seed` changes it. For a smoke run of a few
 seconds, written somewhere else so it does not overwrite the committed

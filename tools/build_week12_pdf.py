@@ -53,8 +53,8 @@ URL_BANNER = (
     '<div class="url-banner"><strong>Project repository (complete source, '
     "tests, benchmarks and results):</strong><br>"
     f"{REPO_URL}<br>"
-    "<span style='font-size:8.5pt'>Fast transforms: src/fft_analyzer/ &nbsp;·&nbsp; "
-    "demonstrations: examples/week12_signal_demo.py, week12_audio_demo.py, week12_image_demo.py<br>"
+    "<span style='font-size:8.5pt'>Fast transforms: src/fft_analyzer/<br>"
+    "Demonstrations: examples/week12_{signal,audio,image}_demo.py<br>"
     "Benchmark: benchmarks/week12_benchmark.py</span></div>"
 )
 
@@ -112,8 +112,10 @@ FIGURE_STYLE = "<style>img { max-height: 4.2in; } p, li { orphans: 3; widows: 3;
 _NBSP = "\u00a0"
 _KEEP_TOGETHER = [
     (re.compile(r"\b([nN]) = (?=\d)"), "\\1" + _NBSP + "=" + _NBSP),
-    (re.compile(r"(\d) (?=(?:Hz|kHz|dB|ms|s|GB|samples|times)\b)"), "\\1" + _NBSP),
-    (re.compile(r"\b(\d+-day)\b"), '<span style="white-space:nowrap">\\1</span>'),
+    (re.compile(r"(\d) (?=(?:Hz|kHz|dB|ms|s|GB|samples|times|timed)\b)"), "\\1" + _NBSP),
+    (re.compile(r"([A-Z][a-z]+(?: et al\.)?), (?=\d{4}[);,])"), "\\1," + _NBSP),
+    (re.compile(r"(\[\[1e-20, 1\], \[1, 1\]\])"), '<span style="white-space:nowrap">\\1</span>'),
+    (re.compile(r"\b(\d+-(?:day|point))\b"), '<span style="white-space:nowrap">\\1</span>'),
 ]
 
 
