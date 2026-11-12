@@ -512,7 +512,9 @@ def plot_image_grid(
         low, high = float(gray.min()), float(gray.max())
         in_range = low >= 0.0 and high <= 255.0
         vmin, vmax = (0.0, 255.0) if in_range else (low, high if high > low else low + 1.0)
-        shown = ax.imshow(gray, cmap="gray", vmin=vmin, vmax=vmax, interpolation="nearest")
+        # "antialiased" averages when a panel is drawn smaller than its pixel
+        # grid, so thin features (a one-pixel edge) do not vanish between rows.
+        shown = ax.imshow(gray, cmap="gray", vmin=vmin, vmax=vmax, interpolation="antialiased")
         ax.grid(False)
         ax.set_title(str(titles[index]), fontsize=15)
         ax.tick_params(labelsize=12.5)
@@ -520,7 +522,7 @@ def plot_image_grid(
             ax.set_ylabel("row (pixels)", fontsize=13.5)
         if index + cols >= count:
             ax.set_xlabel("column (pixels)", fontsize=13.5)
-        bar = fig.colorbar(shown, ax=ax, shrink=0.85, pad=0.02)
+        bar = fig.colorbar(shown, ax=ax, shrink=0.85, pad=0.04)
         bar.ax.tick_params(labelsize=12.5)
         bar.set_label("gray level (0-255)" if in_range else "value (own range)", fontsize=13)
     _save_figure(fig, save_path)

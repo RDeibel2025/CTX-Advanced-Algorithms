@@ -391,8 +391,8 @@ def figures(out: str, rows: List[dict], caps: List[dict], stability: Tuple[List[
     q10, _, _ = compress(scene, 10)
     q50, _, _ = compress(scene, 50)
     images = [scene, gaussian_blur(scene, 2.0), sobel(scene), fft_denoise(scene, 40), q10, q50]
-    titles = ["original (synthetic)", "Gaussian blur, sigma 2", "Sobel gradient magnitude",
-              "FFT denoise, radius 40", "JPEG-style, quality 10", "JPEG-style, quality 50"]
+    titles = ["original (synthetic)", "blur, sigma 2 px", "Sobel magnitude",
+              "denoise, radius 40 bins", "JPEG-style, quality 10", "JPEG-style, quality 50"]
     builds.append(("image_filters.png", lambda p: plot_image_grid(images, titles, save_path=p)))
     for name, build in builds:
         path = os.path.join(out, name)

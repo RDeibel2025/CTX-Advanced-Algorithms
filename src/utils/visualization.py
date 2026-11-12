@@ -5776,8 +5776,8 @@ _W12_STYLE: Dict[str, Dict[str, Any]] = {
 
 #: Font sizes (points, before the PDF scales the figure down). The three-panel
 #: stability figure prints at about 0.6 of its size, so it gets larger ones.
-_W12_FONT = {"title": 14, "label": 13, "tick": 12, "legend": 11.5}
-_W12_FONT_WIDE = {"title": 16, "label": 14.5, "tick": 13.5, "legend": 12.5}
+_W12_FONT = {"title": 14, "label": 13, "tick": 14, "legend": 11.5}
+_W12_FONT_WIDE = {"title": 16, "label": 14.5, "tick": 15, "legend": 12.5}
 
 
 def save_png_under_limit(fig: Figure, save_path: Optional[str], limit_bytes: int = 100_000,
@@ -5986,8 +5986,9 @@ def plot_matrix_runtime(rows: Sequence[Dict[str, Any]], caps: Sequence[Dict[str,
         # Text just above the x axis (x in data units, y as a fraction of the
         # axes), not a marker at some time: a capped size has no time.
         short = _W12_STYLE[cap["method"]]["label"].split(" ")[0]
-        ax.text(cap["n"], 0.03, f"{short}:\nnot run\n(cap)", transform=ax.get_xaxis_transform(),
-                ha="center", va="bottom", fontsize=_W12_FONT["legend"], color=_W12_STYLE[cap["method"]]["color"])
+        ax.text(cap["n"], 0.03, f"{short}:\nnot run\n(configured\nlimit)", transform=ax.get_xaxis_transform(),
+                ha="center", va="bottom", fontsize=_W12_FONT["legend"], color=_W12_STYLE[cap["method"]]["color"],
+                bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.5})
     ax.set_xlabel("Matrix size n (n x n, log base 2)")
     ax.set_ylabel("Mean time per multiply (s, log scale)")
     ax.set_title("Matrix multiplication: slopes over the three largest sizes")
