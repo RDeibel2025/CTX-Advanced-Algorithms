@@ -5736,3 +5736,236 @@ def plot_index_memory(rows: Sequence[Dict[str, Any]], save_path: Optional[str] =
     fig.tight_layout()
     _save(fig, save_path)
     return fig
+
+
+# --- Week 12: fast transforms ---
+#
+# The Week 12 benchmark hands these four functions plain dicts it measured,
+# one per (method, n). Every method has its own marker and line style as
+# well as its own colour, library reference curves are grey and dashed and
+# say "library reference" in the legend, and capped sizes are marked with an
+# x and a legend entry, so nothing is identified by colour alone.
+__all__ += [
+    "plot_fft_runtime",
+    "plot_fft_roundtrip_error",
+    "plot_matrix_runtime",
+    "plot_stability",
+]
+
+_W12_STYLE: Dict[str, Dict[str, Any]] = {
+    "dft": {"marker": "^", "linestyle": ":", "color": "#7d3c98", "label": "direct DFT, O(N^2)"},
+    "fft_recursive": {"marker": "s", "linestyle": "--", "color": "#d68910", "label": "recursive FFT"},
+    "fft_iterative": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "iterative FFT"},
+    "numpy_reference": {"marker": "x", "linestyle": "--", "color": "#7f8c8d", "label": "numpy (library reference)"},
+    "classical": {"marker": "^", "linestyle": ":", "color": "#7d3c98", "label": "classical triple loop"},
+    "blocked": {"marker": "s", "linestyle": "--", "color": "#d68910", "label": "blocked (tiles of 64)"},
+    "strassen": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "Strassen (cutoff 64)"},
+    "cgs": {"marker": "^", "linestyle": ":", "color": "#c0392b", "label": "classical Gram-Schmidt"},
+    "mgs": {"marker": "s", "linestyle": "--", "color": "#d68910", "label": "modified Gram-Schmidt"},
+    "householder": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "Householder"},
+    "lu_pivot": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "LU with partial pivoting"},
+    "lu_no_pivot": {"marker": "^", "linestyle": ":", "color": "#c0392b", "label": "LU without pivoting"},
+    "cond_estimate_1": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "ours: ||A||_1 ||A^-1||_1"},
+    "numpy_cond_1": {"marker": "x", "linestyle": "--", "color": "#7f8c8d", "label": "numpy cond(A, 1) (library reference)"},
+    "cond2_power": {"marker": "s", "linestyle": "-.", "color": "#d68910", "label": "ours: 2-norm by power iteration"},
+    "numpy_cond_2": {"marker": "+", "linestyle": ":", "color": "#212121", "label": "numpy cond(A) (library reference)"},
+}
+
+
+def _w12_line(ax: Axes, rows: Sequence[Dict[str, Any]], method: str, field: str,
+              label: Optional[str] = None, hollow: bool = False) -> Tuple[List[float], List[float]]:
+    """Plot ``field`` against ``n`` for one method; return the plotted (n, value) lists."""
+    mine = sorted((r for r in rows if r["method"] == method and r.get(field) is not None
+                   and r[field] > 0), key=lambda r: r["n"])
+    if not mine:
+        return [], []
+    style = _W12_STYLE[method]
+    ns, values = [r["n"] for r in mine], [r[field] for r in mine]
+    ax.plot(ns, values, marker=style["marker"], linestyle=style["linestyle"], color=style["color"],
+            markerfacecolor="white" if hollow else style["color"], markersize=6, linewidth=1.6,
+            label=label or style["label"])
+    return ns, values
+
+
+def _w12_slope(ns: Sequence[float], values: Sequence[float], tail: int = 5) -> Optional[float]:
+    """Log-log slope over the last ``tail`` points, or ``None`` with fewer than three."""
+    if len(ns) < 3:
+        return None
+    ns, values = list(ns)[-tail:], list(values)[-tail:]
+    return float(np.polyfit(np.log2(ns), np.log2(values), 1)[0])
+
+
+def plot_fft_runtime(rows: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``fft_runtime.png``: time against N for the DFT and both FFTs.
+
+    Log-log axes; each legend entry carries the log-log slope fitted over
+    that method's five largest sizes (2 for the O(N^2) DFT, about 1 for an
+    O(N log N) FFT once overheads fade).
+
+    Args:
+        rows: Dicts with ``method``, ``n`` and ``mean_time_s``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_fft_runtime([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for method in ("dft", "fft_recursive", "fft_iterative", "numpy_reference"):
+        mine = sorted((r for r in rows if r["method"] == method), key=lambda r: r["n"])
+        slope = _w12_slope([r["n"] for r in mine], [r["mean_time_s"] for r in mine])
+        label = _W12_STYLE[method]["label"] + (f" (slope {slope:.2f})" if slope is not None else "")
+        _w12_line(ax, rows, method, "mean_time_s", label)
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
+    ax.set_xlabel("Transform length N (log base 2)")
+    ax.set_ylabel("Mean time per transform (s, log scale)")
+    ax.set_title("FFT runtime: slopes fitted over each method's five largest sizes")
+    if rows:
+        ax.legend(loc="best", fontsize=9)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_fft_roundtrip_error(rows: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``fft_roundtrip_error.png``: ``max|ifft(fft(x)) - x| / max|x|`` against N.
+
+    The dashed reference is ``eps * log2 N``, the growth the error analysis
+    of the FFT predicts.
+
+    Args:
+        rows: Dicts with ``method``, ``n`` and ``max_rel_error``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_fft_roundtrip_error([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for method in ("fft_recursive", "fft_iterative", "numpy_reference"):
+        _w12_line(ax, rows, method, "max_rel_error")
+    ns = sorted({r["n"] for r in rows})
+    if ns:
+        eps = float(np.finfo(float).eps)
+        ax.plot(ns, [eps * math.log2(n) for n in ns], color="#212121", linestyle="--", linewidth=1.2,
+                label="eps * log2 N (reference)")
+        ax.legend(loc="best", fontsize=9)
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
+    ax.set_xlabel("Transform length N (log base 2)")
+    ax.set_ylabel("Round-trip error max|ifft(fft(x)) - x| / max|x|")
+    ax.set_title("What the FFT round trip costs in accuracy")
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_matrix_runtime(rows: Sequence[Dict[str, Any]], caps: Sequence[Dict[str, Any]] = (),
+                        save_path: Optional[str] = None) -> Figure:
+    """Draw ``matrix_runtime.png``: multiply time against n, with caps marked.
+
+    Args:
+        rows: Dicts with ``method``, ``n`` and ``mean_time_s``.
+        caps: Dicts with ``method`` and ``n`` for sizes not run because of a cap.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_matrix_runtime([])
+        >>> len(fig.axes)
+        1
+        >>> plt.close(fig)
+    """
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    for method in ("classical", "blocked", "strassen", "numpy_reference"):
+        mine = sorted((r for r in rows if r["method"] == method), key=lambda r: r["n"])
+        # numpy's multiply takes milliseconds or less here and its times jump around
+        # from run to run, so its slope would not mean anything; it gets none.
+        slope = None if method == "numpy_reference" else _w12_slope(
+            [r["n"] for r in mine], [r["mean_time_s"] for r in mine], tail=3)
+        label = _W12_STYLE[method]["label"] + (f" (slope {slope:.2f})" if slope is not None else "")
+        _w12_line(ax, rows, method, "mean_time_s", label)
+    # Caps sit in a row above every measured time so they never cover a point.
+    top = 3.0 * max([r["mean_time_s"] for r in rows] or [1.0])
+    for cap in caps:
+        ax.scatter([cap["n"]], [top], marker="x", s=90, color=_W12_STYLE[cap["method"]]["color"],
+                   zorder=4, label=f"{_W12_STYLE[cap['method']]['label']}: not run at n = {cap['n']} (cap)")
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
+    ax.set_xlabel("Matrix size n (n x n, log base 2)")
+    ax.set_ylabel("Mean time per multiply (s, log scale)")
+    ax.set_title("Matrix multiplication: slopes over each method's three largest sizes")
+    if rows:
+        ax.legend(loc="best", fontsize=8.5)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
+
+
+def plot_stability(cond_rows: Sequence[Dict[str, Any]], solve_rows: Sequence[Dict[str, Any]],
+                   orth_rows: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
+    """Draw ``stability.png``: conditioning, solve error and orthogonality loss on Hilbert matrices.
+
+    Panel (a) compares our condition numbers with numpy's (library
+    reference); (b) is the relative error of ``solve(H, H @ ones)`` with and
+    without pivoting, against ``cond * eps``; (c) is ``||Q^T Q - I||_F`` for
+    the three QR methods.
+
+    Args:
+        cond_rows: Dicts with ``method``, ``n`` and ``cond``.
+        solve_rows: Dicts with ``method``, ``n``, ``max_rel_error`` and ``cond``.
+        orth_rows: Dicts with ``method``, ``n`` and ``orth_loss``.
+        save_path: PNG path, or ``None`` to skip saving.
+
+    Returns:
+        The matplotlib figure.
+
+    Examples:
+        >>> fig = plot_stability([], [], [])
+        >>> len(fig.axes)
+        3
+        >>> plt.close(fig)
+    """
+    fig, (a, b, c) = plt.subplots(1, 3, figsize=(18, 6))
+    for method in ("cond_estimate_1", "numpy_cond_1", "cond2_power", "numpy_cond_2"):
+        _w12_line(a, cond_rows, method, "cond")
+    a.set_yscale("log")
+    a.set_xlabel("Hilbert matrix size n")
+    a.set_ylabel("Condition number (log scale)")
+    a.set_title("(a) Conditioning of H(n)")
+    for method in ("lu_pivot", "lu_no_pivot"):
+        _w12_line(b, solve_rows, method, "max_rel_error")
+    pivot = sorted((r for r in solve_rows if r["method"] == "lu_pivot" and r.get("cond")), key=lambda r: r["n"])
+    if pivot:
+        eps = float(np.finfo(float).eps)
+        b.plot([r["n"] for r in pivot], [r["cond"] * eps for r in pivot], color="#212121", linestyle="--",
+               linewidth=1.2, label="cond(H) * eps (reference)")
+    b.set_yscale("log")
+    b.set_xlabel("Hilbert matrix size n")
+    b.set_ylabel("Relative error of solve(H, H @ ones), max norm")
+    b.set_title("(b) Solve error grows with the condition number")
+    for method in ("cgs", "mgs", "householder"):
+        _w12_line(c, orth_rows, method, "orth_loss")
+    c.set_yscale("log")
+    c.set_xlabel("Hilbert matrix size n")
+    c.set_ylabel("Orthogonality loss ||Q^T Q - I||_F (log scale)")
+    c.set_title("(c) How Q was built decides how orthogonal it is")
+    for ax, rows in ((a, cond_rows), (b, solve_rows), (c, orth_rows)):
+        if rows:
+            ax.legend(loc="best", fontsize=8)
+    fig.tight_layout()
+    _save(fig, save_path)
+    return fig
