@@ -24,7 +24,9 @@ Conventions
   explicit Agg canvas, not a pyplot figure, so nothing opens a window and
   nothing is left in pyplot's figure registry. With an ``ax`` the plot is
   drawn on that axes and its figure is returned.
-* ``save_path`` writes a PNG at 200 dpi (parent folders are created).
+* ``save_path`` writes a 256-colour palette PNG of at most 100 KB, at 200 dpi
+  or the highest lower resolution that fits (parent folders are created), through
+  :func:`src.utils.visualization.save_png_under_limit`.
 * No series is identified by colour alone: every line has its own marker or
   line style as well as a legend entry, and heatmaps carry a labelled
   colour bar.
@@ -57,7 +59,7 @@ from matplotlib.figure import Figure
 
 from src.fft_analyzer.core.fft import fft2
 from src.fft_analyzer.image.filters import to_grayscale
-from src.utils.visualization import apply_house_style
+from src.utils.visualization import apply_house_style, save_png_under_limit
 
 __all__ = [
     "plot_spectrum",
@@ -115,9 +117,8 @@ def _save_figure(fig: Figure, save_path: Optional[str]) -> None:
     """
     if not save_path:
         return
-    folder = os.path.dirname(os.path.abspath(save_path))
-    os.makedirs(folder, exist_ok=True)
-    fig.savefig(save_path, dpi=SAVE_DPI, bbox_inches="tight")
+    dpis = tuple(d for d in (SAVE_DPI, 170, 145, 125, 110, 100, 90) if d <= SAVE_DPI)
+    save_png_under_limit(fig, save_path, dpis=dpis)
 
 
 def _real_vector(values, name: str) -> np.ndarray:
@@ -513,15 +514,15 @@ def plot_image_grid(
         vmin, vmax = (0.0, 255.0) if in_range else (low, high if high > low else low + 1.0)
         shown = ax.imshow(gray, cmap="gray", vmin=vmin, vmax=vmax, interpolation="nearest")
         ax.grid(False)
-        ax.set_title(str(titles[index]), fontsize=10)
-        ax.tick_params(labelsize=7)
+        ax.set_title(str(titles[index]), fontsize=13)
+        ax.tick_params(labelsize=10)
         if c == 0:
-            ax.set_ylabel("row (pixels)", fontsize=8)
+            ax.set_ylabel("row (pixels)", fontsize=11)
         if index + cols >= count:
-            ax.set_xlabel("column (pixels)", fontsize=8)
+            ax.set_xlabel("column (pixels)", fontsize=11)
         bar = fig.colorbar(shown, ax=ax, shrink=0.85, pad=0.02)
-        bar.ax.tick_params(labelsize=7)
-        bar.set_label("gray level (0-255)" if in_range else "value (own range)", fontsize=7)
+        bar.ax.tick_params(labelsize=10)
+        bar.set_label("gray level (0-255)" if in_range else "value (own range)", fontsize=11)
     _save_figure(fig, save_path)
     return fig
 

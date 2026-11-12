@@ -5744,12 +5744,15 @@ def plot_index_memory(rows: Sequence[Dict[str, Any]], save_path: Optional[str] =
 # one per (method, n). Every method has its own marker and line style as
 # well as its own colour, library reference curves are grey and dashed and
 # say "library reference" in the legend, and capped sizes are marked with an
-# x and a legend entry, so nothing is identified by colour alone.
+# x and a legend entry, so nothing is identified by colour alone. Fonts are
+# set larger than earlier weeks' because the report's PDF prints these
+# figures at about 0.7 of their size.
 __all__ += [
     "plot_fft_runtime",
     "plot_fft_roundtrip_error",
     "plot_matrix_runtime",
     "plot_stability",
+    "save_png_under_limit",
 ]
 
 _W12_STYLE: Dict[str, Dict[str, Any]] = {
@@ -5763,13 +5766,74 @@ _W12_STYLE: Dict[str, Dict[str, Any]] = {
     "cgs": {"marker": "^", "linestyle": ":", "color": "#c0392b", "label": "classical Gram-Schmidt"},
     "mgs": {"marker": "s", "linestyle": "--", "color": "#d68910", "label": "modified Gram-Schmidt"},
     "householder": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "Householder"},
-    "lu_pivot": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "LU with partial pivoting"},
-    "lu_no_pivot": {"marker": "^", "linestyle": ":", "color": "#c0392b", "label": "LU without pivoting"},
-    "cond_estimate_1": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "ours: ||A||_1 ||A^-1||_1"},
-    "numpy_cond_1": {"marker": "x", "linestyle": "--", "color": "#7f8c8d", "label": "numpy cond(A, 1) (library reference)"},
-    "cond2_power": {"marker": "s", "linestyle": "-.", "color": "#d68910", "label": "ours: 2-norm by power iteration"},
-    "numpy_cond_2": {"marker": "+", "linestyle": ":", "color": "#212121", "label": "numpy cond(A) (library reference)"},
+    "lu_pivot": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "LU, partial pivoting"},
+    "lu_no_pivot": {"marker": "^", "linestyle": ":", "color": "#c0392b", "label": "LU, no pivoting"},
+    "cond_estimate_1": {"marker": "o", "linestyle": "-", "color": "#2471a3", "label": "ours, 1-norm"},
+    "numpy_cond_1": {"marker": "x", "linestyle": "--", "color": "#7f8c8d", "label": "numpy, 1-norm (reference)"},
+    "cond2_power": {"marker": "s", "linestyle": "-.", "color": "#d68910", "label": "ours, 2-norm (power iteration)"},
+    "numpy_cond_2": {"marker": "+", "linestyle": ":", "color": "#212121", "label": "numpy, 2-norm (reference)"},
 }
+
+#: Font sizes (points, before the PDF scales the figure down).
+_W12_FONT = {"title": 14, "label": 13, "tick": 12, "legend": 11.5}
+
+
+def save_png_under_limit(fig: Figure, save_path: Optional[str], limit_bytes: int = 100_000,
+                         dpis: Sequence[int] = (200, 170, 145, 125, 110, 100, 90)) -> Optional[int]:
+    """Save ``fig`` as a palette PNG no larger than ``limit_bytes``, if it can be.
+
+    Each attempt renders at the next resolution in ``dpis``, converts the
+    image to a 256-colour palette (Pillow, no dithering) and writes it with
+    PNG optimization; the first attempt under the limit is kept. If none is,
+    the last (smallest) attempt is kept. Line charts usually pass at 200 dpi;
+    images full of noise need a lower resolution.
+
+    Args:
+        fig: The figure to save.
+        save_path: The PNG path, or ``None`` (or ``""``) to skip saving.
+        limit_bytes: The largest file size wanted.
+        dpis: Resolutions to try, highest first.
+
+    Returns:
+        The resolution of the file written, or ``None`` when nothing was saved.
+
+    Examples:
+        >>> save_png_under_limit(plt.figure(), None) is None
+        True
+        >>> plt.close("all")
+    """
+    if not save_path:
+        return None
+    from io import BytesIO
+
+    from PIL import Image
+
+    directory = os.path.dirname(os.path.abspath(save_path))
+    os.makedirs(directory, exist_ok=True)
+    data, used = b"", None
+    for dpi in dpis:
+        raw = BytesIO()
+        fig.savefig(raw, dpi=dpi, bbox_inches="tight", format="png")
+        raw.seek(0)
+        with Image.open(raw) as image:
+            palette = image.convert("RGB").quantize(colors=256, method=Image.Quantize.MEDIANCUT,
+                                                   dither=Image.Dither.NONE)
+        out = BytesIO()
+        palette.save(out, format="PNG", optimize=True)
+        data, used = out.getvalue(), dpi
+        if len(data) <= limit_bytes:
+            break
+    with open(save_path, "wb") as handle:
+        handle.write(data)
+    return used
+
+
+def _w12_fonts(ax: Axes) -> None:
+    """Apply the Week 12 tick and axis-label sizes to one axes."""
+    ax.tick_params(labelsize=_W12_FONT["tick"])
+    ax.xaxis.label.set_size(_W12_FONT["label"])
+    ax.yaxis.label.set_size(_W12_FONT["label"])
+    ax.title.set_size(_W12_FONT["title"])
 
 
 def _w12_line(ax: Axes, rows: Sequence[Dict[str, Any]], method: str, field: str,
@@ -5782,7 +5846,7 @@ def _w12_line(ax: Axes, rows: Sequence[Dict[str, Any]], method: str, field: str,
     style = _W12_STYLE[method]
     ns, values = [r["n"] for r in mine], [r[field] for r in mine]
     ax.plot(ns, values, marker=style["marker"], linestyle=style["linestyle"], color=style["color"],
-            markerfacecolor="white" if hollow else style["color"], markersize=6, linewidth=1.6,
+            markerfacecolor="white" if hollow else style["color"], markersize=7, linewidth=1.8,
             label=label or style["label"])
     return ns, values
 
@@ -5826,18 +5890,20 @@ def plot_fft_runtime(rows: Sequence[Dict[str, Any]], save_path: Optional[str] = 
     ax.set_xlabel("Transform length N (log base 2)")
     ax.set_ylabel("Mean time per transform (s, log scale)")
     ax.set_title("FFT runtime: slopes fitted over each method's five largest sizes")
+    _w12_fonts(ax)
     if rows:
-        ax.legend(loc="best", fontsize=9)
+        ax.legend(loc="upper left", fontsize=_W12_FONT["legend"])
     fig.tight_layout()
-    _save(fig, save_path)
+    save_png_under_limit(fig, save_path)
     return fig
 
 
 def plot_fft_roundtrip_error(rows: Sequence[Dict[str, Any]], save_path: Optional[str] = None) -> Figure:
     """Draw ``fft_roundtrip_error.png``: ``max|ifft(fft(x)) - x| / max|x|`` against N.
 
-    The dashed reference is ``eps * log2 N``, the growth the error analysis
-    of the FFT predicts.
+    The dashed reference is ``eps * log2 N``, the order of the worst-case
+    bound for the FFT's rounding error. The y axis is logarithmic, with
+    ticks at 1, 2 and 5 times each power of ten so the values can be read.
 
     Args:
         rows: Dicts with ``method``, ``n`` and ``max_rel_error``.
@@ -5852,28 +5918,41 @@ def plot_fft_roundtrip_error(rows: Sequence[Dict[str, Any]], save_path: Optional
         1
         >>> plt.close(fig)
     """
+    from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
+
     fig, ax = plt.subplots(figsize=(10, 6.5))
     for method in ("fft_recursive", "fft_iterative", "numpy_reference"):
         _w12_line(ax, rows, method, "max_rel_error")
     ns = sorted({r["n"] for r in rows})
-    if ns:
-        eps = float(np.finfo(float).eps)
-        ax.plot(ns, [eps * math.log2(n) for n in ns], color="#212121", linestyle="--", linewidth=1.2,
-                label="eps * log2 N (reference)")
-        ax.legend(loc="best", fontsize=9)
     ax.set_xscale("log", base=2)
     ax.set_yscale("log")
+    if ns:
+        eps = float(np.finfo(float).eps)
+        ax.plot(ns, [eps * math.log2(n) for n in ns], color="#212121", linestyle="--", linewidth=1.4,
+                label="eps * log2 N (reference)")
+        ax.legend(loc="lower right", fontsize=_W12_FONT["legend"])
+        ticks = [m * 10.0 ** e for e in range(-18, -12) for m in (1, 2, 5)]
+        ax.yaxis.set_major_locator(FixedLocator(ticks))
+        ax.yaxis.set_minor_locator(NullLocator())
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0e}"))
     ax.set_xlabel("Transform length N (log base 2)")
-    ax.set_ylabel("Round-trip error max|ifft(fft(x)) - x| / max|x|")
+    ax.set_ylabel("max|ifft(fft(x)) - x| / max|x| (log scale)")
     ax.set_title("What the FFT round trip costs in accuracy")
+    _w12_fonts(ax)
     fig.tight_layout()
-    _save(fig, save_path)
+    save_png_under_limit(fig, save_path)
     return fig
 
 
 def plot_matrix_runtime(rows: Sequence[Dict[str, Any]], caps: Sequence[Dict[str, Any]] = (),
                         save_path: Optional[str] = None) -> Figure:
     """Draw ``matrix_runtime.png``: multiply time against n, with caps marked.
+
+    Each implemented method's legend entry carries the log-log slope over its
+    three largest sizes; numpy's times are too short and too variable for a
+    slope to mean anything, so it gets none. Sizes not run because of a cap
+    are marked with an x along the top edge of the plot, not at a time, and
+    named in one legend entry per method.
 
     Args:
         rows: Dicts with ``method``, ``n`` and ``mean_time_s``.
@@ -5892,26 +5971,33 @@ def plot_matrix_runtime(rows: Sequence[Dict[str, Any]], caps: Sequence[Dict[str,
     fig, ax = plt.subplots(figsize=(10, 6.5))
     for method in ("classical", "blocked", "strassen", "numpy_reference"):
         mine = sorted((r for r in rows if r["method"] == method), key=lambda r: r["n"])
-        # numpy's multiply takes milliseconds or less here and its times jump around
-        # from run to run, so its slope would not mean anything; it gets none.
         slope = None if method == "numpy_reference" else _w12_slope(
             [r["n"] for r in mine], [r["mean_time_s"] for r in mine], tail=3)
         label = _W12_STYLE[method]["label"] + (f" (slope {slope:.2f})" if slope is not None else "")
         _w12_line(ax, rows, method, "mean_time_s", label)
-    # Caps sit in a row above every measured time so they never cover a point.
-    top = 3.0 * max([r["mean_time_s"] for r in rows] or [1.0])
+    capped: Dict[str, List[int]] = {}
     for cap in caps:
-        ax.scatter([cap["n"]], [top], marker="x", s=90, color=_W12_STYLE[cap["method"]]["color"],
-                   zorder=4, label=f"{_W12_STYLE[cap['method']]['label']}: not run at n = {cap['n']} (cap)")
+        capped.setdefault(cap["method"], []).append(int(cap["n"]))
+    for method, sizes in capped.items():
+        # x in data coordinates, y as a fraction of the axes: the mark is not a time.
+        ax.scatter(sizes, [0.96] * len(sizes), marker="x", s=110, linewidths=2.2,
+                   color=_W12_STYLE[method]["color"], transform=ax.get_xaxis_transform(), clip_on=False,
+                   zorder=4, label=f"{_W12_STYLE[method]['label']}: not run at n = "
+                                   f"{', '.join(str(s) for s in sorted(sizes))} (configured cap)")
     ax.set_xscale("log", base=2)
     ax.set_yscale("log")
+    if rows:
+        # Two decades of headroom keep the cap marks and the legend clear of the data.
+        low, high = ax.get_ylim()
+        ax.set_ylim(low, high * 100.0)
     ax.set_xlabel("Matrix size n (n x n, log base 2)")
     ax.set_ylabel("Mean time per multiply (s, log scale)")
-    ax.set_title("Matrix multiplication: slopes over each method's three largest sizes")
+    ax.set_title("Matrix multiplication: slopes over the three largest sizes")
+    _w12_fonts(ax)
     if rows:
-        ax.legend(loc="best", fontsize=8.5)
+        ax.legend(loc="upper left", fontsize=_W12_FONT["legend"])
     fig.tight_layout()
-    _save(fig, save_path)
+    save_png_under_limit(fig, save_path)
     return fig
 
 
@@ -5939,7 +6025,7 @@ def plot_stability(cond_rows: Sequence[Dict[str, Any]], solve_rows: Sequence[Dic
         3
         >>> plt.close(fig)
     """
-    fig, (a, b, c) = plt.subplots(1, 3, figsize=(18, 6))
+    fig, (a, b, c) = plt.subplots(1, 3, figsize=(15, 5.6))
     for method in ("cond_estimate_1", "numpy_cond_1", "cond2_power", "numpy_cond_2"):
         _w12_line(a, cond_rows, method, "cond")
     a.set_yscale("log")
@@ -5952,20 +6038,25 @@ def plot_stability(cond_rows: Sequence[Dict[str, Any]], solve_rows: Sequence[Dic
     if pivot:
         eps = float(np.finfo(float).eps)
         b.plot([r["n"] for r in pivot], [r["cond"] * eps for r in pivot], color="#212121", linestyle="--",
-               linewidth=1.2, label="cond(H) * eps (reference)")
+               linewidth=1.4, label="cond(H) * eps (reference)")
     b.set_yscale("log")
     b.set_xlabel("Hilbert matrix size n")
-    b.set_ylabel("Relative error of solve(H, H @ ones), max norm")
-    b.set_title("(b) Solve error grows with the condition number")
+    b.set_ylabel("Relative error of solve, max norm (log scale)")
+    b.set_title("(b) Solve error and cond(H) * eps")
     for method in ("cgs", "mgs", "householder"):
         _w12_line(c, orth_rows, method, "orth_loss")
     c.set_yscale("log")
     c.set_xlabel("Hilbert matrix size n")
-    c.set_ylabel("Orthogonality loss ||Q^T Q - I||_F (log scale)")
-    c.set_title("(c) How Q was built decides how orthogonal it is")
+    c.set_ylabel("||Q^T Q - I||_F (log scale)")
+    c.set_title("(c) Orthogonality loss of Q")
+    # Panel (c)'s curves fill its top left, so its legend sits low on the right,
+    # in the empty band between Householder and the Gram-Schmidt curves.
+    places = {a: {"loc": "upper left"}, b: {"loc": "upper left"},
+              c: {"loc": "lower right", "bbox_to_anchor": (1.0, 0.1)}}
     for ax, rows in ((a, cond_rows), (b, solve_rows), (c, orth_rows)):
+        _w12_fonts(ax)
         if rows:
-            ax.legend(loc="best", fontsize=8)
+            ax.legend(fontsize=_W12_FONT["legend"], **places[ax])
     fig.tight_layout()
-    _save(fig, save_path)
+    save_png_under_limit(fig, save_path)
     return fig
