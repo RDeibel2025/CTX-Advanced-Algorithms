@@ -87,7 +87,11 @@ def _random_image(shape=(64, 64), *labels) -> np.ndarray:
 
 
 def _synthetic_scene(seed_label: str = "scene") -> np.ndarray:
-    """The 256 x 256 synthetic test scene of spec 6, built here independently.
+    """A 256 x 256 scene like the shipped test scene, built here independently.
+
+    Its parameters are close to, not identical with,
+    ``src/fft_analyzer/examples/test_scene.png``; the spec 9.7 anchor is also
+    checked on the shipped file itself (``test_compress_quality_100_on_the_shipped_scene``).
 
     A left-to-right gradient, a bright disc, a checkerboard square of 8-pixel
     cells and Gaussian noise with sigma 10, clipped to 0-255.
@@ -311,6 +315,32 @@ def test_compress_quality_100_is_above_45_db(scene):
     assert abs(quality_db - psnr(scene, rec)) < 1e-12
     assert 0.0 < ratio <= 1.0
     assert rec.min() >= 0.0 and rec.max() <= 255.0
+
+
+def test_compress_quality_100_on_the_shipped_scene():
+    """Spec 9.7 on the committed ``examples/test_scene.png``, not a lookalike."""
+    import os
+
+    from src.fft_analyzer.applications.image_processor import load_image
+
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    shipped = load_image(os.path.join(root, "src", "fft_analyzer", "examples", "test_scene.png"))
+    assert shipped.shape == (256, 256)
+    _, _, quality_db = compress(shipped, 100)
+    assert quality_db > 45.0
+
+
+def test_compress_ties_round_the_same_way_whatever_the_last_bit():
+    """A tie k + 0.5 that arrives as k + 0.5 +- one ulp still rounds half to even."""
+    # A constant 8x8 block of value 128 + v has orthonormal DC = 8 v after the
+    # level shift. With Q[0, 0] = 16 at quality 50, v = 5 gives DC / Q = 2.5.
+    Q = quant_table(50)
+    tie = 2.5 * Q[0, 0] / 8.0
+    for nudge in (0.0, 1e-13, -1e-13):
+        img = np.full((8, 8), 128.0 + tie + nudge)
+        rec, _, _ = compress(img, 50)
+        # round-half-to-even sends 2.5 to 2, so the decoded DC is 2 * 16 = 32
+        assert np.allclose(rec, 128.0 + 32.0 / 8.0), nudge
 
 
 def test_compress_trades_quality_for_nonzeros(scene):

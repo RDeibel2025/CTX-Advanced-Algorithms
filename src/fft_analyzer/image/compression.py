@@ -343,7 +343,8 @@ def compress(img, quality: int):
     Steps: convert colour to luminance (:func:`~src.fft_analyzer.image.filters.to_grayscale`);
     edge-pad the bottom and right to a multiple of 8; subtract 128; transform
     every 8x8 block with ``C @ B @ C.T`` (all blocks in one batched product);
-    quantize with ``round(D / Q)`` using :func:`quant_table`; count the
+    quantize with ``round(D / Q)`` using :func:`quant_table` (ties, after
+    snapping D / Q to 9 decimals, round half to even); count the
     non-zero quantized coefficients; dequantize (``* Q``); invert with
     ``C.T @ D @ C``; add 128; crop the padding; clip to 0-255. These are the
     lossy stages of JPEG only (no zig-zag or Huffman coding), so
@@ -392,7 +393,12 @@ def compress(img, quality: int):
     blocks = shifted.reshape(Hp // _BLOCK, _BLOCK, Wp // _BLOCK, _BLOCK).transpose(0, 2, 1, 3)
     C = dct_matrix(_BLOCK)
     coeffs = C @ blocks @ C.T
-    quantized = np.round(coeffs / Q)
+    # D / Q is often an exact tie k + 0.5 in exact arithmetic (DC and the
+    # (0, 4), (4, 0), (4, 4) terms of an integer block are multiples of 1/8),
+    # and the last bit of a batched matrix product depends on the BLAS build.
+    # Snapping to 9 decimals first makes every tie exact, so np.round
+    # (round half to even) gives the same answer on every platform.
+    quantized = np.round(np.round(coeffs / Q, 9))
     nonzero_ratio = float(np.count_nonzero(quantized)) / quantized.size
     decoded = C.T @ (quantized * Q) @ C
     reconstructed = decoded.transpose(0, 2, 1, 3).reshape(Hp, Wp)[:H, :W] + _LEVEL_SHIFT
