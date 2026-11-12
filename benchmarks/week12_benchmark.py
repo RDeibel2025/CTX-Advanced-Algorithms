@@ -412,6 +412,49 @@ def figures(out: str, rows: List[dict], caps: List[dict], stability: Tuple[List[
     print(f"  audio peaks before {summary['peaks_before']} after {summary['peaks_after']}", flush=True)
 
 
+def read_csv(path: str) -> List[dict]:
+    """Read a ``benchmark.csv`` back into typed rows (blank cells become ``None``)."""
+    ints = {"n", "runs", "quality", "seed"}
+    rows = []
+    with open(path, newline="") as handle:
+        for raw in csv.DictReader(handle):
+            entry: Dict[str, Any] = {}
+            for column in COLUMNS:
+                text = raw.get(column, "")
+                if text == "":
+                    entry[column] = None
+                elif column in ("experiment", "method"):
+                    entry[column] = text
+                elif column == "capped":
+                    entry[column] = text == "True"
+                elif column in ints:
+                    entry[column] = int(float(text)) if column != "seed" else int(text)
+                else:
+                    entry[column] = float(text)
+            rows.append(entry)
+    return rows
+
+
+def redraw(out: str, master: int) -> None:
+    """Redraw every figure, animation and the audio from ``out/benchmark.csv``.
+
+    Nothing is re-measured, so the CSV (and every number quoted from it) is
+    unchanged; only the drawing code runs again.
+    """
+    rows = read_csv(os.path.join(out, "benchmark.csv"))
+    caps = [{"method": r["method"], "n": r["n"], "reason": "capped in the measured run"}
+            for r in rows if r["experiment"] == "matrix_runtime" and r["capped"]]
+    pick = lambda experiment, *fields: [  # noqa: E731
+        {"method": r["method"], "n": r["n"], **{f: r[f] for f in fields}}
+        for r in rows if r["experiment"] == experiment]
+    stability = (pick("stability_cond", "cond"), pick("stability_solve", "max_rel_error", "cond"),
+                 pick("stability_orth", "orth_loss"))
+    compression_rows = [{"quality": r["quality"], "psnr": r["psnr_db"], "nonzero_ratio": r["nonzero_ratio"]}
+                        for r in rows if r["experiment"] == "compression"]
+    scene = load_image(os.path.join(EXAMPLES_DIR, "test_scene.png"))
+    figures(out, rows, caps, stability, compression_rows, scene, master)
+
+
 def write_csv(path: str, rows: Sequence[dict]) -> None:
     with open(path, "w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=COLUMNS, extrasaction="ignore")
@@ -426,7 +469,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--smoke", action="store_true", help="tiny parameter set, seconds")
     parser.add_argument("--out", default=RESULTS_DIR, help="directory for the CSV and figures")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="master seed (default 42)")
+    parser.add_argument("--redraw", action="store_true",
+                        help="redraw the figures from OUT/benchmark.csv without measuring anything")
     args = parser.parse_args(argv)
+    if args.redraw:
+        apply_house_style()
+        redraw(os.path.abspath(args.out), args.seed)
+        return 0
 
     cfg = SMOKE if args.smoke else FULL
     out = os.path.abspath(args.out)

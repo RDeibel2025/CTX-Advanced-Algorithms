@@ -112,3 +112,20 @@ def test_same_seed_gives_identical_non_timing_columns(smoke_runs):
     for a, b in zip(first, second):
         assert {k: v for k, v in a.items() if k not in TIMING} == \
                {k: v for k, v in b.items() if k not in TIMING}
+
+
+def test_redraw_rebuilds_figures_without_touching_the_csv(smoke_runs):
+    """``--redraw`` redraws every output from the CSV and leaves the CSV byte for byte."""
+    out = smoke_runs[1]
+    csv_path = os.path.join(out, "benchmark.csv")
+    with open(csv_path, "rb") as handle:
+        before = handle.read()
+    for name in FIGURES:
+        os.remove(os.path.join(out, name))
+    completed = subprocess.run([sys.executable, BENCHMARK, "--redraw", "--out", out],
+                               cwd=REPO_ROOT, capture_output=True, text=True, timeout=600)
+    assert completed.returncode == 0, completed.stdout[-2000:] + completed.stderr[-2000:]
+    with open(csv_path, "rb") as handle:
+        assert handle.read() == before
+    for name in FIGURES + OTHER:
+        assert os.path.getsize(os.path.join(out, name)) > 0
