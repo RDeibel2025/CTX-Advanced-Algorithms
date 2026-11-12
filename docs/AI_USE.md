@@ -948,6 +948,8 @@ attribution.
   19(90), 297-301.
 * Strassen, V. (1969). *Numerische Mathematik*, 13(4), 354-356.
 * Golub, G. H., and Van Loan, C. F. (2013). *Matrix Computations* (4th ed.).
+* Higham, N. J. (2002). *Accuracy and Stability of Numerical Algorithms* (2nd
+  ed.), Ch. 23 and 24.
 * Wallace, G. K. (1992). *IEEE Transactions on Consumer Electronics*, 38(1),
   xviii-xxxiv.
 * numpy, scipy, Python, pytest, pillow and matplotlib documentation.

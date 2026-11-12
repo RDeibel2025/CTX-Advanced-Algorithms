@@ -54,7 +54,7 @@ URL_BANNER = (
     "tests, benchmarks and results):</strong><br>"
     f"{REPO_URL}<br>"
     "<span style='font-size:8.5pt'>Fast transforms: src/fft_analyzer/ &nbsp;·&nbsp; "
-    "demonstration: examples/week12_signal_demo.py<br>"
+    "demonstrations: examples/week12_signal_demo.py, week12_audio_demo.py, week12_image_demo.py<br>"
     "Benchmark: benchmarks/week12_benchmark.py</span></div>"
 )
 
@@ -99,11 +99,12 @@ def run_demo() -> None:
         print("    demo ran clean")
 
 
-#: Week 12's line charts are 10 x 6.5 in figures; a 4.6 in height cap lets them
-#: fill the text width (about 0.7 of their size), so legends and ticks stay
-#: legible on paper. This override applies to the Week 12 PDF only;
+#: Week 12's line charts are 10 x 6.5 in figures; a 4.2 in height cap prints
+#: them at about 0.65 of their size, large enough for legends and ticks to stay
+#: legible on paper and small enough for most to share a page with text.
+#: Orphan and widow control keeps a paragraph's last line off the next page. This override applies to the Week 12 PDF only;
 #: md_to_pdf itself is unchanged.
-FIGURE_STYLE = "<style>img { max-height: 4.6in; }</style>"
+FIGURE_STYLE = "<style>img { max-height: 4.2in; } p, li { orphans: 3; widows: 3; }</style>"
 
 #: Spans that should not break across lines in the PDF: "n = 10", "N = 2^20",
 #: and a number followed by its unit. Only the staged copy is changed; the
@@ -111,7 +112,8 @@ FIGURE_STYLE = "<style>img { max-height: 4.6in; }</style>"
 _NBSP = "\u00a0"
 _KEEP_TOGETHER = [
     (re.compile(r"\b([nN]) = (?=\d)"), "\\1" + _NBSP + "=" + _NBSP),
-    (re.compile(r"(\d) (?=(?:Hz|kHz|dB|ms|s|GB)\b)"), "\\1" + _NBSP),
+    (re.compile(r"(\d) (?=(?:Hz|kHz|dB|ms|s|GB|samples|times)\b)"), "\\1" + _NBSP),
+    (re.compile(r"\b(\d+-day)\b"), '<span style="white-space:nowrap">\\1</span>'),
 ]
 
 

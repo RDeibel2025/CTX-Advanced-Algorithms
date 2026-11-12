@@ -469,8 +469,8 @@ are in [`tests/week12/`](tests/week12/) and its outputs in
 The transform, filter, compression and factorization modules make the
 same round trip: move the problem to where it is easy, do the easy thing,
 move back, and measure what the round trip cost.
-Convolution is an FFT, a pointwise multiply and an inverse FFT; filtering
-zeroes FFT bins; compression quantizes 8x8 DCT blocks; solving Ax = b
+Convolution is two FFTs, a pointwise multiply and an inverse FFT
+(zero-padded for linear convolution); filtering zeroes FFT bins; compression quantizes 8x8 DCT blocks; solving Ax = b
 factors PA = LU and does two triangular solves; QR factors A into Q and R.
 No library FFT or linear-algebra routine is used as an implementation:
 `np.fft`, `scipy.fft`, `scipy.signal`, `scipy.ndimage` and the numpy and
@@ -483,13 +483,15 @@ divides by N, as `np.fft` does. The radix-2 FFTs need a power-of-two
 length; `fft(x, n=...)` zero-pads. The DCT is the orthonormal DCT-II as an
 8x8 matrix C, applied as `C @ B @ C.T`. Quantization tables are scaled the
 IJG (libjpeg) way, and `round(D / Q)` snaps D / Q to 9 decimals first so an
-exact tie rounds the same way (half to even) on every platform. Two places
-go slightly beyond radix-2: the spectral-analysis functions (`psd`,
-`welch_psd`, `spectrogram`, `peak_frequencies`) handle lengths that are not
-a power of two, such as the 1,000-sample test signal and the 32,000-sample
-WAV, with one Cooley-Tukey decimation step by the largest power-of-two
-factor over direct DFTs of the odd part; and `fft2` falls back to the direct
-DFT along an axis whose length is not a power of two.
+exact tie rounds the same way (half to even) on every platform. Four places
+handle lengths that are not a power of two. `circular_convolve` and
+`dominant_period` (the 364-sample series) use the direct DFT, so the bins
+stay at the exact length. The spectral-analysis functions (`psd`,
+`welch_psd`, `spectrogram`, `peak_frequencies`), used on the 1,000-sample
+test signal and the 32,000-sample WAV, take one Cooley-Tukey decimation
+step by the largest power-of-two factor over direct DFTs of the odd part.
+`fft2` falls back to the direct DFT along an axis whose length is not a
+power of two.
 
 ### What is in the package
 
@@ -584,6 +586,13 @@ results:
 
 ```bash
 python benchmarks/week12_benchmark.py --smoke --out /tmp/week12_smoke --seed 42
+```
+
+To redraw the figures, animations and audio from the committed
+`benchmark.csv` without measuring anything again:
+
+```bash
+python benchmarks/week12_benchmark.py --redraw
 ```
 
 Every benchmark figure quoted in the Week 12 report is recomputed from the
