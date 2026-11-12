@@ -1,0 +1,1 @@
+"""Spectral plots and animations."""
