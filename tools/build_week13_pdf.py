@@ -41,8 +41,8 @@ OUT_PDF = os.path.join(OUT_DIR, "Deibel_CSC5300_Week13_Report.pdf")
 REPO_URL = "https://github.com/RDeibel2025/CTX-Advanced-Algorithms"
 TITLE = "Deibel - CSC 5300 Week 13 - Advanced Data Structures"
 
-#: The instructions' limits, counted as ``wc -w`` counts: whitespace-separated
-#: tokens across the whole file.
+#: The instructions' limits for the report body (title to just before
+#: "## References"), counted as ``wc -w`` counts: whitespace-separated tokens.
 WORD_RANGE = (1200, 1500)
 
 #: Inserted directly after the report's H1, so the URL is the first thing on
@@ -102,9 +102,11 @@ def run_demo() -> None:
 #: Week 13's figures are wide one- and two-row panel sets; a 4.2 in height cap
 #: keeps the two-row ones from filling a page while the wide ones are limited
 #: by the page width instead, so legends and ticks stay legible on paper.
-#: Orphan and widow control keeps a paragraph's last line off the next page. This override applies to the Week 13 PDF only;
-#: md_to_pdf itself is unchanged.
-FIGURE_STYLE = "<style>img { max-height: 4.2in; } p, li { orphans: 3; widows: 3; }</style>"
+#: Chrome did not apply md_to_pdf's orphans/widows to this report's short
+#: paragraphs (single lines were left at the top of a page), so paragraphs and
+#: list items are kept whole instead; none is longer than about six lines.
+#: This override applies to the Week 13 PDF only; md_to_pdf itself is unchanged.
+FIGURE_STYLE = "<style>img { max-height: 4.2in; } p, li { break-inside: avoid; orphans: 2; widows: 2; }</style>"
 
 #: Spans that should not break across lines in the PDF: "n = 10", "B = 16",
 #: "h = 20", and a number followed by its unit. Only the staged copy is changed; the

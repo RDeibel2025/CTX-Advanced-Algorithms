@@ -972,11 +972,11 @@ to implement against it. The specification fixed the decisions that decide
 correctness: the required `AdvancedDataStructures/advds/` tree placed in
 `src/advds/` so it sits with every other week's project; every structure
 and query written by hand, with `bisect`, `int.bit_count`, `np.cumsum`,
-`np.searchsorted` and `np.unpackbits` kept out of the package and library
+`np.searchsorted` and `np.unpackbits` kept out of the structures and queries and library
 calls allowed only as test cross-checks and labelled benchmark references;
 the half-open ranges of the core structures and the inclusive ranges of the
 two application classes; the rank/select layout of 2,048- and 256-bit
-levels with a select sample at every 512th bit; the exact `synthetic_dna`
+levels with a select sample at every 512th 1 bit and every 512th 0 bit; the exact `synthetic_dna`
 expression the DNA anchors depend on; synthetic, seeded inputs rather than
 downloaded data; cache misses counted with an LRU simulator rather than
 timed; and the report's organization around the axis each structure halves.
@@ -1012,8 +1012,8 @@ The report's benchmark figures are printed from the result CSV by
 with a brute-force reference before any code was written: the segment-tree
 and Fenwick results on `[5, 2, 8, 1, 9, 3, 7, 4, 6, 0]`, the persistent
 tree's node counts, the rank and select values of the 16-bit and seeded
-1,000-bit vectors, the wavelet-tree queries on `ACGTACGTTGCA`, the six
-exact simulated miss counts, the van Emde Boas orders, the Burrows-Wheeler
+1,000-bit vectors, the wavelet-tree queries on `ACGTACGTTGCA`, the twelve
+exact simulated miss counts (six traces, naive and recursive), the van Emde Boas orders, the Burrows-Wheeler
 transform of `ACGTACGTTGCA$` and the pattern counts on
 `synthetic_dna(100000, 42)`.
 

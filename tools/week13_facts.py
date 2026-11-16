@@ -156,7 +156,7 @@ def main() -> int:
               f"from {pow2(r1.n[0])} to {pow2(r1.n.iloc[-1])} (n x{int(r1.n.iloc[-1] / r1.n[0])})")
         print(f"               select1 {span(per_op_us(s1), s1.n)} us; x{sig(per_op_us(s1)[-1] / per_op_us(s1)[0])}")
         print(f"               select1/rank1 {span(per_op_us(s1) / per_op_us(r1), s1.n)}")
-        print(f"               naive {span(per_op_us(nv), nv.n)} us; slope {slope(nv.n, per_op_us(nv)):.2f}; "
+        print(f"               naive {span(per_op_us(nv), nv.n)} us; log-log slope {sig(slope(nv.n, per_op_us(nv)))}; "
               f"naive/rank at {pow2(nv.n.iloc[-1])} = {sig(per_op_us(nv)[-1] / per_op_us(r1)[list(r1.n).index(nv.n.iloc[-1])])}")
         print(f"               rank directory overhead values {sorted(set(r1.overhead_ratio))}; "
               f"select samples (1s and 0s) {span(s1.overhead_ratio * 100, s1.n)} % of n")
@@ -171,9 +171,9 @@ def main() -> int:
         fm = pick(t, E, "fm_index", "pattern_count")
         nc, npat = pick(t, E, "naive_reference", "range_count_scan"), pick(t, E, "naive_reference", "pattern_count_scan")
         for i, n in enumerate(bal.n):
-            line = (f"  {E} n = {int(n):,}: bits/symbol balanced {bal.bits_per_symbol[i]:.3f} Huffman "
-                    f"{huf.bits_per_symbol[i]:.3f} H0 {h0.bits_per_symbol[i]:.3f} | compression balanced "
-                    f"{bal.compression_ratio[i]:.3f} Huffman {huf.compression_ratio[i]:.3f} | directory/payload "
+            line = (f"  {E} n = {int(n):,}: bits/symbol balanced {sig(bal.bits_per_symbol[i])} Huffman "
+                    f"{sig(huf.bits_per_symbol[i])} H0 {sig(h0.bits_per_symbol[i])} | compression balanced "
+                    f"{sig(bal.compression_ratio[i])} Huffman {sig(huf.compression_ratio[i])} | directory/payload "
                     f"balanced {bal.overhead_ratio[i]:.4f} Huffman {huf.overhead_ratio[i]:.4f}")
             print(line)
             parts = [f"count bal {sig(per_op_us(cb)[i])} us", f"count huf {sig(per_op_us(ch)[i])} us",
@@ -204,8 +204,8 @@ def main() -> int:
             if same:
                 print(f"  sigma = {sigma}, ceil(log2 sigma) = {math.ceil(math.log2(sigma))}, "
                       f"log2 sigma = {math.log2(sigma):.3f}")
-            print(f"  Huffman - H0 = {huf.bits_per_symbol[0] - h0.bits_per_symbol[0]:.3f} bits; "
-                  f"balanced - Huffman = {bal.bits_per_symbol[0] - huf.bits_per_symbol[0]:.3f} bits; "
+            print(f"  Huffman - H0 = {sig(huf.bits_per_symbol[0] - h0.bits_per_symbol[0])} bits; "
+                  f"balanced - Huffman = {sig(bal.bits_per_symbol[0] - huf.bits_per_symbol[0])} bits; "
                   f"Huffman/balanced payload {sig(huf.bits_per_symbol[0] / bal.bits_per_symbol[0])}")
             print(f"  naive count / wavelet balanced count {sig(per_op_us(nc)[0] / per_op_us(cb)[0])}; "
                   f"Huffman/balanced count time {sig(per_op_us(ch)[0] / per_op_us(cb)[0])}")
@@ -250,7 +250,9 @@ def main() -> int:
                   f"| searches {int(b.ops[i]):,}")
         ratio = (v.blocks_per_search / b.blocks_per_search).to_numpy()
         print(f"  B = {B}: vEB/BFS {span(ratio, h, fmt=lambda x: f'{x:.3f}', label=lambda x: f'h {x}')}")
-        print(f"  B = {B}: BFS growth per level {(b.blocks_per_search.iloc[-1] - b.blocks_per_search[0]) / (h[-1] - h[0]):.3f}; "
+        extra = [b.blocks_per_search[i] - (h[i] - math.log2(B)) for i in range(len(b))]
+        print(f"  B = {B}: BFS - (h - log2 B) {span(extra, h, label=lambda x: f'h {x}')}")
+        print(f"  B = {B}: average growth per level, h = {h[0]} to {h[-1]}: BFS {(b.blocks_per_search.iloc[-1] - b.blocks_per_search[0]) / (h[-1] - h[0]):.3f}; "
               f"vEB growth per level {(v.blocks_per_search.iloc[-1] - v.blocks_per_search[0]) / (h[-1] - h[0]):.3f}")
 
     # ------------------------------------------------------------------

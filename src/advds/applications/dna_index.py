@@ -169,9 +169,11 @@ def synthetic_dna(n: int, seed: int) -> str:
 
     The expression is exactly
     ``"".join(np.array(list("ACGT"))[np.random.default_rng(seed).integers(0, 4, n)])``.
-    This is the one place in the package where numpy's generator is used
-    directly instead of :func:`src.utils.random_utils.make_rng`, because the
-    spec 9.7 anchors were computed with this exact expression. The result is
+    Apart from the benchmark module, which seeds numpy generators from
+    ``derive_seed``, this is the one place in the package where numpy's
+    generator is used directly instead of
+    :func:`src.utils.random_utils.make_rng`, because the spec 9.7 anchors
+    were computed with this exact expression. The result is
     synthetic (independent uniform bases), never a real genome.
 
     Args:
