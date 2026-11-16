@@ -14,7 +14,7 @@ I built `src/advds/`, a package of range-query, persistent, succinct and cache-o
 
 ## 2. Overview of Advanced Data Structures
 
-Per axis: positions, about 2n nodes for O(log n) operations; versions, log2 n + 1 nodes per point set; bits, 7.8125% for O(1) rank; the alphabet, ceil(log2 sigma) bits per symbol for O(log sigma) queries, or about H0 with the Huffman shape; memory, recursion for misses near the block count.
+Per axis: positions, about 2n nodes for O(log n) operations; versions, log2 n + 1 nodes per point set; bits, 7.8125% for O(1) rank; the alphabet, ceil(log2 sigma) bits per symbol for O(log sigma) queries, or about H0 with the Huffman shape; memory, recursion for fewer simulated misses.
 
 The segment tree is an augmented tree (Cormen et al., 2022, Ch. 17), the Fenwick tree is Fenwick's (1994), and path copying follows Driscoll et al. (1989). Constant-time rank is Jacobson's (1989), the wavelet tree Grossi et al.'s (2003), and FM backward search Ferragina and Manzini's (2000). Cache-oblivious design is from Frigo et al. (1999).
 
@@ -26,7 +26,7 @@ The segment tree is an augmented tree (Cormen et al., 2022, Ch. 17), the Fenwick
 
 **Data and seeds.** Master seed 42; inputs come from `derive_seed(42, experiment, n, ...)` (numpy `default_rng` or Python `random`). Arrays hold integers 0 to 999, matrices -9 to 9; bit densities are 0.5 and 0.1. DNA is synthetic, `synthetic_dna(n, seed)`, uniform over A, C, G and T; the real-dataset option was not used. The text sample is this repository's README.md at the benchmark run (87,829 characters, 101 symbols); the version history, 1,000 synthetic files over 40 commits.
 
-**Metrics.** Misses are simulated because CPython's per-access interpreter overhead can hide cache effects: each address trace (base case 1, row-major layout) runs through a fully associative LRU cache of M words in blocks of B. Blocks per search averages distinct B-node blocks over 10,000 random searches. Bits per symbol is wavelet payload over n; compression ratio adds rank directories and divides by 8n bits; H0 is zero-order entropy; memory is the `tracemalloc` peak; slopes are log-log fits. Library calls other than `np.lexsort` and hashing appear only as checks and labelled references.
+**Metrics.** Misses are simulated because CPython's per-access interpreter overhead can hide cache effects: each address trace (base case 1, row-major layout) runs through a fully associative LRU cache of M words in blocks of B. Blocks per search averages distinct B-node blocks over 10,000 random searches. Bits per symbol is wavelet payload over n; compression ratio adds rank directories and divides by 8n bits; H0 is zero-order entropy; memory is the `tracemalloc` peak; slopes are log-log fits. Library routines answer queries only as checks and labelled references.
 
 **Naming.** `src/advds/` is the instructions' `AdvancedDataStructures/advds/`; this report is their `docs/chapter12_report.md`, renamed because this is Chapter 13 in Amakobe (2025).
 
@@ -50,7 +50,7 @@ The recursive transpose and multiply halve the largest dimension down to a base 
 
 `RangeQueryEngine` answers inclusive ranges with the segment, range Fenwick and persistent trees; its demo gives sum(2, 6) = 28, then sum(0, 9) = 95 after adding 10 to positions 3 to 7, while version 0 still gives 45. `MiniVCS` stores commits as persistent maps and skips equal-hash subtrees when diffing; a test asserts that one modified file among 1,000 costs fewer than 100 visited nodes. `DNAIndex` counts GATTACA 8, ACGT 399 and CG 6,383 times in `synthetic_dna(100000, 42)`, matching a naive scan.
 
-## 9. Benchmarks and Analysis
+## 9. Benchmarks and Analysis (Results)
 
 ![segment_vs_Fenwick](https://raw.githubusercontent.com/RDeibel2025/CTX-Advanced-Algorithms/main/benchmarks/results/week13/segment_vs_fenwick.png)
 
