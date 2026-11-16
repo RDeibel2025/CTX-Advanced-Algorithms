@@ -1842,8 +1842,8 @@ def _value_label(v: float) -> str:
 def _log_y(ax: Axes, reserve: float = 0.0) -> None:
     """Log y axis with readable ticks; optionally keep the bottom ``reserve`` of the axes free of data.
 
-    Ticks sit at every integer multiple of a power of ten when the data
-    span about one decade, at 1, 2 and 5 times powers of ten up to about
+    Ticks sit at integer multiples of a power of ten when the data span
+    about one decade (every one under 0.7 decades, 1, 2, 3, 4, 6 and 8 above), at 1, 2 and 5 times powers of ten up to about
     three decades, and at powers of ten (of a hundred past seven decades)
     beyond (labelled ``10^k``), so short ranges still carry labels and long
     ones are labelled one way. Under about one decade the bottom limit is
@@ -1876,7 +1876,10 @@ def _log_y(ax: Axes, reserve: float = 0.0) -> None:
     if decades > 7:
         ax.yaxis.set_major_locator(LogLocator(base=100.0, subs=(1.0,)))
     elif decades < 1.2:
-        ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=tuple(float(s) for s in range(1, 10))))
+        # Every integer multiple under about 0.7 decades; above that 7 and 9
+        # are dropped so the labels near the top of a short axis do not touch.
+        subs = range(1, 10) if decades < 0.7 else (1, 2, 3, 4, 6, 8)
+        ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=tuple(float(s) for s in subs)))
     else:
         ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0, 2.0, 5.0) if decades <= 3.2 else (1.0,)))
     if decades > 3.2:
@@ -2109,7 +2112,8 @@ def plot_segment_vs_fenwick(rows: Sequence[Dict[str, Any]], save_path: Optional[
             all_n += [r["n"] for r in mine]
             ys = [_per_op_us(r) if per_op else r["mean_time_s"] * 1e3 for r in mine]
             _line(ax, [r["n"] for r in mine], ys, style, label)
-        notes = [t for t in (_cap_text(_pick(rows, E, s, method, capped_rows=True), label.split(":")[0])
+        notes = [t for t in (_cap_text(_pick(rows, E, s, method, capped_rows=True),
+                                       "naive" if s == "naive_reference" else label.split(":")[0])
                              for s, _, label in series) if t]
         _log_y(ax, reserve=0.22 if notes else 0.0)
         _cap_note(ax, notes, sizes)
@@ -2158,7 +2162,7 @@ def plot_persistent_overhead(rows: Sequence[Dict[str, Any]], save_path: Optional
     """
     E = "persistent_overhead"
     sizes = _FONT_MULTI
-    fig, axes = plt.subplots(2, 2, figsize=(12.5, 10.8))
+    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.0))
     (a, b), (c, d) = axes
     sets = _pick(rows, E, "persistent_segment_tree", "point_set")
     builds = {r["n"]: r for r in _pick(rows, E, "persistent_segment_tree", "build")}
@@ -2210,7 +2214,7 @@ def plot_persistent_overhead(rows: Sequence[Dict[str, Any]], save_path: Optional
     _line(d, [r["n"] for r in sq], [_per_op_us(r) for r in sq],
           {"marker": "^", "linestyle": ":", "color": "#7d3c98"}, "plain array segment tree")
     d.set_title("(d) Range-sum query time")
-    d.set_ylabel("Time per range sum (microseconds, log scale)")
+    d.set_ylabel("Time per range sum\n(microseconds, log scale)")
     for ax in (b, c, d):
         _log_y(ax, reserve=0.22 if notes else 0.0)
     for ax in (a, b, c, d):
@@ -2396,7 +2400,7 @@ def plot_wavelet_compression(rows: Sequence[Dict[str, Any]], save_path: Optional
             a.bar(pos, [v for _, v in present], width, color=colour, hatch=hatch, edgecolor="#212121",
                   linewidth=0.8, label=label, alpha=0.9)
             for p, (_, v) in zip(pos, present):
-                a.text(p, v + 0.08, f"{v:.2f}", ha="center", va="bottom", rotation=90, fontsize=10.5)
+                a.text(p, v + 0.08, f"{v:#.3g}", ha="center", va="bottom", rotation=90, fontsize=10.5)
             top = max(top, max(v for _, v in present))
     a.set_ylim(0, top * 1.35 if top else 1)
     a.set_title("(a) Payload bits per symbol")
@@ -2414,7 +2418,8 @@ def plot_wavelet_compression(rows: Sequence[Dict[str, Any]], save_path: Optional
             b.bar(pos, [v for _, v in present], width, color=colour, hatch=hatch, edgecolor="#212121",
                   linewidth=0.8, label=label, alpha=0.9)
             for p, (_, v) in zip(pos, present):
-                b.text(p, v + 0.02, f"{v:.2f}", ha="center", va="bottom", rotation=90, fontsize=10.5)
+                b.text(p, v + 0.02, f"{v:#.3g}", ha="center", va="bottom", rotation=90, fontsize=10.5,
+                       bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0})
             top = max(top, max(v for _, v in present))
     if data:
         b.axhline(1.0, color=_REF_COLOR, linestyle="--", linewidth=1.8, label="one byte per symbol (reference)")
@@ -2427,10 +2432,12 @@ def plot_wavelet_compression(rows: Sequence[Dict[str, Any]], save_path: Optional
         ax.set_xlabel("Dataset")
         ax.grid(axis="x", visible=False)
     E = "wavelet_dna"
-    series = (("wavelet_balanced", "range_count", "range_count, balanced", _SEG),
-              ("wavelet_huffman", "range_count", "range_count, Huffman", _FEN),
+    # The three wavelet series nearly coincide, so they are nested: a large
+    # hollow circle, a smaller hollow square inside it, a small triangle on top.
+    series = (("wavelet_balanced", "range_count", "range_count, balanced", dict(_SEG, hollow=True, size=13)),
+              ("wavelet_huffman", "range_count", "range_count, Huffman", dict(_FEN, hollow=True, size=9)),
               ("wavelet_balanced", "range_quantile", "range_quantile, balanced",
-               {"marker": "^", "linestyle": ":", "color": "#7d3c98"}),
+               {"marker": "^", "linestyle": ":", "color": "#7d3c98", "size": 6}),
               ("fm_index", "pattern_count", "FM pattern_count", {"marker": "D", "linestyle": "-", "color": "#1e8449"}),
               ("naive_reference", "range_count_scan", "naive count (str.count, reference)", _NAIVE),
               ("naive_reference", "pattern_count_scan", "naive pattern scan (str.find, reference)",
@@ -2518,7 +2525,7 @@ def plot_cache_misses(rows: Sequence[Dict[str, Any]], save_path: Optional[str] =
         ax.set_title(title)
         ax.set_xlabel("Matrix size n (log scale)")
         ax.set_ylabel("Simulated cache misses (log scale)")
-        _size_axis(ax, [r["n"] for r in rows if r["experiment"] == E and r["structure"] == op], powers=False)
+        _size_axis(ax, [r["n"] for r in _pick(rows, E, op, None)], powers=False)  # measured sizes; caps are in the note
         _fonts(ax, sizes)
     _figure_legend(fig, axes, sizes, ncol=3)
     return _finish(fig, save_path)
