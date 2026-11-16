@@ -600,6 +600,24 @@ def test_make_synthetic_fasta_round_trip(tmp_path):
 # ===========================================================================
 
 
+def _load_demo(name: str):
+    """Import ``examples/<name>.py`` as a module, without running its ``__main__`` block."""
+    path = REPO / "examples" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(f"_week13_{name}", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.parametrize(
+    "name", ["week13_range_query_demo", "week13_vcs_demo", "week13_dna_demo"]
+)
+def test_demo_main_runs(name, capsys):
+    assert _load_demo(name).main() == 0
+    out = capsys.readouterr().out
+    assert "All demonstrations held." in out
+
+
 def test_package_exports_resolve():
     for package in ("src.advds", "src.advds.trees", "src.advds.succinct",
                     "src.advds.cache_oblivious", "src.advds.applications"):
