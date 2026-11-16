@@ -953,3 +953,93 @@ attribution.
 * Wallace, G. K. (1992). *IEEE Transactions on Consumer Electronics*, 38(1),
   xviii-xxxiv.
 * numpy, scipy, Python, pytest, pillow and matplotlib documentation.
+
+---
+
+# Week 13 - Advanced Data Structures: Range Queries, Persistence, Succinct Structures and Cache-Oblivious Methods
+
+## Tool used
+
+The same: **Anthropic Claude, via the Claude Code command-line agent**, run
+locally.
+
+## How it was used
+
+The same method and division of labour as Weeks 1 through 12. I wrote a
+specification from the Blackboard Week 13 instructions and readings,
+including the anchor values the tests assert against, and directed the tool
+to implement against it. The specification fixed the decisions that decide
+correctness: the required `AdvancedDataStructures/advds/` tree placed in
+`src/advds/` so it sits with every other week's project; every structure
+and query written by hand, with `bisect`, `int.bit_count`, `np.cumsum`,
+`np.searchsorted` and `np.unpackbits` kept out of the package and library
+calls allowed only as test cross-checks and labelled benchmark references;
+the half-open ranges of the core structures and the inclusive ranges of the
+two application classes; the rank/select layout of 2,048- and 256-bit
+levels with a select sample at every 512th bit; the exact `synthetic_dna`
+expression the DNA anchors depend on; synthetic, seeded inputs rather than
+downloaded data; cache misses counted with an LRU simulator rather than
+timed; and the report's organization around the axis each structure halves.
+The model drafted the code, the tests and the first draft of the report,
+and a second pass of the model reviewed each module against the
+specification and fixed what it found; I reviewed the result and decided
+what the measurements support.
+
+## What was AI-generated
+
+| File | Status |
+|---|---|
+| `src/advds/` (trees, succinct, cache_oblivious, applications, benchmarks and the synthetic FASTA example) | AI-drafted, reviewed by me |
+| `tests/week13/` (eight test files) | AI-drafted, reviewed by me |
+| `benchmarks/week13_benchmark.py` | AI-drafted, reviewed by me |
+| `examples/week13_range_query_demo.py`, `week13_vcs_demo.py`, `week13_dna_demo.py`, `tools/week13_facts.py`, `tools/build_week13_pdf.py` | AI-drafted, reviewed by me |
+| `analysis/week13_report.md`, the README's Week 13 section | AI-drafted, edited by me |
+| Git commit messages | AI-drafted |
+
+## What was *not* AI-generated
+
+**The measurements.** Every benchmark time, node count, miss count and
+chart this week came from running `benchmarks/week13_benchmark.py` on my
+machine with master seed 42; the application results come from the three
+`examples/week13_*_demo.py` scripts and the tests. The DNA sequences, the
+FASTA fragment, the matrices, the bit vectors and the version history are
+synthetic and generated from seeds; none of them is real genomic or
+repository data. The English text sample is this repository's own README.
+The report's benchmark figures are printed from the result CSV by
+`tools/week13_facts.py`.
+
+**The anchor values.** The expected answers the tests assert were computed
+with a brute-force reference before any code was written: the segment-tree
+and Fenwick results on `[5, 2, 8, 1, 9, 3, 7, 4, 6, 0]`, the persistent
+tree's node counts, the rank and select values of the 16-bit and seeded
+1,000-bit vectors, the wavelet-tree queries on `ACGTACGTTGCA`, the six
+exact simulated miss counts, the van Emde Boas orders, the Burrows-Wheeler
+transform of `ACGTACGTTGCA$` and the pattern counts on
+`synthetic_dna(100000, 42)`.
+
+## Direct quotation
+
+**None.** No text produced by the AI tool is presented as a quotation from
+a source, and no text from any source is reproduced verbatim without
+attribution.
+
+## Sources other than AI
+
+* The Blackboard Week 13 assignment instructions and Readings.
+* Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, 4th
+  ed., Ch. 17 (Augmenting Data Structures).
+* Amakobe, M. (2025). *Advanced Algorithms: Concepts, Complexity, and
+  Applied Projects*, Ch. 13.
+* Fenwick, P. M. (1994). *Software: Practice and Experience*, 24(3),
+  327-336.
+* Driscoll, J. R., Sarnak, N., Sleator, D. D., and Tarjan, R. E. (1989).
+  *Journal of Computer and System Sciences*, 38(1), 86-124.
+* Jacobson, G. (1989). *30th Annual Symposium on Foundations of Computer
+  Science*, 549-554.
+* Grossi, R., Gupta, A., and Vitter, J. S. (2003). *Proceedings of the 14th
+  Annual ACM-SIAM Symposium on Discrete Algorithms*, 841-850.
+* Ferragina, P., and Manzini, G. (2000). *Proceedings of the 41st Annual
+  Symposium on Foundations of Computer Science*, 390-398.
+* Frigo, M., Leiserson, C. E., Prokop, H., and Ramachandran, S. (1999).
+  *40th Annual Symposium on Foundations of Computer Science*, 285-297.
+* numpy, Python, pytest and matplotlib documentation.

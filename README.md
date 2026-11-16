@@ -19,6 +19,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 | 10 | Network Flows | [`analysis/week10_report.md`](analysis/week10_report.md) |
 | 11 | String Algorithms | [`analysis/week11_report.md`](analysis/week11_report.md) |
 | 12 | Fast Transforms | [`analysis/week12_report.md`](analysis/week12_report.md) |
+| 13 | Advanced Data Structures | [`analysis/week13_report.md`](analysis/week13_report.md) |
 
 ---
 
@@ -27,7 +28,7 @@ Repository: <https://github.com/RDeibel2025/CTX-Advanced-Algorithms>
 A working laboratory for measuring how algorithms and data structures
 actually behave, rather than only reasoning about how they should behave.
 
-It contains thirteen things:
+It contains fourteen things:
 
 1. **Five sorting algorithms** - an optimized bubble sort, selection sort
    and insertion sort (Week 1), plus merge sort and a randomized quicksort
@@ -85,13 +86,20 @@ It contains thirteen things:
     LU and QR factorizations with stability measurements, signal filters and
     spectral analysis, FFT image filters and DCT compression, applied to
     synthetic audio, images and a time series.
-12. **A benchmarking framework** that generates eight different shapes of
+12. **An advanced data structures package** (Week 13) - a segment tree
+    with lazy propagation, Fenwick trees, a persistent segment tree and a
+    persistent treap map, a bit vector with constant-time rank and sampled
+    select, balanced and Huffman-shaped wavelet trees, and cache-oblivious
+    matrix operations and tree layouts measured with an LRU cache
+    simulator, applied to range queries with time travel, a mini version
+    control system and a DNA index over synthetic sequences.
+13. **A benchmarking framework** that generates eight different shapes of
    input, times an algorithm - or, since Week 3, any operation on a
    structure - over repeated runs with `time.perf_counter`, reports mean,
    standard deviation, minimum and maximum, fits the measurements against
    O(n), O(n log n) and O(n²) reference models, plots the comparison, and
    stores the results as CSV for later retrieval.
-13. **A performance study each week** built from a real run of that
+14. **A performance study each week** built from a real run of that
    framework - charts, a results table, and a report on what the
    measurements actually show.
 
@@ -165,6 +173,13 @@ Advanced Algorithms/
 │   │   ├── applications/             audio_processor, image_processor, data_analyzer
 │   │   ├── visualization/            plots, animations
 │   │   └── examples/                 Synthetic WAV and test scene
+│   ├── advds/                      The instructions' AdvancedDataStructures/advds/ package
+│   │   ├── trees/                    segment_tree, fenwick_tree, persistent_tree
+│   │   ├── succinct/                 bit_vector, rank_select, wavelet_tree
+│   │   ├── cache_oblivious/          matrix_ops, layouts, cache_sim
+│   │   ├── applications/             range_queries, version_control, dna_index
+│   │   ├── benchmarks/               performance (the Week 13 benchmark)
+│   │   └── examples/                 Synthetic FASTA fragment
 │   ├── searching/                  Reserved for a later week
 │   ├── graphs/
 │   │   ├── graph.py                Graph: adjacency list and numpy matrix
@@ -226,6 +241,7 @@ Advanced Algorithms/
 │   ├── week10/                     Week 10's seven test files
 │   ├── week11/                     Week 11's seven test files
 │   ├── week12/                     Week 12's seven test files
+│   ├── week13/                     Week 13's eight test files
 │   ├── test_searching.py           Reserved for a later week
 │   └── test_utils.py               Benchmarking framework tests
 ├── benchmarks/
@@ -241,6 +257,7 @@ Advanced Algorithms/
 │   ├── week10_flow_benchmark.py    The Week 10 benchmark
 │   ├── week11_benchmark_search.py  The Week 11 benchmark
 │   ├── week12_benchmark.py         The Week 12 benchmark
+│   ├── week13_benchmark.py         The Week 13 benchmark (calls src/advds/benchmarks)
 │   ├── complexity_validation.py    Reserved for a later week
 │   └── results/                    Week 2 and Week 3 charts and measurements
 ├── analysis/
@@ -255,7 +272,8 @@ Advanced Algorithms/
 │   ├── week9_report.md             Week 9 technical report
 │   ├── week10_report.md            Week 10 technical report
 │   ├── week11_report.md            Week 11 technical report
-│   └── week12_report.md            Week 12 technical report
+│   ├── week12_report.md            Week 12 technical report
+│   └── week13_report.md            Week 13 technical report
 ├── docs/
 │   ├── performance_analysis.md     The Week 1 report (generated)
 │   ├── AI_USE.md                   AI use disclosure, every week
@@ -285,6 +303,8 @@ Advanced Algorithms/
 │   ├── build_week11_pdf.py         Builds the Week 11 submission PDF
 │   ├── week12_facts.py             Prints every figure the Week 12 report quotes
 │   ├── build_week12_pdf.py         Builds the Week 12 submission PDF
+│   ├── week13_facts.py             Prints every figure the Week 13 report quotes
+│   ├── build_week13_pdf.py         Builds the Week 13 submission PDF
 │   ├── md_to_pdf.py                Markdown to PDF export
 │   └── package_submission.sh       Builds the Week 1 submission zip and PDF
 ├── submissions/                    What was handed in, one folder per week
@@ -302,7 +322,10 @@ Advanced Algorithms/
     ├── week11_demo.py              Runnable Week 11 demonstration
     ├── week12_signal_demo.py       Week 12 signal demonstration
     ├── week12_audio_demo.py        Week 12 audio demonstration
-    └── week12_image_demo.py        Week 12 image demonstration
+    ├── week12_image_demo.py        Week 12 image demonstration
+    ├── week13_range_query_demo.py  Week 13 range-query demonstration
+    ├── week13_vcs_demo.py          Week 13 version-control demonstration
+    └── week13_dna_demo.py          Week 13 DNA index demonstration
 ```
 
 ---
@@ -445,11 +468,185 @@ and quantization tables, the three applications, and a smoke run of the
 benchmark. numpy and scipy appear in these tests only as the independent
 reference.
 
+Week 13's eight test files live in `tests/week13/`. They check the
+segment tree and both Fenwick trees on the array
+`[5, 2, 8, 1, 9, 3, 7, 4, 6, 0]` and on random operation sequences against
+a plain list, the persistent tree's node counts (exactly log2 n + 1 new
+nodes per point set) and its unchanged old versions, rank and select on 20
+random bit vectors, the wavelet trees against brute force on 200 queries
+per method, the six exact simulated miss counts for transpose and
+multiply, the van Emde Boas order, the range-query, version-control and
+DNA anchors (FM pattern counts on `synthetic_dna(100000, 42)` against a
+naive scan), the three demos, and a smoke run of the benchmark.
+`int.bit_count`, `np.flatnonzero` and numpy's `.T` and `@` appear in these
+tests only as the independent reference.
+
 The docstring examples are executable too:
 
 ```bash
 pytest --doctest-modules src/
 ```
+
+---
+
+## Week 13: advanced data structures - range queries, persistence, succinct structures and cache-oblivious methods
+
+No new dependencies. `src/advds/` is the instructions'
+`AdvancedDataStructures/advds/` package; the repository holds every week's
+project, so it sits under `src/` like Weeks 1-12. The report is
+[`analysis/week13_report.md`](analysis/week13_report.md), the
+instructions' `docs/chapter12_report.md` under this repository's weekly
+naming (this is Chapter 13 in the course text). Week 13's tests are in
+[`tests/week13/`](tests/week13/) and its outputs in
+[`benchmarks/results/week13/`](benchmarks/results/week13/).
+
+Each structure halves a different axis of its problem. The segment tree
+halves the index range and the Fenwick tree splits it by low bits; the
+persistent tree copies one halved path per update, so every old version
+stays queryable; rank/select cuts a bit vector into fixed levels of 2,048,
+256, 64 and 8 bits; the wavelet tree halves the alphabet at each level;
+the recursive matrix operations and the van Emde Boas layout halve until a
+piece fits a cache block whose size the code is never told. Every
+structure and query is hand-written: no `bisect`, `int.bit_count`,
+`np.cumsum`, `np.searchsorted` or `np.unpackbits` answers a query. numpy
+holds storage and does build-time array preparation, `np.lexsort` sorts
+the suffix array, and library calls appear only in the tests and as
+labelled references in the benchmark.
+
+Conventions: indices are 0-based and the core structures take half-open
+ranges `[l, r)`. The two application classes, `RangeQueryEngine` and
+`DNAIndex`, take inclusive `l, r`, because the instructions phrase them
+that way ("how many A's in range [l, r]"), and convert once at the
+boundary. `rank1(i)` counts the 1s in `[0, i)`; `select1(k)` and
+`range_quantile(l, r, k)` are 1-based. DNA bases sort A < C < G < T, and
+the FM-index's `$` sorts before them. The optional segment-tree
+visualization from the instructions is not built.
+
+### What is in the package
+
+| Module | Contents |
+|---|---|
+| [`trees/segment_tree.py`](src/advds/trees/segment_tree.py) | `SegmentTree`: range sum, min and max with lazy range add |
+| [`trees/fenwick_tree.py`](src/advds/trees/fenwick_tree.py) | `FenwickTree` (point update, prefix and range sums) and `RangeFenwick` (range add and range sum with two trees) |
+| [`trees/persistent_tree.py`](src/advds/trees/persistent_tree.py) | `PersistentSegmentTree` (path copying with permanent tags, every version queryable) and `PersistentMap` (a treap with Merkle hashes) |
+| [`succinct/bit_vector.py`](src/advds/succinct/bit_vector.py) | `BitVector`: bits packed into 64-bit words |
+| [`succinct/rank_select.py`](src/advds/succinct/rank_select.py) | `RankSelect`: constant-time `rank1` and `rank0` from a 7.8125% directory; `select1` and `select0` from a sample at every 512th bit of each kind |
+| [`succinct/wavelet_tree.py`](src/advds/succinct/wavelet_tree.py) | `WaveletTree` (balanced and Huffman shapes): `access`, `rank`, `select`, `range_count`, `range_count_values`, `range_quantile`, `frequencies`, `decode`; `zero_order_entropy` |
+| [`cache_oblivious/matrix_ops.py`](src/advds/cache_oblivious/matrix_ops.py) | `naive_transpose`, `co_transpose`, `naive_matmul`, `co_matmul`, `z_order`, and `trace_transpose` and `trace_matmul`, the address traces the simulator replays |
+| [`cache_oblivious/layouts.py`](src/advds/cache_oblivious/layouts.py) | `veb_order`, `bfs_layout`, `build_bfs_tree`, `build_veb_tree`, `search`, `blocks_per_search` |
+| [`cache_oblivious/cache_sim.py`](src/advds/cache_oblivious/cache_sim.py) | `LRUCache`: a fully associative LRU cache of M words in blocks of B that counts misses |
+| [`applications/range_queries.py`](src/advds/applications/range_queries.py) | `RangeQueryEngine`: sum, min and max over inclusive ranges, with queries on any earlier version |
+| [`applications/version_control.py`](src/advds/applications/version_control.py) | `MiniVCS`: commits stored as persistent maps, diffs pruned by Merkle hash, node-sharing statistics |
+| [`applications/dna_index.py`](src/advds/applications/dna_index.py) | `DNAIndex` (window counts and quantiles, FM-index pattern counts), `build_suffix_array`, `bwt_from_suffix_array`, `synthetic_dna`, FASTA reading and writing |
+| [`benchmarks/performance.py`](src/advds/benchmarks/performance.py) | The Week 13 benchmark; `benchmarks/week13_benchmark.py` calls its `main()` |
+
+The [`examples/`](src/advds/examples/) folder holds
+`synthetic_fragment.fa`, 20,000 **synthetic** bases drawn uniformly from
+A, C, G and T with seed 42. It is not a real genome.
+
+```python
+from src.advds import SegmentTree, PersistentSegmentTree, BitVector, RankSelect
+from src.advds import WaveletTree, DNAIndex, synthetic_dna, veb_order
+from src.advds import LRUCache, trace_transpose
+
+A = [5, 2, 8, 1, 9, 3, 7, 4, 6, 0]
+st = SegmentTree(A)
+st.query_sum(2, 7)                         # 28  (half-open [2, 7))
+st.range_add(3, 8, 10); st.query_max(2, 6) # 19
+
+pt = PersistentSegmentTree(A)
+v1 = pt.range_add(0, 0, 10, 1)             # new version 1
+pt.query_sum(0, 0, 10), pt.query_sum(v1, 0, 10)   # (45, 55)
+
+rs = RankSelect(BitVector.from_string("1011000111010010"))
+rs.rank1(8), rs.select1(4)                 # (4, 7)
+
+wt = WaveletTree("ACGTACGTTGCA")
+wt.range_count("A", 2, 10), wt.range_quantile(3, 9, 3)   # (1, 'G')
+
+idx = DNAIndex(synthetic_dna(100000, 42))
+idx.count("A", 1000, 1999), idx.pattern_count("GATTACA")  # (254, 8), inclusive range
+
+veb_order(3)                               # [1, 2, 4, 5, 3, 6, 7]
+trace_transpose(64, "naive", LRUCache(1024, 16))       # 4352 misses
+trace_transpose(64, "recursive", LRUCache(1024, 16))   # 512 misses
+```
+
+### Running the demonstrations, tests and benchmark
+
+```bash
+python examples/week13_range_query_demo.py
+```
+
+Builds the engine on `[5, 2, 8, 1, 9, 3, 7, 4, 6, 0]`, applies a range add,
+a set and an add (one new version each), and queries every version again.
+
+```bash
+python examples/week13_vcs_demo.py
+```
+
+Makes ten commits over 20 synthetic files, then prints the log, two
+Merkle-pruned diffs and how many nodes the commits share.
+
+```bash
+python examples/week13_dna_demo.py
+```
+
+Reads (or creates) `src/advds/examples/synthetic_fragment.fa`, prints base
+frequencies, window counts, k-th smallest bases and FM-index counts for
+`GATTACA`, `ACGT` and `CG`, then checks the anchors on
+`synthetic_dna(100000, 42)`. Each demo runs in about a second.
+
+```bash
+pytest tests/week13 -q
+```
+
+```bash
+pytest --doctest-modules src/advds
+```
+
+```bash
+python benchmarks/week13_benchmark.py
+```
+
+Seven studies: the segment tree against the Fenwick tree for n = 2^10
+to 2^20 (the naive `sum` over a slice to 2^16); the persistent tree's new
+nodes, memory and query time for n = 2^10 to 2^18 (2^19 and 2^20 are
+capped); `rank1` and `select1` for n = 2^16 to 2^24 bits at densities 0.5
+and 0.1 (the `int.bit_count` reference to 2^20); wavelet-tree space and
+query time on synthetic DNA of 10^4 to 10^6 bases and on this README as an
+English text sample; simulated LRU misses for transpose (n = 32 to 256)
+and multiply (n = 16 to 64) at three cache settings, with wall-clock times
+of the real functions and numpy as the library reference; blocks per
+search in BFS and van Emde Boas layouts for h = 10 to 20 at B = 16 and 64;
+and the node sharing of a 40-commit synthetic version history. The full
+run takes about two minutes and writes `benchmark.csv`,
+`segment_vs_fenwick.png`, `persistent_overhead.png`, `rank_select.png`,
+`wavelet_compression.png`, `cache_misses.png`, `layout_blocks.png` and
+`vcs_history.png` to
+[`benchmarks/results/week13/`](benchmarks/results/week13/). A size outside
+a configured limit is not run; it is written as a capped row with blank
+measurements, and the reason is printed. PNGs are saved as palette images
+under 100 KB. The committed results were produced with the versions
+`requirements.txt` pins. The master seed defaults to 42 and `--seed`
+changes it. For a smoke run of a few seconds, written somewhere else so it
+does not overwrite the committed results:
+
+```bash
+python benchmarks/week13_benchmark.py --smoke --out /tmp/week13_smoke --seed 42
+```
+
+To redraw the figures from the committed `benchmark.csv` without measuring
+anything again:
+
+```bash
+python benchmarks/week13_benchmark.py --redraw
+```
+
+Every benchmark figure quoted in the Week 13 report is recomputed from the
+CSV by `python tools/week13_facts.py`. As in earlier weeks, the code,
+tests and report were drafted with Claude Code from my specification; see
+[`docs/AI_USE.md`](docs/AI_USE.md).
 
 ---
 
@@ -1564,7 +1761,7 @@ I used Anthropic's Claude (Claude Code) as an assistant on this project,
 working from a detailed written specification of the requirements that I
 prepared from the assignment instructions and the course reading. The
 model drafted the source files, the test suite and the first draft of the
-written documents, the Week 4 to Week 12 algorithms included; I specified the
+written documents, the Week 4 to Week 13 algorithms included; I specified the
 requirements, directed the work,
 reviewed the output, ran the benchmarks, and am responsible for what is
 submitted here. No text was copied from an AI site and presented as a
